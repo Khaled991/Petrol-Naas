@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:petrol_naas/data/invoice_data.dart';
 import 'package:petrol_naas/models/invoice.dart';
 
@@ -9,6 +8,7 @@ import '../components/custom_dropdown.dart';
 import '../components/custom_input.dart';
 import '../components/expand_custom_textField.dart';
 import '../components/invoice_details.dart';
+import 'invoice_screen.dart';
 
 class HomeBody extends StatefulWidget {
   const HomeBody({
@@ -137,138 +137,45 @@ class _HomeBodyState extends State<HomeBody> {
           onPressed: onPressAddItem,
         ),
         CustomButton(
-            text: 'طباعة الفاتورة',
-            buttonColors: primaryColor,
-            textColors: Colors.white,
-            icon: Icons.print,
-            onPressed: () => showMaterialModalBottomSheet(
-                  context: context,
-                  builder: (context) => SafeArea(
-                    child: SizedBox(
-                      height: 800,
-                      child: ListView(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'الفاتورة',
-                                  style: TextStyle(
-                                    color: darkColor,
-                                    fontSize: 24.0,
-                                  ),
-                                ),
-                                Divider(),
-                                Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          children: [
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                border: Border(
-                                                  bottom: BorderSide(
-                                                    color: darkColor,
-                                                    style: BorderStyle.solid,
-                                                    width: 1.0,
-                                                  ),
-                                                ),
-                                              ),
-                                              child: Text(
-                                                'Petrol Naas مصنع بترول ناس',
-                                                style: TextStyle(
-                                                  fontSize: 20.0,
-                                                  color: darkColor,
-                                                ),
-                                              ),
-                                            ),
-                                            Text(
-                                              'الرقم الضريبي : 3004687955200002',
-                                              style: TextStyle(
-                                                fontSize: 16.0,
-                                                color: darkColor,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                'دخال مبيعات',
-                                                style: TextStyle(
-                                                  decoration:
-                                                      TextDecoration.underline,
-                                                  fontSize: 20.0,
-                                                  color: darkColor,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        Image.asset(
-                                          'assets/images/logo.png',
-                                          width: 100,
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 20.0,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'الرقم : 100200',
-                                          style: TextStyle(
-                                            fontSize: 19.0,
-                                            color: darkColor,
-                                          ),
-                                        ),
-                                        Text(
-                                          'التاريخ : 2022/09/05',
-                                          style: TextStyle(
-                                            fontSize: 19.0,
-                                            color: darkColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+          text: 'طباعة الفاتورة',
+          buttonColors: primaryColor,
+          textColors: Colors.white,
+          icon: Icons.print,
+          onPressed: () => showDialog<String>(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              title: const Text('تنبية!!'),
+              content: const Text(
+                'هل انت متأكد لأنه لا يمكن التعديل علي الفاتورة مجدداً',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'Cancel'),
+                  child: const Text(
+                    'الغاء',
+                    style: TextStyle(color: primaryColor),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => InvoiceScreen(
+                          finalPrice: 1627.25,
+                        ),
                       ),
                     ),
+                  },
+                  child: const Text(
+                    'موفق',
+                    style: TextStyle(color: primaryColor),
                   ),
-                )),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 }
-
-
-
-
-//  showDialog<String>(
-//   context: context,
-//   builder: (BuildContext context) => AlertDialog(
-//     title: const Text('AlertDialog Title'),
-//     content: const Text('AlertDialog description'),
-//     actions: <Widget>[
-//       TextButton(
-//         onPressed: () => Navigator.pop(context, 'Cancel'),
-//         child: const Text('Cancel'),
-//       ),
-//       TextButton(
-//         onPressed: () => Navigator.pop(context, 'OK'),
-//         child: const Text('OK'),
-//       ),
-//     ],
-//   ),
-// ),
