@@ -1,58 +1,99 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:petrol_naas/components/custom_button.dart';
 import 'package:petrol_naas/components/custom_input.dart';
+import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/user.dart';
+import 'package:petrol_naas/models/user_sign_in.dart';
+import 'package:provider/src/provider.dart';
 
 import '../constants.dart';
 import 'navigations_screen.dart';
 
-class SignIn extends StatelessWidget {
+class SignIn extends StatefulWidget {
   final Widget? child;
-  final TextEditingController userNoController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final SignInModel signInData = SignInModel();
+  SignIn({Key? key, this.child}) : super(key: key);
 
-  void onPressSignIn() {
-    signInData.userNo = userNoController.text;
-    signInData.userPwd = passwordController.text;
+  @override
+  State<SignIn> createState() => _SignInState();
+}
 
-    // axios.post("http://192.168.1.41:8000/api/login", user.toJson()).then((data){
-    //    
-    // });
+class _SignInState extends State<SignIn> {
+  final TextEditingController userNoController =
+      TextEditingController(text: "29");
+
+  final TextEditingController passwordController =
+      TextEditingController(text: "2640");
+
+  UserSignIn signInData = UserSignIn();
+
+  void navigateToUserScreens() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => NavigationsScreen(),
+      ),
+    );
   }
 
-  SignIn({Key? key, this.child}) : super(key: key);
+  void onPressSignIn() async {
+    signInData = signInData.copyWith(
+      userNo: userNoController.text,
+      userPwd: passwordController.text,
+    );
+    bool isValid = await fetchSignIn();
+    if (isValid) navigateToUserScreens();
+  }
+
+  Future<bool> fetchSignIn() async {
+    try {
+      Response response = await Dio().post(
+        'http://192.168.1.2/petrolnaas/public/api/login',
+        data: signInData.toJson(),
+      );
+      var jsonRespone = jsonDecode(response.toString());
+      final store = context.read<UserStore>();
+      print(jsonRespone);
+      store.setUser(User.fromJson(jsonRespone));
+      return true;
+    } on DioError catch (e) {
+      if (e.response?.statusCode == 400) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.response!.data['message']),
+          ),
+        );
+      }
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
-      body: SafeArea(
+      body: SingleChildScrollView(
         child: Container(
           color: Colors.white,
           height: size.height,
           width: double.infinity,
-          child: ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 0),
-                child: Image.asset(
-                  'assets/images/signInImage.png',
-                ),
-              ),
-              Stack(
-                children: [
-                  Image.asset(
-                    'assets/images/signInFormContainer.png',
-                    width: size.width,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 0),
+                  child: Image.asset(
+                    'assets/images/signInImage.png',
                   ),
-                  Positioned(
-                    top: 52,
-                    bottom: 0,
-                    right: 0,
-                    left: 0,
+                ),
+                Expanded(
+                  child: Container(
+                    color: primaryColor,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
                         Text(
                           'تسجيل الدخول',
                           style: TextStyle(
@@ -102,44 +143,93 @@ class SignIn extends StatelessWidget {
                           hintText: 'كلمة المرور',
                           type: 'password',
                         ),
-                        Container(
-                          margin: EdgeInsets.symmetric(
-                            vertical: 10.0,
-                            horizontal: 20.0,
-                          ),
-                          height: 47.0,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              primary: primaryColor,
-                              textStyle: const TextStyle(
-                                fontSize: 18.0,
-                                letterSpacing: 1.5,
-                                fontFamily: 'Changa',
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (_) => const NavigationsScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'تسجيل الدخول',
-                            ),
-                          ),
+                        CustomButton(
+                          buttonColors: Colors.white,
+                          onPressed: () => onPressSignIn(),
+                          text: 'تسجيل الدخول',
+                          textColors: primaryColor,
                         ),
                       ],
                     ),
-                  )
-                ],
-              ),
-            ],
+                  ),
+                )
+                // Stack(
+                //   children: [
+                //     Image.asset(
+                //       'assets/images/signInFormContainer.png',
+                //       width: size.width,
+                //     ),
+                //     Positioned(
+                //       top: 52,
+                //       bottom: 0,
+                //       right: 0,
+                //       left: 0,
+                //       child: Column(
+                //         mainAxisAlignment: MainAxisAlignment.center,
+                //         children: <Widget>[
+                //           Text(
+                //             'تسجيل الدخول',
+                //             style: TextStyle(
+                //               color: Colors.white,
+                //               fontSize: 24.0,
+                //             ),
+                //           ),
+                //           Row(
+                //             mainAxisAlignment: MainAxisAlignment.center,
+                //             children: [
+                //               SizedBox(
+                //                 width: 50,
+                //                 height: 1.75,
+                //               ),
+                //               Container(
+                //                 color: Colors.white,
+                //                 width: 100,
+                //                 height: 1.75,
+                //               ),
+                //             ],
+                //           ),
+                //           SizedBox(height: 4),
+                //           Row(
+                //             mainAxisAlignment: MainAxisAlignment.center,
+                //             children: [
+                //               Container(
+                //                 color: Colors.white,
+                //                 width: 100,
+                //                 height: 1.75,
+                //               ),
+                //               SizedBox(
+                //                 width: 50,
+                //                 height: 1.75,
+                //               ),
+                //             ],
+                //           ),
+                //           Padding(
+                //             padding: const EdgeInsets.only(top: 20.0),
+                //             child: CustomInput(
+                //               hintText: 'رقم المندوب',
+                //               type: 'white',
+                //               controller: userNoController,
+                //             ),
+                //           ),
+                //           CustomInput(
+                //             controller: passwordController,
+                //             hintText: 'كلمة المرور',
+                //             type: 'password',
+                //           ),
+                //           CustomButton(
+                //             buttonColors: Colors.white,
+                //             onPressed: () => onPressSignIn(context, ref),
+                //             text: 'تسجيل الدخول',
+                //             textColors: primaryColor,
+                //           ),
+                //         ],
+                //       ),
+
+                //     )
+                //   ],
+                // ),
+              ],
+            ),
           ),
         ),
       ),

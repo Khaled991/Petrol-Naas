@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../constants.dart';
 
 class ExpandCustomTextField extends StatelessWidget {
-  const ExpandCustomTextField({
+  ExpandCustomTextField({
     Key? key,
+    required this.controller,
   }) : super(key: key);
+  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +27,9 @@ class ExpandCustomTextField extends StatelessWidget {
             ),
           ),
           TextFormField(
+            controller: controller,
             keyboardType: TextInputType.multiline,
             maxLines: 8,
-            maxLength: 100,
             decoration: InputDecoration(
               hintStyle: TextStyle(fontSize: 18.0, color: Color(0x993d3d3d)),
               contentPadding: EdgeInsets.all(9.0),

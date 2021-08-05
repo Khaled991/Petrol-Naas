@@ -16,45 +16,89 @@ class CustomHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        children: [
+          SizedBox(height: 200.0),
+          Positioned(
+            width: MediaQuery.of(context).size.width,
+            left: -30,
+            child: HeaderShepe(
+              headerColor: Color(0x66f8cf34),
+            ),
+          ),
+          Positioned(
+            width: MediaQuery.of(context).size.width,
+            top: -15,
+            left: -15,
+            child: HeaderShepe(
+              headerColor: Color(0x88f8cf34),
+            ),
+          ),
+          Positioned(
+            width: MediaQuery.of(context).size.width,
+            top: -30,
+            child: HeaderShepe(
+              scaffoldKey: _scaffoldKey,
+              title: title,
+              headerColor: Color(0xfff8cf34),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HeaderShepe extends StatelessWidget {
+  HeaderShepe({
+    Key? key,
+    GlobalKey<ScaffoldState>? scaffoldKey,
+    this.title,
+    required this.headerColor,
+  })  : _scaffoldKey = scaffoldKey,
+        super(key: key);
+
+  final GlobalKey<ScaffoldState>? _scaffoldKey;
+  String? title;
+  final Color headerColor;
+
+  @override
+  Widget build(BuildContext context) {
     return ClipPath(
       clipper: MyClipper(),
       child: Container(
         height: 200.0,
         decoration: BoxDecoration(
-          color: primaryColor,
+          color: headerColor,
         ),
         child: Padding(
           padding: const EdgeInsets.only(
-            left: 20.0,
             right: 30.0,
-            bottom: 50.0,
           ),
           child: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 45.0),
-                child: Positioned(
-                  top: 50.0,
-                  left: 20.0,
+              if (_scaffoldKey != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 50.0),
                   child: TextButton(
-                    onPressed: () => _scaffoldKey.currentState!.openDrawer(),
-                    child: Image.asset('assets/images/menu.png', width: 35.0),
+                    onPressed: () => _scaffoldKey!.currentState!.openDrawer(),
+                    child: Image.asset(
+                      'assets/images/menu.png',
+                      width: 35.0,
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: 50.0,
-                left: 100.0,
-                child: Text(
-                  title,
+              if (title != null)
+                Text(
+                  title!,
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 25.0,
-                    fontFamily: 'Changa',
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -68,13 +112,13 @@ class MyClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     Path path = Path();
     path.lineTo(0, size.height - 90);
-    path.quadraticBezierTo(0, size.height, 80, size.height - 20);
-    path.lineTo(size.width - 80, size.height - 80);
+    path.quadraticBezierTo(0, size.height, 70, size.height - 10);
+    path.lineTo(size.width - 80, size.height - 55);
     path.quadraticBezierTo(
       size.width,
-      size.height - 100,
+      size.height - 70,
       size.width,
-      size.height - 150,
+      size.height - 130,
     );
     path.lineTo(size.width, 0);
     path.close();

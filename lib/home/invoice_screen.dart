@@ -1,5 +1,10 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:petrol_naas/widget/utils.dart';
+import 'package:petrol_naas/widget/widget_to_image.dart';
 
 import '../constants.dart';
 
@@ -16,11 +21,22 @@ class InvoiceScreen extends StatefulWidget {
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
   String priceText = "";
+  GlobalKey? key;
+  Uint8List? bytes;
+  bool isCaptured = false;
 
   @override
   void initState() {
     getHttp();
     super.initState();
+  }
+
+  Future<void> capture(key) async {
+    isCaptured = true;
+    final bytes = await Utils.capture(key);
+    setState(() {
+      this.bytes = bytes;
+    });
   }
 
   void getHttp() async {
@@ -38,6 +54,14 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       setState(() {
         this.priceText = priceText;
       });
+      Timer(
+        const Duration(seconds: 1),
+        () {
+          if (isCaptured == false && priceText != '') {
+            capture(key);
+          }
+        },
+      );
     } catch (e) {
       print(e);
     }
@@ -46,113 +70,115 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     getHttp();
+
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  Text(
-                    'الفاتورة',
-                    style: TextStyle(
-                      color: darkColor,
-                      fontSize: 24.0,
-                    ),
-                  ),
-                  Divider(),
-                  Column(
+      body: WidgetToImage(
+        builder: (key) {
+          this.key = key;
+          return SafeArea(
+            child: ListView(
+              children: [
+                // buildImage(bytes),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
                     children: [
-                      InvoiceScreenHeader(taxNo: '3004687955200002'),
-                      SizedBox(
-                        height: 20.0,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
                         children: [
+                          InvoiceScreenHeader(taxNo: '3004687955200002'),
+                          SizedBox(
+                            height: 20.0,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'الرقم : 100200',
+                                style: TextStyle(
+                                  fontSize: 19.0,
+                                  color: darkColor,
+                                ),
+                              ),
+                              Text(
+                                'التاريخ : 2020/09/05',
+                                style: TextStyle(
+                                  fontSize: 19.0,
+                                  color: darkColor,
+                                ),
+                              ),
+                            ],
+                          ),
                           Text(
-                            'الرقم : 100200',
+                            'العميل : حسني مبارك/محطة الفوزان السويد النخيل',
                             style: TextStyle(
                               fontSize: 19.0,
                               color: darkColor,
                             ),
                           ),
+                          Divider(
+                            height: 2,
+                            color: darkColor,
+                          ),
+                          ItemInfoTittels(),
+                          Divider(
+                            height: 2,
+                            color: darkColor,
+                          ),
+                          ItemInfo(
+                            itemName: 'MO 20W50 ZER\nزير اويل1لتر بلاستيك',
+                            onePrice: '94',
+                            piecesNo: '10',
+                            total: '940.00',
+                          ),
+                          Divider(
+                            height: 2,
+                            color: darkColor,
+                          ),
+                          BillDtl(
+                            price: '1,415.00',
+                            tittle: 'الاجمالي',
+                          ),
+                          BillDtl(
+                            price: '0.00',
+                            tittle: 'الخصم',
+                          ),
+                          BillDtl(
+                            price: '1,415.00',
+                            tittle: 'الصافي',
+                          ),
+                          BillDtl(
+                            price: '212.25',
+                            tittle: 'ضريبة القيمة المضافة',
+                          ),
+                          BillDtl(
+                            price: widget.finalPrice.toString(),
+                            tittle: 'قيمة الفاتورة',
+                          ),
                           Text(
-                            'التاريخ : 2020/09/05',
-                            style: TextStyle(
-                              fontSize: 19.0,
-                              color: darkColor,
-                            ),
+                            priceText + " فقط لا غير",
+                            style: TextStyle(color: darkColor, fontSize: 17),
+                          ),
+                          Text(
+                            'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
                           ),
                         ],
                       ),
-                      Text(
-                        'العميل : حسني مبارك/محطة الفوزان السويد النخيل',
-                        style: TextStyle(
-                          fontSize: 19.0,
-                          color: darkColor,
-                        ),
-                      ),
-                      Divider(
-                        height: 2,
-                        color: darkColor,
-                      ),
-                      ItemInfoTittels(),
-                      Divider(
-                        height: 2,
-                        color: darkColor,
-                      ),
-                      ItemInfo(
-                        itemName: 'MO 20W50 ZER\nزير اويل1لتر بلاستيك',
-                        onePrice: '94',
-                        piecesNo: '10',
-                        total: '940.00',
-                      ),
-                      Divider(
-                        height: 2,
-                        color: darkColor,
-                      ),
-                      BillDtl(
-                        price: '1,415.00',
-                        tittle: 'الاجمالي',
-                      ),
-                      BillDtl(
-                        price: '0.00',
-                        tittle: 'الخصم',
-                      ),
-                      BillDtl(
-                        price: '1,415.00',
-                        tittle: 'الصافي',
-                      ),
-                      BillDtl(
-                        price: '212.25',
-                        tittle: 'ضريبة القيمة المضافة',
-                      ),
-                      BillDtl(
-                        price: widget.finalPrice.toString(),
-                        tittle: 'قيمة الفاتورة',
-                      ),
-                      Text(
-                        priceText,
-                        style: TextStyle(color: darkColor, fontSize: 17),
-                      ),
-                      Text(
-                        'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
+                      SizedBox(
+                        height: 20.0,
                       ),
                     ],
                   ),
-                  SizedBox(
-                    height: 20.0,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
+
+  Widget buildImage(Uint8List? bytes) =>
+      bytes != null ? Image.memory(bytes) : Container();
 }
 
 class InvoiceScreenHeader extends StatelessWidget {

@@ -16,7 +16,7 @@ class _NavigationsScreenState extends State<NavigationsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _currentScreenIdx;
   List<Widget> bodies = [HomeBody(), MyInvoicesScreen()];
-  List<String> headerTitles = ["أضافة فاتورة", "الفواتير"];
+  List<String> headerTitles = ["إضافة فاتورة", "الفواتير"];
 
   @override
   void initState() {
@@ -36,7 +36,6 @@ class _NavigationsScreenState extends State<NavigationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Color(0xf),
       key: _scaffoldKey,
       drawer: CustomDrawer(
         changeBodyIdx: changeBodyIdx,

@@ -34,8 +34,8 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
           ),
           TextButton(
             child: Icon(
-              Icons.sort,
-              size: 30.0,
+              Icons.filter_alt_outlined,
+              size: 33.0,
               color: primaryColor,
             ),
             onPressed: () => showFilterModal(context),
@@ -68,9 +68,9 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                       child: CustomDropdown(
                         itemsList: <String>[
                           'محمد',
-                          'محمد الخرمان',
-                          'ابو حيوان الفرطان',
-                          'ابو سمعيل'
+                          'محمد رمضان',
+                          'احمد علي',
+                          'سمعيل'
                         ],
                         text: 'اسم العميل',
                         onChange: (int) {},
@@ -174,7 +174,32 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                                 Text('good');
                                 Navigator.pop(context);
                               } else {
-                                Text('التاريخ غير صحيح');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('التاريخ غير صحيح'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                                // ScaffoldMessenger.of(context).showSnackBar(
+                                //   SnackBar(
+                                //       content: Container(
+                                //         margin: EdgeInsets.fromLTRB(
+                                //           0,
+                                //           0,
+                                //           0,
+                                //           450,
+                                //         ),
+                                //         child: Text('Yay! A SnackBar!'),
+                                //       ),
+                                //       behavior: SnackBarBehavior.floating,
+                                //       backgroundColor: Colors.green),
+                                // );
+                                // final snackBar = SnackBar(
+                                //   content: Text('التاريخ غير صحيح'),
+                                //   behavior: SnackBarBehavior.floating,
+                                // );
+                                // ScaffoldMessenger.of(context)
+                                //     .showSnackBar(snackBar);
                                 // Fluttertoast.showToast(
                                 //   msg: "التاريخ غير صحيح",
                                 //   toastLength: Toast.LENGTH_SHORT,

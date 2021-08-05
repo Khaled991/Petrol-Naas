@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/components/splash_screen_style.dart';
@@ -18,8 +17,8 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(microseconds: 1), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => const NavigationsScreen(),
-          // SignIn(),
+          builder: (_) => //NavigationsScreen(),
+              SignIn(),
         ),
       );
     });

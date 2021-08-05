@@ -1,74 +1,36 @@
-// class Invoice {
-//   final String name;
-//   final int payType;
-//   final String custName;
-//   final String custno;
-//   final List<InvoiceProduct> products;
-//   final String note;
-//   final DateTime year = DateTime.now();
-//   final String freeQty;
+import 'invoice_details.dart';
+import 'invoice_header.dart';
 
-//   Invoice({
-//     required this.name,
-//     required this.payType,
-//     required this.custName,
-//     required this.custno,
-//     required this.products,
-//     required this.note,
-//     required this.freeQty,
-//   });
-// }
+class Invoice {
+  InoviceHeader? header;
+  List<InvoiceDetails>? details;
 
-// class InvoiceProduct {
-//   late Product product;
-//   late int qty;
-// }
+  Invoice({this.header, this.details});
 
-class Product {
-  final int itemno;
-  final String itemDesc;
-  final double unitPrice;
-  final double sellPrice1;
-  final int promotionQtyReq;
-  final int promotionQtyFree;
+  @override
+  String toString() => 'Invoice(header: $header, details: $details)';
 
-  Product({
-    required this.itemno,
-    required this.itemDesc,
-    required this.unitPrice,
-    required this.sellPrice1,
-    required this.promotionQtyReq,
-    required this.promotionQtyFree,
-  });
-}
+  factory Invoice.fromJson(Map<String, dynamic> json) => Invoice(
+        header: json['header'] == null
+            ? null
+            : InoviceHeader.fromJson(json['header'] as Map<String, dynamic>),
+        details: (json['details'] as List<dynamic>?)
+            ?.map((e) => InvoiceDetails.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 
-class CreateInvoiceModel {
-  String userno;
-  String salesman;
-  String custno;
-  String whno;
-  String payType;
-  String accno;
-  String notes;
-  List<Item> items = <Item>[];
+  Map<String, dynamic> toJson() => {
+        'header': header?.toJson(),
+        'details': details?.map((e) => e.toJson()).toList(),
+      };
 
-  CreateInvoiceModel({
-    this.userno = "",
-    this.salesman = "",
-    this.custno = "",
-    this.whno = "",
-    this.payType = "",
-    this.accno = "",
-    this.notes = "",
-  });
-}
-
-class Item {
-  String itemno;
-  String qty;
-
-  Item({
-    this.itemno = "",
-    this.qty = "",
-  });
+  Invoice copyWith({
+    InoviceHeader? header,
+    List<InvoiceDetails>? details,
+  }) {
+    return Invoice(
+      header: header ?? this.header,
+      details: details ?? this.details,
+    );
+  }
 }

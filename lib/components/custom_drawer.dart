@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:petrol_naas/home/sign_in.dart';
+import 'package:petrol_naas/mobx/user/user.dart';
+import 'package:provider/src/provider.dart';
+
+import '../constants.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({
@@ -24,6 +29,8 @@ class CustomDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = context.watch<UserStore>();
+
     return SafeArea(
       child: Drawer(
         child: Column(
@@ -32,27 +39,29 @@ class CustomDrawer extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(60),
-                  // bottomRight: Radius.circular(20),
+                  bottomLeft: Radius.circular(80),
                 ),
               ),
               alignment: Alignment.center,
               width: double.infinity - 10.0,
               height: 150.0,
-              child: Text(
-                'خالد وليد محمدخالد وليد محمد',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20.0,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              child: Observer(builder: (_) {
+                return Text(
+                  store.user.name ?? "",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20.0,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }),
             ),
 
             _buildDrawerOption(
               Icon(
-                Icons.add,
+                Icons.add_box_outlined,
                 size: 27,
+                color: primaryColor,
               ),
               'إضافة فاتورة',
               () {
@@ -64,6 +73,7 @@ class CustomDrawer extends StatelessWidget {
               Icon(
                 Icons.receipt_outlined,
                 size: 27,
+                color: primaryColor,
               ),
               'الفواتير',
               () {
@@ -77,8 +87,9 @@ class CustomDrawer extends StatelessWidget {
                 alignment: FractionalOffset.bottomCenter,
                 child: _buildDrawerOption(
                   Icon(
-                    Icons.exit_to_app_outlined,
+                    Icons.logout_outlined,
                     size: 27,
+                    color: primaryColor,
                   ),
                   'تسجيل الخروج',
                   () => Navigator.pushReplacement(

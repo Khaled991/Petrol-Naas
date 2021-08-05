@@ -1,42 +1,41 @@
-class SignInModel {
-  String userNo;
-  String userPwd;
-
-  SignInModel({
-    this.userNo = "",
-    this.userPwd = "",
-  });
-
-  Map<String, String> toJson() {
-    return {
-      "User_no": userNo,
-      "user_pwd": userPwd,
-    };
-  }
-}
-
 class User {
-  final String name;
-  final String whno;
-  final String cashAccno;
-  final String salesman;
-  final String userNo;
+  String? name;
+  String? whno;
+  String? cashAccno;
+  String? salesman;
 
-  User({
-    required this.userNo,
-    required this.name,
-    required this.whno,
-    required this.cashAccno,
-    required this.salesman,
-  });
+  User({this.name, this.whno, this.cashAccno, this.salesman});
 
-  User fromJson(jsonData, userNo) {
+  @override
+  String toString() {
+    return 'User(name: $name, whno: $whno, cashAccno: $cashAccno, salesman: $salesman)';
+  }
+
+  factory User.fromJson(Map<String, dynamic> json) => User(
+        name: json['name'] as String?,
+        whno: json['Whno'] as String?,
+        cashAccno: json['CashAccno'] as String?,
+        salesman: json['Salesman'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'Whno': whno,
+        'CashAccno': cashAccno,
+        'Salesman': salesman,
+      };
+
+  User copyWith({
+    String? name,
+    String? whno,
+    String? cashAccno,
+    String? salesman,
+  }) {
     return User(
-      name: jsonData['name'],
-      whno: jsonData['Whno'],
-      cashAccno: jsonData['CashAccno'],
-      salesman: jsonData['Salesman'],
-      userNo: userNo,
+      name: name ?? this.name,
+      whno: whno ?? this.whno,
+      cashAccno: cashAccno ?? this.cashAccno,
+      salesman: salesman ?? this.salesman,
     );
   }
 }
