@@ -9,7 +9,7 @@ import 'package:petrol_naas/components/invoice_list_style.dart';
 import 'package:petrol_naas/mobx/my_invoice/my_invoices.dart';
 import 'package:petrol_naas/models/invoice.dart';
 
-import 'my_invoices_info.dart';
+import 'my_invoice_info.dart';
 
 class MyInvoicesScreen extends StatefulWidget {
   const MyInvoicesScreen({Key? key}) : super(key: key);
@@ -74,7 +74,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
                   onTap: () => {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => MyInvoicesInfo(
+                        builder: (_) => MyInvoiceInfo(
                           invno: invno,
                         ),
                       ),

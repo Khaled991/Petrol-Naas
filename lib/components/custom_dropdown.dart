@@ -6,12 +6,14 @@ import '../constants.dart';
 class CustomDropdown extends StatefulWidget {
   final List<String> itemsList;
   final String text;
+  final String? dropdownValue;
   final void Function(int payTypeIdx) onChange;
   const CustomDropdown({
     Key? key,
     required this.itemsList,
     required this.text,
     required this.onChange,
+    this.dropdownValue,
   }) : super(key: key);
 
   @override
@@ -58,7 +60,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 7.0),
                 child: DropdownButtonFormField<String>(
-                  // value: dropdownValue,
+                  value: widget.dropdownValue,
                   decoration: InputDecoration.collapsed(hintText: ''),
                   hint: Text(
                     dropdownHint,
@@ -85,7 +87,6 @@ class _CustomDropdownState extends State<CustomDropdown> {
                     });
                     widget.onChange(widget.itemsList.indexOf(newValue!));
                   },
-
                   items: widget.itemsList
                       .map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(

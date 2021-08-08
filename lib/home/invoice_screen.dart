@@ -215,10 +215,10 @@ class _ItemsInfoState extends State<ItemsInfo> {
           .map(
             (ViewInvoiceItem item) => DataRow(
               cells: [
-                DataCell(Text((item.sellPrice * item.qty).toString())),
+                DataCell(Text((item.sellPrice! * item.qty!).toString())),
                 DataCell(Text(item.sellPrice.toString())),
                 DataCell(Text(item.qty.toString())),
-                DataCell(Text(item.itemDesc)),
+                DataCell(Text(item.itemDesc!)),
               ],
             ),
           )
