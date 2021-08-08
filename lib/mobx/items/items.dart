@@ -10,5 +10,5 @@ abstract class _ItemsStoreBase with Store {
   List<Item> items = [];
 
   @action
-  setCustomers(List<Item> value) => items = value;
+  setItems(List<Item> value) => items = value;
 }

@@ -10,4 +10,12 @@ abstract class _CustomerStoreBase with Store {
 
   @action
   setCustomers(List<Customer> value) => customers = value;
+
+  @action
+  List<String> getCustomersNames(List<Customer> customers) {
+    print(customers);
+    return customers
+        .map((Customer customer) => customer.accName ?? "")
+        .toList();
+  }
 }

@@ -52,10 +52,10 @@ class _SignInState extends State<SignIn> {
         'http://192.168.1.2/petrolnaas/public/api/login',
         data: signInData.toJson(),
       );
-      var jsonRespone = jsonDecode(response.toString());
+      var jsonRespone = response.data;
       final store = context.read<UserStore>();
-      print(jsonRespone);
-      store.setUser(User.fromJson(jsonRespone));
+      store.setUser(User.fromJson(jsonRespone, signInData.userNo));
+      print(store.user);
       return true;
     } on DioError catch (e) {
       if (e.response?.statusCode == 400) {
@@ -236,3 +236,36 @@ class _SignInState extends State<SignIn> {
     );
   }
 }
+
+// class BackgroundClipper extends CustomClipper<Path> {
+//   @override
+//   Path getClip(Size size) {
+//     var roundnessFactor = 50.0;
+//     var path = Path();
+
+//     path.moveTo(0, size.height * 0.33);
+//     path.lineTo(0, size.height);
+//     path.lineTo(size.width, size.height);
+//     path.lineTo(size.width, roundnessFactor * 2);
+//     path.quadraticBezierTo(
+//       size.width,
+//       0,
+//       size.width - roundnessFactor * 3,
+//       roundnessFactor * 2,
+//     );
+//     path.lineTo(roundnessFactor, size.height * 0.33 + 10);
+//     path.quadraticBezierTo(
+//       0,
+//       size.height * 0.33 + roundnessFactor,
+//       0,
+//       size.height * 0.33 + roundnessFactor * 2,
+//     );
+//     return path;
+//   }
+
+//   @override
+//   bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
+//     // TODO: implement shouldReclip
+//     throw UnimplementedError();
+//   }
+// }

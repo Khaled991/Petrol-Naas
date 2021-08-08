@@ -1,6 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
+import 'package:petrol_naas/mobx/customers/customers.dart';
+import 'package:petrol_naas/mobx/my_invoice/my_invoices.dart';
+import 'package:petrol_naas/mobx/user/user.dart';
+import 'package:petrol_naas/models/invoice.dart';
+import 'package:provider/src/provider.dart';
 
 import '../constants.dart';
 import 'custom_button.dart';
@@ -16,8 +23,48 @@ class InvoiceHeader extends StatefulWidget {
 }
 
 class _InvoiceHeaderState extends State<InvoiceHeader> {
-  DateTime _firstDate = DateTime.now();
-  DateTime _lastDate = DateTime.now();
+  String? _firstDate;
+  String? _lastDate;
+  Invoice _invoice = Invoice();
+  String? _custNo;
+
+  List<Invoice> prepareInvoiceList(dynamic invoiceList) {
+    List<Invoice> invoices = List<Invoice>.from(
+      invoiceList.map(
+        (invoice) => Invoice.fromJson(invoice),
+      ),
+    );
+    return invoices;
+  }
+
+  Future<void> getInvoices(
+      {required DateTime from, required DateTime to}) async {
+    if (from != null && to != null) {
+      _firstDate = DateFormat("yyyy-MM-dd").format(from);
+      _lastDate = DateFormat("yyyy-MM-dd").format(to);
+    }
+    final store = context.read<UserStore>();
+
+    try {
+      String url =
+          'http://192.168.1.2/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}';
+// &from=$dateFrom&to=$dateTo
+      if (_firstDate != null && _lastDate != null)
+        url += "&from=$_firstDate&to=$_lastDate";
+      if (_custNo != null) url += "&Custno=$_custNo";
+      Response response = await Dio().get(
+        url,
+      );
+
+      final storeMyInvoices = context.read<MyInvoices>();
+      var jsonRespone = response.data;
+      storeMyInvoices.jsonToInvoicesList(jsonRespone);
+      print(storeMyInvoices);
+    } on DioError catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -45,6 +92,26 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
     );
   }
 
+  void onPressFilter() {
+    DateTime from = DateTime.parse(_firstDate ?? "");
+    DateTime to = DateTime.parse(_lastDate ?? "");
+    bool isUsingDateFilter = _firstDate != null && _lastDate != null;
+    bool toIsGreaterThenFrom = from.compareTo(to) < 0;
+    if (isUsingDateFilter) {
+      if (toIsGreaterThenFrom) {
+        getInvoices(to: to, from: from);
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('التاريخ غير صحيح'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> showFilterModal(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
@@ -63,19 +130,19 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                       ),
                     ),
                     Divider(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: CustomDropdown(
-                        itemsList: <String>[
-                          'محمد',
-                          'محمد رمضان',
-                          'احمد علي',
-                          'سمعيل'
-                        ],
-                        text: 'اسم العميل',
-                        onChange: (int) {},
-                      ),
-                    ),
+                    Observer(builder: (_) {
+                      final customersStore = context.watch<CustomerStore>();
+
+                      return SizedBox(
+                        width: double.infinity,
+                        child: CustomDropdown(
+                          itemsList: customersStore
+                              .getCustomersNames(customersStore.customers),
+                          text: 'اسم العميل',
+                          onChange: (int) {},
+                        ),
+                      );
+                    }),
                     Divider(),
                     Text(
                       'اختيار تاريخ',
@@ -97,7 +164,8 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                               ).then(
                                 (date) {
                                   setState(() {
-                                    _firstDate = date!;
+                                    _firstDate =
+                                        DateFormat("dd-MM-yyyy").format(date!);
                                   });
                                 },
                               );
@@ -113,9 +181,7 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                             left: 10.0,
                           ),
                           child: Text(
-                            _firstDate == null
-                                ? _firstDate.toString()
-                                : DateFormat("dd-MM-yyyy").format(_firstDate),
+                            _firstDate ?? "",
                             style: TextStyle(
                               color: darkColor,
                               fontSize: 18.0,
@@ -137,7 +203,8 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                               ).then(
                                 (date) {
                                   setState(() {
-                                    _lastDate = date!;
+                                    _lastDate =
+                                        DateFormat("dd-MM-yyyy").format(date!);
                                   });
                                 },
                               );
@@ -153,9 +220,7 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                             left: 10.0,
                           ),
                           child: Text(
-                            _lastDate == null
-                                ? _lastDate.toString()
-                                : DateFormat("dd-MM-yyyy").format(_lastDate),
+                            _lastDate ?? "",
                             style: TextStyle(
                               color: darkColor,
                               fontSize: 18.0,
@@ -169,46 +234,8 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                         Expanded(
                           child: CustomButton(
                             buttonColors: greenColor,
-                            onPressed: () {
-                              if (_firstDate.compareTo(_lastDate) < 0) {
-                                Text('good');
-                                Navigator.pop(context);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('التاريخ غير صحيح'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                                // ScaffoldMessenger.of(context).showSnackBar(
-                                //   SnackBar(
-                                //       content: Container(
-                                //         margin: EdgeInsets.fromLTRB(
-                                //           0,
-                                //           0,
-                                //           0,
-                                //           450,
-                                //         ),
-                                //         child: Text('Yay! A SnackBar!'),
-                                //       ),
-                                //       behavior: SnackBarBehavior.floating,
-                                //       backgroundColor: Colors.green),
-                                // );
-                                // final snackBar = SnackBar(
-                                //   content: Text('التاريخ غير صحيح'),
-                                //   behavior: SnackBarBehavior.floating,
-                                // );
-                                // ScaffoldMessenger.of(context)
-                                //     .showSnackBar(snackBar);
-                                // Fluttertoast.showToast(
-                                //   msg: "التاريخ غير صحيح",
-                                //   toastLength: Toast.LENGTH_SHORT,
-                                //   gravity: ToastGravity.CENTER,
-                                //   timeInSecForIosWeb: 200,
-                                // );
-                              }
-                            },
-                            text: 'حفظ',
+                            onPressed: onPressFilter,
+                            text: 'تصفية النتائج',
                             textColors: Colors.white,
                           ),
                         ),
@@ -228,12 +255,5 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
             });
       },
     );
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<DateTime>('_dateTime', _firstDate));
-    properties.add(DiagnosticsProperty<DateTime>('_dateTime', _firstDate));
   }
 }

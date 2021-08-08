@@ -13,6 +13,7 @@ import 'package:petrol_naas/models/create_invoice.dart';
 import 'package:petrol_naas/models/customer.dart';
 import 'package:petrol_naas/models/invoice_item.dart';
 import 'package:petrol_naas/models/item.dart';
+import 'package:petrol_naas/models/view_invoice_item.dart';
 import 'package:provider/src/provider.dart';
 import '../constants.dart';
 import 'invoice_screen.dart';
@@ -30,6 +31,7 @@ class _HomeBodyState extends State<HomeBody> {
   InvoiceItem invoiceItem = InvoiceItem();
 
   Item item = Item();
+  List<ViewInvoiceItem> viewInvoiceItems = [];
 
   final TextEditingController qtyController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
@@ -104,7 +106,7 @@ class _HomeBodyState extends State<HomeBody> {
       var jsonRespone = response.data;
       final items = context.read<ItemsStore>();
 
-      items.setCustomers(prepareItemsList(jsonRespone));
+      items.setItems(prepareItemsList(jsonRespone));
     } on DioError catch (e) {
       print(e);
     }
@@ -134,26 +136,23 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   void onChangePayType(int payTypeIdx) {
-    Map<int, int> payType = {
+    Map<int, int> payTypeDecode = {
       0: 1,
       1: 3,
     };
-    createInvoice = createInvoice.copyWith(payType: payType[payTypeIdx]!);
+
+    final int payType = payTypeDecode[payTypeIdx]!;
+
+    createInvoice = createInvoice.copyWith(payType: payType);
+    //TODO: set Accno
   }
 
-  void onChangeCustomer(String customerNo) {
+  Customer selectedCustomer = Customer();
+
+  void onChangeCustomer(Customer customer) {
+    selectedCustomer = selectedCustomer.copyWith(accName: customer.accName!);
+    String customerNo = customer.accNo!;
     createInvoice = createInvoice.copyWith(custno: customerNo);
-  }
-
-  double getItemSellPrice(String itemno) {
-    final List<Item> items = context.read<ItemsStore>().items;
-    double sellPrice = items
-            .firstWhere(
-              (Item item) => item.itemno == itemno,
-            )
-            .sellPrice1 ??
-        0.0;
-    return sellPrice;
   }
 
   double total = 0.0;
@@ -162,18 +161,48 @@ class _HomeBodyState extends State<HomeBody> {
     if (createInvoice.items == null) return;
     List<InvoiceItem> items = createInvoice.items!;
     double total = 0;
+
     for (int i = 0; i < items.length; i++) {
       InvoiceItem item = items[i];
-      double sellPrice = getItemSellPrice(item.itemno!);
+      Item itemFromAvailableItems = findItemByItemNo(item.itemno!);
+
+      double sellPrice = getItemSellPrice(itemFromAvailableItems);
       int qty = item.qty!;
       total += sellPrice * qty.toDouble();
+
+      bool isLastItem = i == items.length - 1;
+      if (isLastItem) addItemToViewInvoiceItemsList(itemFromAvailableItems);
     }
+
     setState(() {
       this.total = total;
     });
   }
 
-  int calcFreeQty() {
+  double getItemSellPrice(Item item) {
+    double sellPrice = item.sellPrice1 ?? 0.0;
+    return sellPrice;
+  }
+
+  Item findItemByItemNo(String itemno) {
+    List<Item> items = context.read<ItemsStore>().items;
+    Item item = items.firstWhere(
+      (Item item) => item.itemno == itemno,
+    );
+    return item;
+  }
+
+  void addItemToViewInvoiceItemsList(Item item) {
+    viewInvoiceItems.add(ViewInvoiceItem(
+      itemno: item.itemno!,
+      itemDesc: item.itemDesc!,
+      qty: int.parse(qtyController.text),
+      freeItemsQty: calcFreeQty(item),
+      sellPrice: item.sellPrice1!,
+    ));
+  }
+
+  int calcFreeQty(Item item) {
     int promotionQtyFree = item.promotionQtyFree!;
     int promotionQtyReq = item.promotionQtyReq!;
     int qty = invoiceItem.qty!;
@@ -198,13 +227,6 @@ class _HomeBodyState extends State<HomeBody> {
     createInvoice = createInvoice.copyWith(notes: noteController.text);
     print('createInvoice');
     print(createInvoice);
-  }
-
-  List<String> getCustomersNames(List<Customer> customers) {
-    print(customers);
-    return customers
-        .map((Customer customer) => customer.accName ?? "")
-        .toList();
   }
 
   List<String> getProductsNames(List<Item> items) {
@@ -241,13 +263,52 @@ class _HomeBodyState extends State<HomeBody> {
     return (total + getVatAmount()).toString();
   }
 
+  void fillRestDataOfInvoice(int payType) {
+    final userStore = context.read<UserStore>();
+    // accno
+    if (payType == 1) {
+      createInvoice = createInvoice.copyWith(accno: userStore.user.cashAccno!);
+    } else {
+      createInvoice = createInvoice.copyWith(accno: selectedCustomer.accNo!);
+    }
+    createInvoice = createInvoice.copyWith(userno: userStore.user.userNo!);
+    createInvoice = createInvoice.copyWith(salesman: userStore.user.salesman!);
+    createInvoice = createInvoice.copyWith(whno: userStore.user.whno!);
+  }
+
+  bool fieldsIsFilled() {
+    return createInvoice.accno != null &&
+        createInvoice.salesman != null &&
+        createInvoice.custno != null &&
+        createInvoice.whno != null &&
+        createInvoice.payType != null &&
+        createInvoice.accno != null &&
+        createInvoice.items != null &&
+        selectedCustomer.accName != null &&
+        total != 0;
+  }
+
   void onPressedPrint() {
     //TODO  if this obj is not null CreateInvoice
     onChangeNotes();
+    int? payType = createInvoice.payType;
+
+    if (payType == null) return; //TODO: show error customer not selected
+
+    fillRestDataOfInvoice(payType);
+
+    // if(!fieldsIsFilled()) return; //TODO: show error all fields is not filled
+    print(createInvoice);
+
+    Navigator.pop(context, 'Cancel');
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => InvoiceScreen(
           finalPrice: double.parse(invoiceTotal()),
+          fee: getVatAmount(),
+          total: total,
+          items: viewInvoiceItems,
+          customerName: selectedCustomer.accName!,
         ),
       ),
     );
@@ -270,9 +331,10 @@ class _HomeBodyState extends State<HomeBody> {
             final customersStore = context.watch<CustomerStore>();
             return CustomDropdown(
               text: 'العميل',
-              itemsList: getCustomersNames(customersStore.customers),
+              itemsList:
+                  customersStore.getCustomersNames(customersStore.customers),
               onChange: (int idx) =>
-                  onChangeCustomer(customersStore.customers[idx].accNo!),
+                  onChangeCustomer(customersStore.customers[idx]),
             );
           }),
           Observer(builder: (_) {
@@ -298,43 +360,13 @@ class _HomeBodyState extends State<HomeBody> {
             icon: Icons.add,
             onPressed: onPressAddItem,
           ),
+          InvoiceItemsTableDetails(items: viewInvoiceItems),
           ExpandCustomTextField(
             controller: noteController,
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10.0),
-                border: Border.all(color: primaryColor, width: 2.0),
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
-                child: DataTable(
-                  columns: [
-                    DataColumn(label: Text('الصنف')),
-                    DataColumn(label: Text('سعر')),
-                    DataColumn(label: Text('القطع المجانية')),
-                  ],
-                  rows: [
-                    DataRow(
-                      cells: [
-                        DataCell(Text('oil 8')),
-                        DataCell(Text('50')),
-                        DataCell(Text('5')),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
           InvoiceDetails(
             title: 'الاجمالي :',
             result: total.toString(),
-            // result: 'getTotalSaleHeader.toString()',
           ),
           InvoiceDetails(
             title: 'الضريبـــة :',
@@ -376,6 +408,63 @@ class _HomeBodyState extends State<HomeBody> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+//===========================================Invoice Items Table Details===========================================
+
+class InvoiceItemsTableDetails extends StatefulWidget {
+  final List<ViewInvoiceItem> items;
+  const InvoiceItemsTableDetails({Key? key, required this.items})
+      : super(key: key);
+  @override
+  State<InvoiceItemsTableDetails> createState() =>
+      _InvoiceItemsTableDetailsState();
+}
+
+class _InvoiceItemsTableDetailsState extends State<InvoiceItemsTableDetails> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
+            border: Border.all(color: primaryColor, width: 2.0),
+          ),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+            child: DataTable(
+              columns: [
+                DataColumn(label: Text('الرقم')),
+                DataColumn(label: Text('اسم الصنف')),
+                DataColumn(label: Text('الكمية')),
+                DataColumn(label: Text('سعر')),
+                DataColumn(label: Text('الاجمالي')),
+                DataColumn(label: Text('القطع المجانية')),
+              ],
+              rows: widget.items
+                  .map(
+                    (ViewInvoiceItem item) => DataRow(
+                      cells: [
+                        DataCell(Text(item.itemno)),
+                        DataCell(Text(item.itemDesc)),
+                        DataCell(Text(item.qty.toString())),
+                        DataCell(Text(item.sellPrice.toString())),
+                        DataCell(Text((item.sellPrice * item.qty).toString())),
+                        DataCell(Text(item.freeItemsQty.toString())),
+                      ],
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
       ),
     );
   }

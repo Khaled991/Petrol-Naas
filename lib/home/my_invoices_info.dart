@@ -1,55 +1,47 @@
-import 'dart:async';
-import 'dart:typed_data';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
-import 'package:petrol_naas/widget/utils.dart';
 import 'package:petrol_naas/widget/widget_to_image.dart';
-// import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
 import '../constants.dart';
 
-class InvoiceScreen extends StatefulWidget {
+class MyInvoicesInfo extends StatefulWidget {
   final Widget? child;
-  final double finalPrice;
-  final double total;
-  final double fee;
-  final List<ViewInvoiceItem> items;
-  final String customerName;
+  final double finalPrice = 0.0;
+  final String invno;
 
-  const InvoiceScreen({
+  const MyInvoicesInfo({
     Key? key,
     this.child,
-    required this.finalPrice,
-    required this.total,
-    required this.fee,
-    required this.items,
-    required this.customerName,
+    this.invno = "108639",
   }) : super(key: key);
 
   @override
-  State<InvoiceScreen> createState() => _InvoiceScreenState();
+  State<MyInvoicesInfo> createState() => _MyInvoicesInfoState();
 }
 
-class _InvoiceScreenState extends State<InvoiceScreen> {
+class _MyInvoicesInfoState extends State<MyInvoicesInfo> {
   String priceText = "";
-  GlobalKey? key;
-  Uint8List? bytes;
   bool isCaptured = false;
 
   @override
   void initState() {
-    getTafqeet();
+    getInvoiceData();
+    // getTafqeet();
     super.initState();
   }
 
-  Future<void> capture(key) async {
-    isCaptured = true;
-    final bytes = await Utils.capture(key);
-    setState(() {
-      this.bytes = bytes;
-    });
+  void getInvoiceData() async {
+    try {
+      Response response = await Dio().post(
+          'http://192.168.1.2/petrolnaas/public/api/invoice/${widget.invno}');
+      final jsonResponse = response.data;
+      print(jsonResponse);
+      // setState(() {
+      //   // this.priceText = priceText;
+      // });
+    } catch (e) {
+      print(e);
+    }
   }
 
   void getTafqeet() async {
@@ -67,126 +59,129 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       setState(() {
         this.priceText = priceText;
       });
-      Timer(
-        const Duration(seconds: 1),
-        () {
-          if (isCaptured == false && priceText != '') {
-            capture(key);
-          }
-        },
-      );
     } catch (e) {
       print(e);
     }
   }
 
-  final String today = DateFormat("dd-mm-yyyy").format(DateTime.now());
-  //TODO: Timezone Soudia arabia
   @override
   Widget build(BuildContext context) {
+    getTafqeet();
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text('الفاتورة'),
+        centerTitle: true,
+        backgroundColor: Colors.grey[50],
+        shadowColor: Color(0x003d3d3d),
+      ),
       body: WidgetToImage(
         builder: (key) {
-          this.key = key;
           return SafeArea(
-            child: ListView(
-              children: [
-                // buildImage(bytes),
-                Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    children: [
-                      Column(
-                        children: [
-                          InvoiceScreenHeader(taxNo: '3004687955200002'),
-                          SizedBox(
-                            height: 20.0,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'الرقم : 100200',
-                                style: TextStyle(
-                                  fontSize: 19.0,
-                                  color: darkColor,
+            child: Container(
+              color: Colors.grey[50],
+              child: ListView(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Divider(
+                      height: 2,
+                      color: darkColor,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      children: [
+                        Column(
+                          children: [
+                            InvoiceScreenHeader(taxNo: '3004687955200002'),
+                            SizedBox(
+                              height: 20.0,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'الرقم : 100200',
+                                  style: TextStyle(
+                                    fontSize: 19.0,
+                                    color: darkColor,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                'التاريخ : ' + today,
-                                style: TextStyle(
-                                  fontSize: 19.0,
-                                  color: darkColor,
+                                Text(
+                                  'التاريخ : 2020/09/05',
+                                  style: TextStyle(
+                                    fontSize: 19.0,
+                                    color: darkColor,
+                                  ),
                                 ),
+                              ],
+                            ),
+                            Text(
+                              'العميل : حسني مبارك/محطة الفوزان السويد النخيل',
+                              style: TextStyle(
+                                fontSize: 19.0,
+                                color: darkColor,
                               ),
-                            ],
-                          ),
-                          Text(
-                            'العميل : ${widget.customerName}',
-                            style: TextStyle(
-                              fontSize: 19.0,
+                            ),
+                            Divider(
+                              height: 2,
                               color: darkColor,
                             ),
-                          ),
-                          Divider(
-                            height: 2,
-                            color: darkColor,
-                          ),
-                          ItemsInfo(
-                            items: widget.items,
-                          ),
-                          Divider(
-                            height: 2,
-                            color: darkColor,
-                          ),
-                          InvoiceDetailsPrices(
-                            price: widget.total.toString(),
-                            tittle: 'الاجمالي',
-                          ),
-                          InvoiceDetailsPrices(
-                            price: '0.00',
-                            tittle: 'الخصم',
-                          ),
-                          InvoiceDetailsPrices(
-                            price: widget.total.toString(),
-                            tittle: 'الصافي',
-                          ),
-                          InvoiceDetailsPrices(
-                            price: widget.fee.toString(),
-                            tittle: 'ضريبة القيمة المضافة',
-                          ),
-                          InvoiceDetailsPrices(
-                            price: widget.finalPrice.toString(),
-                            tittle: 'قيمة الفاتورة',
-                          ),
-                          Text(
-                            priceText + " فقط لا غير",
-                            style: TextStyle(color: darkColor, fontSize: 17),
-                          ),
-                          Text(
-                            'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 20.0,
-                      ),
-                    ],
+                            ItemsInfo(
+                              items: [],
+                            ),
+                            Divider(
+                              height: 2,
+                              color: darkColor,
+                            ),
+                            InvoiceDetailsPrices(
+                              price: '0.0',
+                              tittle: 'الاجمالي',
+                            ),
+                            InvoiceDetailsPrices(
+                              price: '0.00',
+                              tittle: 'الخصم',
+                            ),
+                            InvoiceDetailsPrices(
+                              price: '0.0',
+                              tittle: 'الصافي',
+                            ),
+                            InvoiceDetailsPrices(
+                              price: '0.0',
+                              tittle: 'ضريبة القيمة المضافة',
+                            ),
+                            InvoiceDetailsPrices(
+                              price: widget.finalPrice.toString(),
+                              tittle: 'قيمة الفاتورة',
+                            ),
+                            Text(
+                              priceText + " فقط لا غير",
+                              style: TextStyle(color: darkColor, fontSize: 17),
+                            ),
+                            Text(
+                              'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 20.0,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
       ),
     );
   }
-
-  Widget buildImage(Uint8List? bytes) =>
-      bytes != null ? Image.memory(bytes) : Container();
 }
 
-//===========================================Items info===========================================
+//===========================================Items Info===========================================
 
 class ItemsInfo extends StatefulWidget {
   final List<ViewInvoiceItem> items;
@@ -272,7 +267,7 @@ class InvoiceDetailsPrices extends StatelessWidget {
   }
 }
 
-//===========================================Header===========================================
+//===========================================header===========================================
 
 class InvoiceScreenHeader extends StatelessWidget {
   const InvoiceScreenHeader({

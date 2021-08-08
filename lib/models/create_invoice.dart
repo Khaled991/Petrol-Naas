@@ -1,12 +1,12 @@
 import 'invoice_item.dart';
 
 class CreateInvoice {
-  int? userno;
-  int? salesman;
+  String? userno;
+  String? salesman;
   String? custno;
-  int? whno;
+  String? whno;
   int? payType;
-  int? accno;
+  String? accno;
   String? notes;
   List<InvoiceItem>? items;
 
@@ -27,12 +27,12 @@ class CreateInvoice {
   }
 
   factory CreateInvoice.fromJson(Map<String, dynamic> json) => CreateInvoice(
-        userno: json['userno'] as int?,
-        salesman: json['Salesman'] as int?,
+        userno: json['userno'] as String?,
+        salesman: json['Salesman'] as String?,
         custno: json['Custno'] as String?,
-        whno: json['whno'] as int?,
+        whno: json['whno'] as String?,
         payType: json['PayType'] as int?,
-        accno: json['Accno'] as int?,
+        accno: json['Accno'] as String?,
         notes: json['notes'] as String?,
         items: (json['Items'] as List<dynamic>?)
             ?.map((e) => InvoiceItem.fromJson(e as Map<String, dynamic>))
@@ -51,12 +51,12 @@ class CreateInvoice {
       };
 
   CreateInvoice copyWith({
-    int? userno,
-    int? salesman,
+    String? userno,
+    String? salesman,
     String? custno,
-    int? whno,
+    String? whno,
     int? payType,
-    int? accno,
+    String? accno,
     String? notes,
     List<InvoiceItem>? items,
   }) {
