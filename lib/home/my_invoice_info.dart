@@ -8,12 +8,10 @@ import 'package:petrol_naas/widget/widget_to_image.dart';
 import '../constants.dart';
 
 class MyInvoiceInfo extends StatefulWidget {
-  final Widget? child;
   final String invno;
 
   const MyInvoiceInfo({
     Key? key,
-    this.child,
     this.invno = "108639",
   }) : super(key: key);
 

@@ -11,6 +11,7 @@ import 'package:petrol_naas/mobx/items/items.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/create_invoice.dart';
 import 'package:petrol_naas/models/customer.dart';
+import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/invoice_item.dart';
 import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
@@ -288,6 +289,21 @@ class _HomeBodyState extends State<HomeBody> {
         total != 0;
   }
 
+  Future<void> sendInvoiceToApi() async {
+    try {
+      final String url = "http://192.168.1.2/petrolnaas/public/api/invoice";
+
+      Response res = await Dio().post(url, data: createInvoice.toJson());
+      final response = res.data;
+      print(response);
+
+      // invoice = Invoice.fromJson(jsonResponse);
+
+    } catch (e) {
+      print(e);
+    }
+  }
+
   void onPressedPrint() {
     //TODO  if this obj is not null CreateInvoice
     onChangeNotes();
@@ -298,6 +314,7 @@ class _HomeBodyState extends State<HomeBody> {
     fillRestDataOfInvoice(payType);
 
     // if(!fieldsIsFilled()) return; //TODO: show error all fields is not filled
+    sendInvoiceToApi();
     print(createInvoice);
 
     Navigator.pop(context, 'Cancel');
