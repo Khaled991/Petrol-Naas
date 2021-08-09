@@ -123,7 +123,15 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   void onPressAddItem() {
-    //TODO:handle empty quantity
+    if (qtyController.text == '' && createInvoice.items == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('يجب إضافة كمية او اختيار صنف'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     onChangeQty();
     List<InvoiceItem> mergedOldAndNewItems = createInvoice.items ?? [];
     mergedOldAndNewItems.add(invoiceItem);
@@ -145,7 +153,6 @@ class _HomeBodyState extends State<HomeBody> {
     final int payType = payTypeDecode[payTypeIdx]!;
 
     createInvoice = createInvoice.copyWith(payType: payType);
-    //TODO: set Accno
   }
 
   Customer selectedCustomer = Customer();
@@ -226,8 +233,6 @@ class _HomeBodyState extends State<HomeBody> {
 
   void onChangeNotes() {
     createInvoice = createInvoice.copyWith(notes: noteController.text);
-    print('createInvoice');
-    print(createInvoice);
   }
 
   List<String> getProductsNames(List<Item> items) {
@@ -241,17 +246,13 @@ class _HomeBodyState extends State<HomeBody> {
       );
       setState(() {
         final double fee = double.parse(response.data) / 100.0;
-        print('feeeee');
-        print(fee);
         this.fee = fee;
       });
       throw Error();
     } on DioError catch (e) {
       print("error getting fee");
-      print(e);
     } catch (e) {
       print("error by Error");
-      print(e);
     }
   }
 
@@ -305,17 +306,34 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   void onPressedPrint() {
-    //TODO  if this obj is not null CreateInvoice
     onChangeNotes();
     int? payType = createInvoice.payType;
 
-    if (payType == null) return; //TODO: show error customer not selected
+    if (payType == null) {
+      Navigator.pop(context, 'Cancel');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('يجب اختيار وسيلة دفع'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     fillRestDataOfInvoice(payType);
 
-    // if(!fieldsIsFilled()) return; //TODO: show error all fields is not filled
+    if (!fieldsIsFilled()) {
+      Navigator.pop(context, 'Cancel');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('يجب ملء جميع البيانات'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     sendInvoiceToApi();
-    print(createInvoice);
 
     Navigator.pop(context, 'Cancel');
     Navigator.of(context).push(

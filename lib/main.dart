@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mobx/mobx.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
+import 'package:petrol_naas/widget/print_invoice.dart';
 import 'package:provider/provider.dart';
 import 'components/splash_screen.dart';
 import 'constants.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
           fontFamily: "Changa",
           primaryColor: primaryColor,
         ),
+        // home: PrintInvoice(),
         home: SplashScreen(),
       ),
     );
