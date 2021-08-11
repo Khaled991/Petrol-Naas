@@ -4,42 +4,42 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:petrol_naas/widget/testprint.dart';
+import 'package:petrol_naas/components/custom_button.dart';
+
+import '../constants.dart';
 
 class PrintInvoice extends StatefulWidget {
+  final bool connected;
+  const PrintInvoice(this.connected);
   @override
-  _PrintInvoiceState createState() => new _PrintInvoiceState();
+  _PrintInvoiceState createState() => _PrintInvoiceState();
 }
 
 class _PrintInvoiceState extends State<PrintInvoice> {
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
-
   List<BluetoothDevice> _devices = [];
   BluetoothDevice? _device;
-  bool _connected = false;
-  String? pathImage;
-  TestPrint? testPrint;
+  late bool _connected;
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
-    initSavetoPath();
-    testPrint = TestPrint();
+    _connected = widget.connected;
+    // initSavetoPath();
   }
 
-  initSavetoPath() async {
-    //read and write
-    //image max 300px X 300px
-    final filename = 'yourlogo.png';
-    var bytes = await rootBundle.load("assets/images/yourlogo.png");
-    String dir = (await getApplicationDocumentsDirectory()).path;
-    writeToFile(bytes, '$dir/$filename');
-    setState(() {
-      pathImage = '$dir/$filename';
-    });
-  }
+  // initSavetoPath() async {
+  //   //read and write
+  //   //image max 300px X 300px
+  //   final filename = 'yourlogo.png';
+  //   var bytes = await rootBundle.load("assets/images/yourlogo.png");
+  //   String dir = (await getApplicationDocumentsDirectory()).path;
+  //   writeToFile(bytes, '$dir/$filename');
+  //   setState(() {
+  //     pathImage = '$dir/$filename';
+  //   });
+  // }
 
   Future<void> initPlatformState() async {
     bool? isConnected = await bluetooth.isConnected;
@@ -82,89 +82,92 @@ class _PrintInvoiceState extends State<PrintInvoice> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Blue Thermal Printer'),
-        ),
-        body: Container(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ListView(
-              children: <Widget>[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      'Device:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 30,
-                    ),
-                    Expanded(
-                      child: DropdownButton(
-                        items: _getDeviceItems(),
-                        onChanged: (BluetoothDevice? value) =>
-                            setState(() => _device = value),
-                        value: _device,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    RaisedButton(
-                      color: Colors.brown,
-                      onPressed: () {
-                        initPlatformState();
-                      },
-                      child: Text(
-                        'Refresh',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    RaisedButton(
-                      color: _connected ? Colors.red : Colors.green,
-                      onPressed: _connected ? _disconnect : _connect,
-                      child: Text(
-                        _connected ? 'Disconnect' : 'Connect',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.only(left: 10.0, right: 10.0, top: 50),
-                  //
-                  child: ElevatedButton(
-                    // color: Colors.brown,
-                    onPressed: () {
-                      testPrint?.sample(pathImage!);
-                    },
-                    child: Text('PRINT TEST',
-                        style: TextStyle(color: Colors.white)),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  'اختر الطابعة',
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    color: darkColor,
                   ),
                 ),
-              ],
-            ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(
+                    color: primaryColor,
+                    style: BorderStyle.solid,
+                    width: 1.2,
+                  ),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.0, vertical: 7.0),
+                    child: DropdownButtonFormField<BluetoothDevice>(
+                      value: _device,
+                      decoration: InputDecoration.collapsed(hintText: ''),
+                      hint: Text(
+                        'تحديد الطابعة',
+                        style: TextStyle(
+                          fontSize: 15,
+                        ),
+                      ),
+                      icon: const Icon(
+                        Icons.expand_more,
+                        color: primaryColor,
+                      ),
+                      iconSize: 24,
+                      elevation: 16,
+                      isExpanded: true,
+                      isDense: true,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontFamily: 'Changa',
+                        color: Color(0x993d3d3d),
+                      ),
+                      onChanged: (BluetoothDevice? value) {
+                        setState(() => _device = value);
+                      },
+                      items: _getDeviceItems(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Expanded(
+                child: CustomButton(
+                  buttonColors: _connected ? redColor : greenColor,
+                  textColors: Colors.white,
+                  text: _connected ? 'قطع الاتصال بالطابعة' : 'اتصال بالطابعة',
+                  onPressed: _connected ? _disconnect : _connect,
+                ),
+              ),
+              Expanded(
+                child: CustomButton(
+                  buttonColors: primaryColor,
+                  textColors: Colors.white,
+                  text: 'تحديث',
+                  onPressed: () {
+                    initPlatformState();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -173,7 +176,7 @@ class _PrintInvoiceState extends State<PrintInvoice> {
     List<DropdownMenuItem<BluetoothDevice>> items = [];
     if (_devices.isEmpty) {
       items.add(DropdownMenuItem(
-        child: Text('NONE'),
+        child: Text('اختر طابعة'),
       ));
     } else {
       _devices.forEach((device) {
@@ -188,7 +191,7 @@ class _PrintInvoiceState extends State<PrintInvoice> {
 
   void _connect() {
     if (_device == null) {
-      show('No device selected.');
+      show('لم يتم اختيار طابعة.');
     } else {
       bluetooth.isConnected.then((isConnected) {
         if (!isConnected!) {
@@ -215,7 +218,7 @@ class _PrintInvoiceState extends State<PrintInvoice> {
 
   Future show(
     String message, {
-    Duration duration: const Duration(seconds: 3),
+    Duration duration = const Duration(seconds: 3),
   }) async {
     await new Future.delayed(new Duration(milliseconds: 100));
     Scaffold.of(context).showSnackBar(

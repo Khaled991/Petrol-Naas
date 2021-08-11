@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/components/splash_screen_style.dart';
-import 'package:petrol_naas/home/navigations_screen.dart';
 import 'package:petrol_naas/home/sign_in.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,8 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(microseconds: 1), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => //NavigationsScreen(),
-              SignIn(),
+          builder: (_) => SignIn(),
         ),
       );
     });

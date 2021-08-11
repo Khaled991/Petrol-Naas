@@ -19,6 +19,8 @@ class MyInvoicesScreen extends StatefulWidget {
 }
 
 class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -27,13 +29,14 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
 
   @override
   void dispose() {
-    //TODO: delete MyInvoices
     super.dispose();
   }
 
+  void changeLoadingState(bool state) => setState(() => isLoading = state);
+
   Future<void> getInvoices() async {
     final store = context.read<UserStore>();
-
+    changeLoadingState(true);
     try {
       String url =
           'http://192.168.1.2/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}';
@@ -44,9 +47,10 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
       final storeMyInvoices = context.read<MyInvoices>();
       var jsonRespone = response.data;
       storeMyInvoices.jsonToInvoicesList(jsonRespone);
-      print(storeMyInvoices);
+      changeLoadingState(false);
     } on DioError catch (e) {
       print(e);
+      changeLoadingState(false);
     }
   }
 
@@ -56,7 +60,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
 
     return Column(
       children: [
-        InvoiceHeader(),
+        InvoiceHeader(changeLoadingState: changeLoadingState),
         Expanded(
           child: Observer(builder: (_) {
             return ListView.builder(
@@ -67,20 +71,27 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
                 final date = invoice.header!.invdate!.split(' ')[0];
                 final invno = invoice.header!.invno!;
 
-                return InvoiceList(
-                  tittle: invoice.header!.custName!,
-                  billNumber: invno,
-                  date: date,
-                  onTap: () => {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => MyInvoiceInfo(
-                          invno: invno,
+                if (isLoading) {
+                  return CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
+                  );
+                } else {
+                  return InvoiceList(
+                    tittle: invoice.header!.custName!,
+                    billNumber: invno,
+                    date: date,
+                    onTap: () => {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MyInvoiceInfo(
+                            invno: invno,
+                          ),
                         ),
                       ),
-                    ),
-                  },
-                );
+                    },
+                  );
+                }
               },
             );
           }),

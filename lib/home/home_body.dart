@@ -11,15 +11,14 @@ import 'package:petrol_naas/mobx/items/items.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/create_invoice.dart';
 import 'package:petrol_naas/models/customer.dart';
-import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/invoice_item.dart';
 import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
+import 'package:petrol_naas/widget/print_invoice.dart';
 import 'package:provider/src/provider.dart';
 import '../constants.dart';
 import 'invoice_screen.dart';
 
-// ignore: must_be_immutable
 class HomeBody extends StatefulWidget {
   const HomeBody({Key? key}) : super(key: key);
 
@@ -30,36 +29,13 @@ class HomeBody extends StatefulWidget {
 class _HomeBodyState extends State<HomeBody> {
   CreateInvoice createInvoice = CreateInvoice();
   InvoiceItem invoiceItem = InvoiceItem();
-
+  bool connected = false;
   Item item = Item();
   List<ViewInvoiceItem> viewInvoiceItems = [];
 
   final TextEditingController qtyController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
 
-  // final store = context.read<
-
-  // List<InvoiceItem> prepareinvoiceItemList(dynamic invoiceItemsList) {
-  //   List<InvoiceItem> invoiceItems = List<InvoiceItem>.from(
-  //     invoiceItemsList.map(
-  //       (customer) => InvoiceItem.fromJson(customer),
-  //     ),
-  //   );
-  //   return invoiceItems;
-  // }
-
-  // Future<void> getInvoiceItem() async {
-  //   try {
-  //     Response response = await Dio().get(
-  //       'http://192.168.1.2/petrolnaas/public/api/invoice',
-  //     );
-
-  //     var jsonRespone = jsonDecode(response.toString());
-  //     // ref.read(invoiceItemProvider).state = prepareinvoiceItemList(jsonRespone);
-  //   } on DioError catch (e) {
-  //     print(e);
-  //   }
-  // }
   double fee = 0.0;
   void asyncMethod() async {
     await getCustomers();
@@ -73,6 +49,11 @@ class _HomeBodyState extends State<HomeBody> {
     asyncMethod();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> getCustomers() async {
     try {
       final String salesman = context.read<UserStore>().user.salesman ?? '';
@@ -80,8 +61,6 @@ class _HomeBodyState extends State<HomeBody> {
         'http://192.168.1.2/petrolnaas/public/api/customer?Salesman=$salesman',
       );
       var jsonRespone = response.data;
-      print(jsonRespone);
-
       final customersStore = context.read<CustomerStore>();
 
       customersStore.setCustomers(prepareCustomersList(jsonRespone));
@@ -126,13 +105,14 @@ class _HomeBodyState extends State<HomeBody> {
     if (qtyController.text == '' && createInvoice.items == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('يجب إضافة كمية او اختيار صنف'),
+          content: Text('يجب إضافة كمية و اختيار صنف'),
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
-    onChangeQty();
+
+    handleQty();
     List<InvoiceItem> mergedOldAndNewItems = createInvoice.items ?? [];
     mergedOldAndNewItems.add(invoiceItem);
     setState(
@@ -227,7 +207,7 @@ class _HomeBodyState extends State<HomeBody> {
     invoiceItem = invoiceItem.copyWith(itemno: itemNo);
   }
 
-  void onChangeQty() {
+  void handleQty() {
     invoiceItem = invoiceItem.copyWith(qty: int.parse(qtyController.text));
   }
 
@@ -265,10 +245,9 @@ class _HomeBodyState extends State<HomeBody> {
     return (total + getVatAmount()).toString();
   }
 
-  void fillRestDataOfInvoice(int payType) {
+  void fillRestDataOfInvoice() {
     final userStore = context.read<UserStore>();
-    // accno
-    if (payType == 1) {
+    if (createInvoice.payType == 1) {
       createInvoice = createInvoice.copyWith(accno: userStore.user.cashAccno!);
     } else {
       createInvoice = createInvoice.copyWith(accno: selectedCustomer.accNo!);
@@ -287,12 +266,13 @@ class _HomeBodyState extends State<HomeBody> {
         createInvoice.accno != null &&
         createInvoice.items != null &&
         selectedCustomer.accName != null &&
+        connected == true &&
         total != 0;
   }
 
   Future<void> sendInvoiceToApi() async {
     try {
-      final String url = "http://192.168.1.2/petrolnaas/public/api/invoice";
+      const String url = "http://192.168.1.2/petrolnaas/public/api/invoice";
 
       Response res = await Dio().post(url, data: createInvoice.toJson());
       final response = res.data;
@@ -307,32 +287,42 @@ class _HomeBodyState extends State<HomeBody> {
 
   void onPressedPrint() {
     onChangeNotes();
-    int? payType = createInvoice.payType;
 
-    if (payType == null) {
-      Navigator.pop(context, 'Cancel');
+    // if (payType == null) {
+    //   Navigator.pop(context, 'Cancel');
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text('يجب اختيار وسيلة دفع'),
+    //       behavior: SnackBarBehavior.floating,
+    //     ),
+    //   );
+    //   return;
+    // }
+
+    fillRestDataOfInvoice();
+    void ShowSnackBar(BuildContext context, String msg) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('يجب اختيار وسيلة دفع'),
+          content: Text(msg),
           behavior: SnackBarBehavior.floating,
         ),
       );
-      return;
     }
 
-    fillRestDataOfInvoice(payType);
-
+    print('object2');
     if (!fieldsIsFilled()) {
       Navigator.pop(context, 'Cancel');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('يجب ملء جميع البيانات'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      ShowSnackBar(context, 'يجب ملء جميع البيانات');
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text('يجب ملء جميع البيانات'),
+      //     behavior: SnackBarBehavior.floating,
+      //   ),
+      // );
       return;
     }
 
+    if (connected == false) {}
     sendInvoiceToApi();
 
     Navigator.pop(context, 'Cancel');
@@ -416,31 +406,104 @@ class _HomeBodyState extends State<HomeBody> {
             buttonColors: primaryColor,
             textColors: Colors.white,
             icon: Icons.print,
-            onPressed: () => showDialog<String>(
+            onPressed: () => showModalBottomSheet<void>(
               context: context,
-              builder: (BuildContext context) => AlertDialog(
-                title: const Text('تنبيه!!'),
-                content: const Text(
-                  'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, 'Cancel'),
-                    child: const Text(
-                      'الغاء',
-                      style: TextStyle(color: primaryColor),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: onPressedPrint,
-                    child: const Text(
-                      'موفق',
-                      style: TextStyle(color: primaryColor),
-                    ),
-                  ),
-                ],
-              ),
+              // isDismissible: false,
+              builder: (BuildContext context) {
+                return BottomSheet(
+                  onClosing: () {},
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(
+                        builder: (BuildContext ctx, setState) {
+                      return Padding(
+                        padding: const EdgeInsets.all(15.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'تنبيه!!',
+                                  style: TextStyle(fontSize: 25.0),
+                                ),
+                                Text(
+                                  'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
+                                  style: TextStyle(fontSize: 18.0),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10.0),
+                            Divider(
+                              height: 2.0,
+                              color: primaryColor,
+                            ),
+                            PrintInvoice(connected),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomButton(
+                                    buttonColors: greenColor,
+                                    onPressed: onPressedPrint,
+                                    text: 'موافق',
+                                    textColors: Colors.white,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: CustomButton(
+                                    buttonColors: redColor,
+                                    onPressed: () =>
+                                        Navigator.pop(context, 'Cancel'),
+                                    text: 'إلغاء',
+                                    textColors: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    });
+                  },
+                );
+              },
             ),
+            // showFilterModal(context),
+            //  showDialog<String>(
+            //   context: context,
+            //   builder: (BuildContext context) {
+            //     return AlertDialog(
+            //       title: const Text('تنبيه!!'),
+            //       content: StatefulBuilder(
+            //           builder: (BuildContext context, StateSetter setState) {
+            //         return Column(
+            //           children: [
+            //             Text(
+            //               'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
+            //             ),
+            //             PrintInvoice(),
+            //           ],
+            //         );
+            //       }),
+            //       actions: <Widget>[
+            //         TextButton(
+            //           onPressed: () => Navigator.pop(context, 'Cancel'),
+            //           child: const Text(
+            //             'الغاء',
+            //             style: TextStyle(color: primaryColor),
+            //           ),
+            //         ),
+            //         TextButton(
+            //           onPressed: onPressedPrint,
+            //           child: const Text(
+            //             'موفق',
+            //             style: TextStyle(color: primaryColor),
+            //           ),
+            //         ),
+            //       ],
+            //     );
+            //   },
+            // ),
           ),
         ],
       ),
@@ -448,6 +511,52 @@ class _HomeBodyState extends State<HomeBody> {
   }
 }
 
+// Future<void> showFilterModal(BuildContext context) {
+//   return showModalBottomSheet<void>(
+//     context: context,
+//     isDismissible: false,
+//     builder: (BuildContext context) {
+//       return BottomSheet(
+//         onClosing: () {},
+//         builder: (BuildContext context) {
+//           return StatefulBuilder(builder: (BuildContext ctx, setState) {
+//             return Column(
+//               children: [
+//                 Text(
+//                   'تنبيه!!',
+//                 ),
+//                 Text(
+//                   'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
+//                 ),
+//                 PrintInvoice(),
+//                 Row(
+//                   children: [
+//                     Expanded(
+//                       child: CustomButton(
+//                         buttonColors: greenColor,
+//                         onPressed: onPressedPrint,
+//                         text: 'موافق',
+//                         textColors: Colors.white,
+//                       ),
+//                     ),
+//                     Expanded(
+//                       child: CustomButton(
+//                         buttonColors: redColor,
+//                         onPressed: () => Navigator.pop(context, 'Cancel'),
+//                         text: 'إلغاء',
+//                         textColors: Colors.white,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ],
+//             );
+//           });
+//         },
+//       );
+//     },
+//   );
+// }
 //===========================================Invoice Items Table Details===========================================
 
 class InvoiceItemsTableDetails extends StatefulWidget {

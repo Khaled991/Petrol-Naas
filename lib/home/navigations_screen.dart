@@ -47,7 +47,10 @@ class _NavigationsScreenState extends State<NavigationsScreen> {
             title: _getTitle(),
           ),
           Expanded(
-            child: _getBody(),
+            child: Container(
+              color: Colors.white,
+              child: _getBody(),
+            ),
           ),
         ],
       ),

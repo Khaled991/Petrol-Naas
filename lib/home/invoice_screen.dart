@@ -1,13 +1,17 @@
-import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
-
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
+import 'package:petrol_naas/widget/print.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
+import 'package:petrol_naas/widget/invoice_details_prices.dart';
+import 'package:petrol_naas/widget/invoice_screen_header.dart';
+import 'package:petrol_naas/widget/items_info.dart';
 import 'package:petrol_naas/widget/utils.dart';
 import 'package:petrol_naas/widget/widget_to_image.dart';
-// import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
 import '../constants.dart';
 
 class InvoiceScreen extends StatefulWidget {
@@ -33,23 +37,25 @@ class InvoiceScreen extends StatefulWidget {
 }
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
+  BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
   String priceText = "";
   GlobalKey? key;
   Uint8List? bytes;
   bool isCaptured = false;
 
+  late Print thermalPrint;
+
   @override
   void initState() {
     getTafqeet();
     super.initState();
+    thermalPrint = Print();
   }
 
-  Future<void> capture(key) async {
+  Future<Uint8List> capture(key) async {
     isCaptured = true;
     final bytes = await Utils.capture(key);
-    setState(() {
-      this.bytes = bytes;
-    });
+    return bytes;
   }
 
   void getTafqeet() async {
@@ -58,10 +64,12 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
         'coinname': 'SAR',
         'number': widget.finalPrice,
       });
+
       Response response = await Dio().post(
         'https://ahsibli.com/wp-admin/admin-ajax.php?action=date_coins_1',
         data: formData,
       );
+
       final String priceText =
           response.toString().split("<td>")[4].split("</td>")[0];
       setState(() {
@@ -69,9 +77,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       });
       Timer(
         const Duration(seconds: 1),
-        () {
+        () async {
           if (isCaptured == false && priceText != '') {
-            capture(key);
+            final imgBytes = await capture(key);
+            thermalPrint.print(imgBytes);
           }
         },
       );
@@ -91,12 +100,12 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           return SafeArea(
             child: ListView(
               children: [
-                // buildImage(bytes),
                 Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Column(
                     children: [
                       Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           InvoiceScreenHeader(taxNo: '3004687955200002'),
                           SizedBox(
@@ -179,168 +188,6 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           );
         },
       ),
-    );
-  }
-
-  Widget buildImage(Uint8List? bytes) =>
-      bytes != null ? Image.memory(bytes) : Container();
-}
-
-//===========================================Items info===========================================
-
-class ItemsInfo extends StatefulWidget {
-  final List<ViewInvoiceItem> items;
-
-  ItemsInfo({
-    Key? key,
-    required this.items,
-  }) : super(key: key);
-
-  @override
-  State<ItemsInfo> createState() => _ItemsInfoState();
-}
-
-class _ItemsInfoState extends State<ItemsInfo> {
-  @override
-  Widget build(BuildContext context) {
-    return DataTable(
-      horizontalMargin: 10.0,
-      columns: [
-        DataColumn(label: Text('الاجمالي')),
-        DataColumn(label: Text('سعر')),
-        DataColumn(label: Text('الكمية')),
-        DataColumn(label: Text('اسم الصنف')),
-      ],
-      rows: widget.items
-          .map(
-            (ViewInvoiceItem item) => DataRow(
-              cells: [
-                DataCell(Text((item.sellPrice! * item.qty!).toString())),
-                DataCell(Text(item.sellPrice.toString())),
-                DataCell(Text(item.qty.toString())),
-                DataCell(Text(item.itemDesc!)),
-              ],
-            ),
-          )
-          .toList(),
-    );
-  }
-}
-
-//===========================================invoice details prices===========================================
-
-class InvoiceDetailsPrices extends StatelessWidget {
-  const InvoiceDetailsPrices({
-    Key? key,
-    required this.tittle,
-    required this.price,
-  }) : super(key: key);
-  final String tittle;
-  final String price;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                width: 1,
-                color: darkColor,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 5.0,
-                horizontal: 10.0,
-              ),
-              child: Text(
-                price,
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ),
-          ),
-        ),
-        Text(
-          tittle,
-          style: TextStyle(fontSize: 18.0),
-        ),
-      ],
-    );
-  }
-}
-
-//===========================================Header===========================================
-
-class InvoiceScreenHeader extends StatelessWidget {
-  const InvoiceScreenHeader({
-    Key? key,
-    required this.taxNo,
-  }) : super(key: key);
-  final String taxNo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: darkColor,
-                    style: BorderStyle.solid,
-                    width: 1.0,
-                  ),
-                ),
-              ),
-              child: Text(
-                'Petrol Naas مصنع بترول ناس',
-                style: TextStyle(
-                  fontSize: 20.0,
-                  color: darkColor,
-                ),
-              ),
-            ),
-            Text(
-              'الرقم الضريبي : $taxNo',
-              style: TextStyle(
-                fontSize: 16.0,
-                color: darkColor,
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: darkColor,
-                    style: BorderStyle.solid,
-                    width: 1.0,
-                  ),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'دخال مبيعات',
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: darkColor,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        Image.asset(
-          'assets/images/logo.png',
-          width: 100,
-        ),
-      ],
     );
   }
 }

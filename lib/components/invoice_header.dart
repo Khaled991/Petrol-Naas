@@ -15,7 +15,9 @@ import 'custom_button.dart';
 import 'custom_dropdown.dart';
 
 class InvoiceHeader extends StatefulWidget {
+  final void Function(bool state) changeLoadingState;
   const InvoiceHeader({
+    required this.changeLoadingState,
     Key? key,
   }) : super(key: key);
 
@@ -41,7 +43,7 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
   Future<void> getInvoices() async {
     try {
       final store = context.read<UserStore>();
-
+      widget.changeLoadingState(true);
       String url =
           'http://192.168.1.2/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}';
 
@@ -61,8 +63,10 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
       var jsonRespone = response.data;
       storeMyInvoices.jsonToInvoicesList(jsonRespone);
       print(storeMyInvoices);
+      widget.changeLoadingState(false);
     } on DioError catch (e) {
       print(e);
+      widget.changeLoadingState(false);
     }
   }
 

@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:petrol_naas/home/invoice_screen.dart';
 import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/invoice_details.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
+import 'package:petrol_naas/widget/invoice_details_prices.dart';
+import 'package:petrol_naas/widget/invoice_screen_header.dart';
+import 'package:petrol_naas/widget/items_info.dart';
 import 'package:petrol_naas/widget/widget_to_image.dart';
 import '../constants.dart';
 
@@ -67,8 +69,6 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
 
   @override
   Widget build(BuildContext context) {
-    // getTafqeet();
-
     return Scaffold(
       appBar: AppBar(
         title: Text('الفاتورة'),
@@ -95,6 +95,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                     child: Column(
                       children: [
                         Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             InvoiceScreenHeader(taxNo: '3004687955200002'),
                             SizedBox(
@@ -192,162 +193,3 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
     );
   }
 }
-
-// //===========================================Items Info===========================================
-
-// class ItemsInfo extends StatefulWidget {
-//   final List<ViewInvoiceItem> items;
-
-//   ItemsInfo({
-//     Key? key,
-//     required this.items,
-//   }) : super(key: key);
-
-//   @override
-//   State<ItemsInfo> createState() => _ItemsInfoState();
-// }
-
-// class _ItemsInfoState extends State<ItemsInfo> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return DataTable(
-//       horizontalMargin: 10.0,
-//       columns: [
-//         DataColumn(label: Text('الاجمالي')),
-//         DataColumn(label: Text('سعر')),
-//         DataColumn(label: Text('الكمية')),
-//         DataColumn(label: Text('اسم الصنف')),
-//       ],
-//       rows: widget.items
-//           .map(
-//             (ViewInvoiceItem item) => DataRow(
-//               cells: [
-//                 DataCell(Text((item.sellPrice * item.qty).toString())),
-//                 DataCell(Text(item.sellPrice.toString())),
-//                 DataCell(Text(item.qty.toString())),
-//                 DataCell(Text(item.itemDesc)),
-//               ],
-//             ),
-//           )
-//           .toList(),
-//     );
-//   }
-// }
-
-// //===========================================invoice details prices===========================================
-
-// class InvoiceDetailsPrices extends StatelessWidget {
-//   const InvoiceDetailsPrices({
-//     Key? key,
-//     required this.tittle,
-//     required this.price,
-//   }) : super(key: key);
-//   final String tittle;
-//   final String price;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         Padding(
-//           padding: const EdgeInsets.all(8.0),
-//           child: Container(
-//             decoration: BoxDecoration(
-//               border: Border.all(
-//                 width: 1,
-//                 color: darkColor,
-//               ),
-//             ),
-//             child: Padding(
-//               padding: const EdgeInsets.symmetric(
-//                 vertical: 5.0,
-//                 horizontal: 10.0,
-//               ),
-//               child: Text(
-//                 price,
-//                 style: TextStyle(fontSize: 16.0),
-//               ),
-//             ),
-//           ),
-//         ),
-//         Text(
-//           tittle,
-//           style: TextStyle(fontSize: 18.0),
-//         ),
-//       ],
-//     );
-//   }
-// }
-
-// //===========================================header===========================================
-
-// class InvoiceScreenHeader extends StatelessWidget {
-//   const InvoiceScreenHeader({
-//     Key? key,
-//     required this.taxNo,
-//   }) : super(key: key);
-//   final String taxNo;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//       children: [
-//         Column(
-//           children: [
-//             Container(
-//               decoration: BoxDecoration(
-//                 border: Border(
-//                   bottom: BorderSide(
-//                     color: darkColor,
-//                     style: BorderStyle.solid,
-//                     width: 1.0,
-//                   ),
-//                 ),
-//               ),
-//               child: Text(
-//                 'Petrol Naas مصنع بترول ناس',
-//                 style: TextStyle(
-//                   fontSize: 20.0,
-//                   color: darkColor,
-//                 ),
-//               ),
-//             ),
-//             Text(
-//               'الرقم الضريبي : $taxNo',
-//               style: TextStyle(
-//                 fontSize: 16.0,
-//                 color: darkColor,
-//               ),
-//             ),
-//             Container(
-//               decoration: BoxDecoration(
-//                 border: Border(
-//                   bottom: BorderSide(
-//                     color: darkColor,
-//                     style: BorderStyle.solid,
-//                     width: 1.0,
-//                   ),
-//                 ),
-//               ),
-//               child: Padding(
-//                 padding: const EdgeInsets.only(top: 8.0),
-//                 child: Text(
-//                   'دخال مبيعات',
-//                   style: TextStyle(
-//                     fontSize: 20.0,
-//                     color: darkColor,
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//         Image.asset(
-//           'assets/images/logo.png',
-//           width: 100,
-//         ),
-//       ],
-//     );
-//   }
-// }
