@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:flutter/services.dart';
 import 'package:petrol_naas/components/custom_button.dart';
+import 'package:petrol_naas/components/show_snack_bar.dart';
 
 import '../constants.dart';
 
@@ -82,24 +83,25 @@ class _PrintInvoiceState extends State<PrintInvoice> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: <Widget>[
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Text(
-                  'اختر الطابعة',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    color: darkColor,
-                  ),
+    return Column(
+      children: <Widget>[
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                'اختر الطابعة',
+                style: TextStyle(
+                  fontSize: 18.0,
+                  color: darkColor,
                 ),
               ),
-              Container(
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
+              child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10.0),
                   border: Border.all(
@@ -142,33 +144,33 @@ class _PrintInvoiceState extends State<PrintInvoice> {
                   ),
                 ),
               ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Expanded(
-                child: CustomButton(
-                  buttonColors: _connected ? redColor : greenColor,
-                  textColors: Colors.white,
-                  text: _connected ? 'قطع الاتصال بالطابعة' : 'اتصال بالطابعة',
-                  onPressed: _connected ? _disconnect : _connect,
-                ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: CustomButton(
+                buttonColors: _connected ? redColor : greenColor,
+                textColors: Colors.white,
+                text: _connected ? 'قطع الاتصال بالطابعة' : 'اتصال بالطابعة',
+                onPressed: _connected ? _disconnect : _connect,
               ),
-              Expanded(
-                child: CustomButton(
-                  buttonColors: primaryColor,
-                  textColors: Colors.white,
-                  text: 'تحديث',
-                  onPressed: () {
-                    initPlatformState();
-                  },
-                ),
+            ),
+            Expanded(
+              child: CustomButton(
+                buttonColors: primaryColor,
+                textColors: Colors.white,
+                text: 'تحديث',
+                onPressed: () {
+                  initPlatformState();
+                },
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -191,7 +193,7 @@ class _PrintInvoiceState extends State<PrintInvoice> {
 
   void _connect() {
     if (_device == null) {
-      show('لم يتم اختيار طابعة.');
+      ShowSnackBar(context, 'لم يتم اختيار طابعة.');
     } else {
       bluetooth.isConnected.then((isConnected) {
         if (!isConnected!) {
@@ -209,28 +211,10 @@ class _PrintInvoiceState extends State<PrintInvoice> {
     setState(() => _connected = true);
   }
 
-//write to app path
+  //write to app path
   Future<void> writeToFile(ByteData data, String path) {
     final buffer = data.buffer;
-    return new File(path).writeAsBytes(
+    return File(path).writeAsBytes(
         buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
-  }
-
-  Future show(
-    String message, {
-    Duration duration = const Duration(seconds: 3),
-  }) async {
-    await new Future.delayed(new Duration(milliseconds: 100));
-    Scaffold.of(context).showSnackBar(
-      new SnackBar(
-        content: new Text(
-          message,
-          style: new TextStyle(
-            color: Colors.white,
-          ),
-        ),
-        duration: duration,
-      ),
-    );
   }
 }

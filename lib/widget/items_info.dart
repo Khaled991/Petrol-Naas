@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
 
-class ItemsInfo extends StatefulWidget {
+class ItemsInfoTable extends StatefulWidget {
   final List<ViewInvoiceItem> items;
 
-  const ItemsInfo({
+  const ItemsInfoTable({
     Key? key,
     required this.items,
   }) : super(key: key);
 
   @override
-  State<ItemsInfo> createState() => _ItemsInfoState();
+  State<ItemsInfoTable> createState() => _ItemsInfoTableState();
 }
 
-class _ItemsInfoState extends State<ItemsInfo> {
+class _ItemsInfoTableState extends State<ItemsInfoTable> {
   @override
   Widget build(BuildContext context) {
     return DataTable(
@@ -30,7 +30,7 @@ class _ItemsInfoState extends State<ItemsInfo> {
               cells: [
                 DataCell(Text((item.sellPrice! * item.qty!).toString())),
                 DataCell(Text(item.sellPrice.toString())),
-                DataCell(Text(item.qty.toString())),
+                DataCell(Text((item.qty! + item.freeItemsQty!).toString())),
                 DataCell(Text(item.itemDesc!)),
               ],
             ),

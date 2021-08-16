@@ -3,8 +3,8 @@ class InvoiceDetails {
   int? qty;
   String? unitPrice;
   String? itemDesc;
-  String? promotionQtyReq;
-  String? promotionQtyFree;
+  int? promotionQtyReq;
+  int? promotionQtyFree;
   int? totalPrice;
   int? freeQty;
 
@@ -29,8 +29,8 @@ class InvoiceDetails {
         qty: json['QTY'] as int?,
         unitPrice: json['unitPrice'] as String?,
         itemDesc: json['itemDesc'] as String?,
-        promotionQtyReq: json['PromotionQtyReq'] as String?,
-        promotionQtyFree: json['PromotionQtyFree'] as String?,
+        promotionQtyReq: double.parse(json['PromotionQtyReq']).toInt(),
+        promotionQtyFree: double.parse(json['PromotionQtyFree']).toInt(),
         totalPrice: json['totalPrice'] as int?,
         freeQty: json['freeQty'] as int?,
       );
@@ -51,8 +51,8 @@ class InvoiceDetails {
     int? qty,
     String? unitPrice,
     String? itemDesc,
-    String? promotionQtyReq,
-    String? promotionQtyFree,
+    int? promotionQtyReq,
+    int? promotionQtyFree,
     int? totalPrice,
     int? freeQty,
   }) {

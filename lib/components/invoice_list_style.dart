@@ -19,42 +19,40 @@ class InvoiceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        8.0,
-        0,
-        8.0,
-        13.0,
-      ),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: ListTile(
-          leading: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      children: [
+        TextButton(
+          onPressed: () {},
+          child: Column(
             children: [
-              Icon(
-                Icons.receipt_outlined,
-                size: 40,
-                color: primaryColor,
+              ListTile(
+                leading: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.receipt_outlined,
+                      size: 40,
+                      color: primaryColor,
+                    ),
+                  ],
+                ),
+                title: Text(
+                  tittle,
+                  style: TextStyle(
+                    color: darkColor,
+                  ),
+                ),
+                subtitle: Text(
+                  '$billNumber',
+                ),
+                trailing: Text(date),
+                onTap: onTap,
               ),
             ],
           ),
-          title: Text(
-            tittle,
-            style: TextStyle(
-              color: darkColor,
-            ),
-          ),
-          subtitle: Text(
-            '$billNumber\n$date',
-          ),
-          isThreeLine: true,
-          onTap: onTap,
         ),
-      ),
+        Divider(height: 0, color: darkColor.withOpacity(.25)),
+      ],
     );
   }
 }

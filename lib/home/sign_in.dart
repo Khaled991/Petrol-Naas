@@ -88,68 +88,71 @@ class _SignInState extends State<SignIn> {
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    color: primaryColor,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'تسجيل الدخول',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24.0,
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 50,
-                              height: 1.75,
-                            ),
-                            Container(
+                  child: ClipPath(
+                    clipper: BackgroundClipper(),
+                    child: Container(
+                      color: primaryColor,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'تسجيل الدخول',
+                            style: TextStyle(
                               color: Colors.white,
-                              width: 100,
-                              height: 1.75,
+                              fontSize: 24.0,
                             ),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              color: Colors.white,
-                              width: 100,
-                              height: 1.75,
-                            ),
-                            SizedBox(
-                              width: 50,
-                              height: 1.75,
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20.0),
-                          child: CustomInput(
-                            hintText: 'رقم المندوب',
-                            type: 'white',
-                            controller: userNoController,
                           ),
-                        ),
-                        CustomInput(
-                          controller: passwordController,
-                          hintText: 'كلمة المرور',
-                          type: 'password',
-                        ),
-                        CustomButton(
-                          buttonColors: Colors.white,
-                          onPressed: () => onPressSignIn(),
-                          text: 'تسجيل الدخول',
-                          textColors: primaryColor,
-                        ),
-                      ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 50,
+                                height: 1.75,
+                              ),
+                              Container(
+                                color: Colors.white,
+                                width: 100,
+                                height: 1.75,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                color: Colors.white,
+                                width: 100,
+                                height: 1.75,
+                              ),
+                              SizedBox(
+                                width: 50,
+                                height: 1.75,
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0),
+                            child: CustomInput(
+                              hintText: 'رقم المندوب',
+                              type: 'white',
+                              controller: userNoController,
+                            ),
+                          ),
+                          CustomInput(
+                            controller: passwordController,
+                            hintText: 'كلمة المرور',
+                            type: 'password',
+                          ),
+                          CustomButton(
+                            buttonColors: Colors.white,
+                            onPressed: () => onPressSignIn(),
+                            text: 'تسجيل الدخول',
+                            textColors: primaryColor,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 )
@@ -237,35 +240,62 @@ class _SignInState extends State<SignIn> {
   }
 }
 
-// class BackgroundClipper extends CustomClipper<Path> {
-//   @override
-//   Path getClip(Size size) {
-//     var roundnessFactor = 50.0;
-//     var path = Path();
+class BackgroundClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    // var roundnessFactor = 50.0;
+    var path = Path();
+    path.moveTo(0, size.height / 5);
+    path.lineTo(0, size.height);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width, size.height / 10);
+    path.quadraticBezierTo(
+        size.width + 50, size.height / 10, size.width * 0.9, size.height / 15);
 
-//     path.moveTo(0, size.height * 0.33);
-//     path.lineTo(0, size.height);
-//     path.lineTo(size.width, size.height);
-//     path.lineTo(size.width, roundnessFactor * 2);
+//  path.lineTo(0, size.height - 90);
+//     path.quadraticBezierTo(0, size.height, 70, size.height - 10);
+//     path.lineTo(size.width - 80, size.height - 55);
 //     path.quadraticBezierTo(
 //       size.width,
-//       0,
-//       size.width - roundnessFactor * 3,
-//       roundnessFactor * 2,
+//       size.height - 70,
+//       size.width,
+//       size.height - 130,
 //     );
-//     path.lineTo(roundnessFactor, size.height * 0.33 + 10);
-//     path.quadraticBezierTo(
-//       0,
-//       size.height * 0.33 + roundnessFactor,
-//       0,
-//       size.height * 0.33 + roundnessFactor * 2,
-//     );
-//     return path;
-//   }
+//     path.lineTo(size.width, 0);
+//     path.close();
+    // path.moveTo(0, size.height * 0.40);
+    // path.moveTo(0, 0);
+    // path.lineTo(0, size.height);
+    // path.lineTo(size.width, size.height);
+    // path.quadraticBezierTo(
+    //     size.width, size.height, size.width, size.height - 50 * 2);
+    // path.lineTo(size.width, 0);
+    // path.quadraticBezierTo(size.width - 50 * 2, 0, size.width - 60 * 3, 30 * 2);
+    // path.lineTo(0, size.height * 0.33);
+    // path.quadraticBezierTo(0, size.height * 33, 0, size.height * 0.33 + 50);
+    // path.lineTo(size.width, 0);
 
-//   @override
-//   bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
-//     // TODO: implement shouldReclip
-//     throw UnimplementedError();
-//   }
-// }
+    // path.lineTo(size.width, size.height);
+    // path.lineTo(size.width, roundnessFactor * 2);
+    // path.quadraticBezierTo(
+    //   size.width,
+    //   0,
+    //   size.width - roundnessFactor * 3,
+    //   roundnessFactor * 2,
+    // );
+    // path.lineTo(roundnessFactor, size.height * 0.33 + 10);
+    // path.quadraticBezierTo(
+    //   0,
+    //   size.height * 0.33 + roundnessFactor,
+    //   0,
+    //   size.height * 0.33 + roundnessFactor * 2,
+    // );
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
+    // TODO: implement shouldReclip
+    throw UnimplementedError();
+  }
+}

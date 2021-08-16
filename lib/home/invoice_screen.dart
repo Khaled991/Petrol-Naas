@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -89,8 +88,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
   }
 
-  final String today = DateFormat("dd-mm-yyyy").format(DateTime.now());
-  //TODO: Timezone Soudia arabia
+  final String today = DateFormat("dd-MM-yyyy").format(DateTime.now());
+  //TODO: Timezone Soudia arabia +3
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,7 +106,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          InvoiceScreenHeader(taxNo: '3004687955200002'),
+                          InvoiceScreenHeader(
+                            taxNo: '3004687955200002',
+                            isColored: false,
+                          ),
                           SizedBox(
                             height: 20.0,
                           ),
@@ -141,7 +143,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             height: 2,
                             color: darkColor,
                           ),
-                          ItemsInfo(
+                          ItemsInfoTable(
                             items: widget.items,
                           ),
                           Divider(

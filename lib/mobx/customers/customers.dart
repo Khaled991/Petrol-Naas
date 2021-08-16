@@ -13,7 +13,6 @@ abstract class _CustomerStoreBase with Store {
 
   @action
   List<String> getCustomersNames(List<Customer> customers) {
-    print(customers);
     return customers
         .map((Customer customer) => customer.accName ?? "")
         .toList();

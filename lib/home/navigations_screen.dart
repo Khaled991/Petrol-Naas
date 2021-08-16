@@ -48,7 +48,7 @@ class _NavigationsScreenState extends State<NavigationsScreen> {
           ),
           Expanded(
             child: Container(
-              color: Colors.white,
+              // color: Colors.white,
               child: _getBody(),
             ),
           ),

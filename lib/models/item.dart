@@ -28,8 +28,8 @@ class Item {
         sellPrice1: json['SellPrice1']?.toDouble() ?? 0.0,
         avgCost: json['AvgCost']?.toDouble() ?? 0.0,
         itemProd: json['ItemProd'] as String?,
-        promotionQtyReq: json['PromotionQtyReq'] as int?,
-        promotionQtyFree: json['PromotionQtyFree'] as int?,
+        promotionQtyReq: json['PromotionQtyReq'].toInt(),
+        promotionQtyFree: json['PromotionQtyFree'].toInt(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -60,5 +60,18 @@ class Item {
       promotionQtyReq: promotionQtyReq ?? this.promotionQtyReq,
       promotionQtyFree: promotionQtyFree ?? this.promotionQtyFree,
     );
+  }
+
+  static int calcFreeQty({
+    required int qty,
+    required int promotionQtyReq,
+    required int promotionQtyFree,
+  }) {
+    int freeQty = 0;
+    if (promotionQtyFree != 0) {
+      int free = qty ~/ promotionQtyReq;
+      freeQty = free * promotionQtyFree;
+    }
+    return freeQty;
   }
 }

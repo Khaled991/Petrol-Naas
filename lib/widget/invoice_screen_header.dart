@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 import '../constants.dart';
 
 class InvoiceScreenHeader extends StatelessWidget {
-  const InvoiceScreenHeader({
+  InvoiceScreenHeader({
     Key? key,
     required this.taxNo,
+    this.isColored = true,
   }) : super(key: key);
   final String taxNo;
+  bool isColored;
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +67,19 @@ class InvoiceScreenHeader extends StatelessWidget {
             ),
           ],
         ),
-        Image.asset(
-          'assets/images/logo.png',
-          width: 100,
-        ),
+        isColored
+            ? Image.asset(
+                'assets/images/logo.png',
+                width: 110,
+              )
+            : Padding(
+                padding: const EdgeInsets.only(left: 25.0),
+                child: SvgPicture.asset(
+                  'assets/images/Logo_greyscale.svg',
+                  semanticsLabel: 'Logo',
+                  width: 75,
+                ),
+              ),
       ],
     );
   }
