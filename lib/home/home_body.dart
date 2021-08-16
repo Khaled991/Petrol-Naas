@@ -6,6 +6,7 @@ import 'package:petrol_naas/components/custom_dropdown.dart';
 import 'package:petrol_naas/components/custom_input.dart';
 import 'package:petrol_naas/components/expand_custom_text_field.dart';
 import 'package:petrol_naas/components/invoice_details.dart';
+import 'package:petrol_naas/components/show_snack_bar.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/items/items.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
@@ -20,7 +21,9 @@ import '../constants.dart';
 import 'invoice_screen.dart';
 
 class HomeBody extends StatefulWidget {
-  const HomeBody({Key? key}) : super(key: key);
+  const HomeBody({
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<HomeBody> createState() => _HomeBodyState();
@@ -32,6 +35,10 @@ class _HomeBodyState extends State<HomeBody> {
   bool connected = false;
   Item item = Item();
   List<ViewInvoiceItem> viewInvoiceItems = [];
+  late bool isLoading;
+  void changeLoadingState(bool state) => setState(() => isLoading = state);
+  List<String> products = [];
+  Item selectedProduct = Item();
 
   final TextEditingController qtyController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
@@ -46,6 +53,7 @@ class _HomeBodyState extends State<HomeBody> {
   @override
   void initState() {
     super.initState();
+    isLoading = true;
     asyncMethod();
   }
 
@@ -57,6 +65,8 @@ class _HomeBodyState extends State<HomeBody> {
   Future<void> getCustomers() async {
     try {
       final String salesman = context.read<UserStore>().user.salesman ?? '';
+
+      changeLoadingState(true);
       Response response = await Dio().get(
         'http://192.168.1.2/petrolnaas/public/api/customer?Salesman=$salesman',
       );
@@ -64,8 +74,10 @@ class _HomeBodyState extends State<HomeBody> {
       final customersStore = context.read<CustomerStore>();
 
       customersStore.setCustomers(prepareCustomersList(jsonRespone));
+      changeLoadingState(false);
     } on DioError catch (e) {
       print(e);
+      changeLoadingState(false);
     }
   }
 
@@ -80,15 +92,20 @@ class _HomeBodyState extends State<HomeBody> {
 
   Future<void> getItems() async {
     try {
+      changeLoadingState(true);
       Response response = await Dio().get(
         'http://192.168.1.2/petrolnaas/public/api/items',
       );
       var jsonRespone = response.data;
-      final items = context.read<ItemsStore>();
+      final itemsStore = context.read<ItemsStore>();
 
-      items.setItems(prepareItemsList(jsonRespone));
+      itemsStore.setItems(prepareItemsList(jsonRespone));
+      products = getProductsNames(itemsStore.items);
+
+      changeLoadingState(false);
     } on DioError catch (e) {
       print(e);
+      changeLoadingState(false);
     }
   }
 
@@ -102,26 +119,29 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   void onPressAddItem() {
-    if (qtyController.text == '' && createInvoice.items == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('يجب إضافة كمية و اختيار صنف'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    print(selectedProduct);
+    if (qtyController.text == '' && selectedProduct == null) {
+      ShowSnackBar(context, 'يجب إضافة كمية و اختيار صنف');
+
       return;
     }
 
     handleQty();
+
     List<InvoiceItem> mergedOldAndNewItems = createInvoice.items ?? [];
     mergedOldAndNewItems.add(invoiceItem);
+
     setState(
       () {
         createInvoice = createInvoice.copyWith(items: mergedOldAndNewItems);
       },
     );
-    getTotalSaleHeader();
+    handleTotalSaleHeader();
     qtyController.text = '';
+    setState(() {
+      selectedProduct = Item();
+    });
+    FocusScope.of(context).requestFocus(FocusNode()); //dismiss keyboard
   }
 
   void onChangePayType(int payTypeIdx) {
@@ -132,34 +152,34 @@ class _HomeBodyState extends State<HomeBody> {
 
     final int payType = payTypeDecode[payTypeIdx]!;
 
-    createInvoice = createInvoice.copyWith(payType: payType);
+    setState(() {
+      createInvoice = createInvoice.copyWith(payType: payType);
+    });
   }
 
   Customer selectedCustomer = Customer();
 
   void onChangeCustomer(Customer customer) {
-    selectedCustomer = selectedCustomer.copyWith(accName: customer.accName!);
-    String customerNo = customer.accNo!;
-    createInvoice = createInvoice.copyWith(custno: customerNo);
+    selectedCustomer = customer;
+    createInvoice = createInvoice.copyWith(custno: customer.accNo!);
   }
 
   double total = 0.0;
 
-  void getTotalSaleHeader() {
+  void handleTotalSaleHeader() {
     if (createInvoice.items == null) return;
     List<InvoiceItem> items = createInvoice.items!;
     double total = 0;
 
     for (int i = 0; i < items.length; i++) {
       InvoiceItem item = items[i];
-      Item itemFromAvailableItems = findItemByItemNo(item.itemno!);
-
-      double sellPrice = getItemSellPrice(itemFromAvailableItems);
+      // Item itemFromAvailableItems = findItemByItemNo(item.itemno!);
+      double sellPrice = getItemSellPrice(selectedProduct);
       int qty = item.qty!;
       total += sellPrice * qty.toDouble();
 
       bool isLastItem = i == items.length - 1;
-      if (isLastItem) addItemToViewInvoiceItemsList(itemFromAvailableItems);
+      if (isLastItem) addItemToViewInvoiceItemsList(selectedProduct);
     }
 
     setState(() {
@@ -172,46 +192,42 @@ class _HomeBodyState extends State<HomeBody> {
     return sellPrice;
   }
 
-  Item findItemByItemNo(String itemno) {
-    List<Item> items = context.read<ItemsStore>().items;
-    Item item = items.firstWhere(
-      (Item item) => item.itemno == itemno,
-    );
-    return item;
-  }
+  // Item findItemByItemNo(String itemno) {
+  //   List<Item> items = context.read<ItemsStore>().items;
+  //   Item item = items.firstWhere(
+  //     (Item item) => item.itemno == itemno,
+  //   );
+  //   return item;
+  // }
 
   void addItemToViewInvoiceItemsList(Item item) {
     viewInvoiceItems.add(ViewInvoiceItem(
       itemno: item.itemno!,
       itemDesc: item.itemDesc!,
       qty: int.parse(qtyController.text),
-      freeItemsQty: calcFreeQty(item),
+      freeItemsQty: Item.calcFreeQty(
+        qty: invoiceItem.qty!,
+        promotionQtyFree: item.promotionQtyFree!,
+        promotionQtyReq: item.promotionQtyReq!,
+      ),
       sellPrice: item.sellPrice1!,
     ));
   }
 
-  int calcFreeQty(Item item) {
-    int promotionQtyFree = item.promotionQtyFree!;
-    int promotionQtyReq = item.promotionQtyReq!;
-    int qty = invoiceItem.qty!;
-
-    int freeQty = 0;
-    if (promotionQtyFree != 0) {
-      int free = (qty / promotionQtyReq) as int;
-      freeQty = free * promotionQtyFree;
-    }
-    return freeQty;
-  }
-
-  void onChangeItem(String itemNo) {
-    invoiceItem = invoiceItem.copyWith(itemno: itemNo);
+  void onChangeItem(int idx) {
+    final itemsStore = context.read<ItemsStore>();
+    Item item = itemsStore.items[idx];
+    setState(() {
+      invoiceItem = invoiceItem.copyWith(itemno: item.itemno);
+      selectedProduct = item;
+    });
   }
 
   void handleQty() {
     invoiceItem = invoiceItem.copyWith(qty: int.parse(qtyController.text));
   }
 
-  void onChangeNotes() {
+  void changeNotes() {
     createInvoice = createInvoice.copyWith(notes: noteController.text);
   }
 
@@ -228,6 +244,7 @@ class _HomeBodyState extends State<HomeBody> {
         final double fee = double.parse(response.data) / 100.0;
         this.fee = fee;
       });
+
       throw Error();
     } on DioError catch (e) {
       print("error getting fee");
@@ -266,7 +283,6 @@ class _HomeBodyState extends State<HomeBody> {
         createInvoice.accno != null &&
         createInvoice.items != null &&
         selectedCustomer.accName != null &&
-        connected == true &&
         total != 0;
   }
 
@@ -279,50 +295,26 @@ class _HomeBodyState extends State<HomeBody> {
       print(response);
 
       // invoice = Invoice.fromJson(jsonResponse);
-
     } catch (e) {
       print(e);
     }
   }
 
   void onPressedPrint() {
-    onChangeNotes();
-
-    // if (payType == null) {
-    //   Navigator.pop(context, 'Cancel');
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(
-    //       content: Text('يجب اختيار وسيلة دفع'),
-    //       behavior: SnackBarBehavior.floating,
-    //     ),
-    //   );
-    //   return;
-    // }
-
+    changeNotes();
     fillRestDataOfInvoice();
-    void ShowSnackBar(BuildContext context, String msg) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-
-    print('object2');
+    print(createInvoice);
     if (!fieldsIsFilled()) {
       Navigator.pop(context, 'Cancel');
-      ShowSnackBar(context, 'يجب ملء جميع البيانات');
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text('يجب ملء جميع البيانات'),
-      //     behavior: SnackBarBehavior.floating,
-      //   ),
-      // );
+      ShowSnackBar(context, 'يجب ملئ جميع البيانات');
       return;
     }
 
-    if (connected == false) {}
+    if (connected != false) {
+      ShowSnackBar(context, 'يرجي التأكد من توصيل الطابعة');
+      return;
+    }
+
     sendInvoiceToApi();
 
     Navigator.pop(context, 'Cancel');
@@ -337,6 +329,11 @@ class _HomeBodyState extends State<HomeBody> {
         ),
       ),
     );
+    createInvoice = CreateInvoice();
+    // selectedCustomer.accName = '';
+    // createInvoice.payType = null;
+    // viewInvoiceItems = [];
+    // total = 0.0;
   }
 
   @override
@@ -344,219 +341,146 @@ class _HomeBodyState extends State<HomeBody> {
     BuildContext context,
   ) {
     return Scaffold(
-      body: ListView(
-        padding: EdgeInsets.all(0),
-        children: [
-          CustomDropdown(
-            text: 'نوع الدفع',
-            itemsList: <String>["نقدي كاش", "آجل"],
-            onChange: onChangePayType,
-          ),
-          Observer(builder: (_) {
-            final customersStore = context.watch<CustomerStore>();
-            return CustomDropdown(
-              text: 'العميل',
-              itemsList:
-                  customersStore.getCustomersNames(customersStore.customers),
-              onChange: (int idx) =>
-                  onChangeCustomer(customersStore.customers[idx]),
-            );
-          }),
-          Observer(builder: (_) {
-            final itemsStore = context.watch<ItemsStore>();
-            return CustomDropdown(
-              text: 'الصنف',
-              itemsList: getProductsNames(itemsStore.items),
-              onChange: (int idx) {
-                onChangeItem(itemsStore.items[idx].itemno!);
-              },
-            );
-          }),
-          CustomInput(
-            hintText: 'الكمية',
-            keyboardType: TextInputType.number,
-            type: 'yellow',
-            controller: qtyController,
-          ),
-          CustomButton(
-            text: 'اضافة صنف',
-            buttonColors: greenColor,
-            textColors: Colors.white,
-            icon: Icons.add,
-            onPressed: onPressAddItem,
-          ),
-          InvoiceItemsTableDetails(items: viewInvoiceItems),
-          ExpandCustomTextField(
-            controller: noteController,
-          ),
-          InvoiceDetails(
-            title: 'الاجمالي :',
-            result: total.toString(),
-          ),
-          InvoiceDetails(
-            title: 'الضريبـــة :',
-            result: getVatAmount().toString(),
-          ),
-          InvoiceDetails(
-            title: 'اجمالي الفاتورة :',
-            result: invoiceTotal(),
-          ),
-          CustomButton(
-            text: 'طباعة الفاتورة',
-            buttonColors: primaryColor,
-            textColors: Colors.white,
-            icon: Icons.print,
-            onPressed: () => showModalBottomSheet<void>(
-              context: context,
-              // isDismissible: false,
-              builder: (BuildContext context) {
-                return BottomSheet(
-                  onClosing: () {},
-                  builder: (BuildContext context) {
-                    return StatefulBuilder(
-                        builder: (BuildContext ctx, setState) {
-                      return Padding(
-                        padding: const EdgeInsets.all(15.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'تنبيه!!',
-                                  style: TextStyle(fontSize: 25.0),
-                                ),
-                                Text(
-                                  'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
-                                  style: TextStyle(fontSize: 18.0),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10.0),
-                            Divider(
-                              height: 2.0,
-                              color: primaryColor,
-                            ),
-                            PrintInvoice(connected),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CustomButton(
-                                    buttonColors: greenColor,
-                                    onPressed: onPressedPrint,
-                                    text: 'موافق',
-                                    textColors: Colors.white,
+      body: Container(
+        color: Colors.white,
+        child: isLoading
+            ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
+                ),
+              )
+            : ListView(
+                padding: EdgeInsets.all(0),
+                children: [
+                  CustomDropdown(
+                    text: 'نوع الدفع',
+                    itemsList: <String>["نقدي كاش", "آجل"],
+                    onChange: onChangePayType,
+                    dropdownValue: createInvoice.payType == 3
+                        ? 'آجل'
+                        : createInvoice.payType == 1
+                            ? 'نقدي كاش'
+                            : null,
+                  ),
+                  Observer(builder: (_) {
+                    final customersStore = context.watch<CustomerStore>();
+                    return CustomDropdown(
+                      text: 'العميل',
+                      itemsList: customersStore
+                          .getCustomersNames(customersStore.customers),
+                      onChange: (int idx) =>
+                          onChangeCustomer(customersStore.customers[idx]),
+                      dropdownValue: selectedCustomer.accName,
+                    );
+                  }),
+                  CustomDropdown(
+                    text: 'الصنف',
+                    itemsList: products,
+                    onChange: onChangeItem,
+                    dropdownValue: selectedProduct.itemDesc,
+                  ),
+                  CustomInput(
+                    hintText: 'الكمية',
+                    keyboardType: TextInputType.number,
+                    type: 'yellow',
+                    controller: qtyController,
+                  ),
+                  CustomButton(
+                    text: 'اضافة صنف',
+                    buttonColors: greenColor,
+                    textColors: Colors.white,
+                    icon: Icons.add,
+                    onPressed: onPressAddItem,
+                  ),
+                  InvoiceItemsTableDetails(items: viewInvoiceItems),
+                  ExpandCustomTextField(
+                    controller: noteController,
+                  ),
+                  InvoiceDetails(
+                    title: 'الاجمالي :',
+                    result: total.toString(),
+                  ),
+                  InvoiceDetails(
+                    title: 'الضريبـــة :',
+                    result: getVatAmount().toString(),
+                  ),
+                  InvoiceDetails(
+                    title: 'اجمالي الفاتورة :',
+                    result: invoiceTotal(),
+                  ),
+                  CustomButton(
+                    text: 'طباعة الفاتورة',
+                    buttonColors: primaryColor,
+                    textColors: Colors.white,
+                    icon: Icons.print,
+                    onPressed: () => showModalBottomSheet<void>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        print(createInvoice);
+                        return BottomSheet(
+                          onClosing: () {},
+                          builder: (BuildContext context) {
+                            return Padding(
+                              padding: const EdgeInsets.all(15.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'تنبيه!!',
+                                        style: TextStyle(fontSize: 25.0),
+                                      ),
+                                      Text(
+                                        'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
+                                        style: TextStyle(fontSize: 18.0),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                Expanded(
-                                  child: CustomButton(
-                                    buttonColors: redColor,
-                                    onPressed: () =>
-                                        Navigator.pop(context, 'Cancel'),
-                                    text: 'إلغاء',
-                                    textColors: Colors.white,
+                                  SizedBox(height: 10.0),
+                                  Divider(
+                                    height: 2.0,
+                                    color: primaryColor,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    });
-                  },
-                );
-              },
-            ),
-            // showFilterModal(context),
-            //  showDialog<String>(
-            //   context: context,
-            //   builder: (BuildContext context) {
-            //     return AlertDialog(
-            //       title: const Text('تنبيه!!'),
-            //       content: StatefulBuilder(
-            //           builder: (BuildContext context, StateSetter setState) {
-            //         return Column(
-            //           children: [
-            //             Text(
-            //               'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
-            //             ),
-            //             PrintInvoice(),
-            //           ],
-            //         );
-            //       }),
-            //       actions: <Widget>[
-            //         TextButton(
-            //           onPressed: () => Navigator.pop(context, 'Cancel'),
-            //           child: const Text(
-            //             'الغاء',
-            //             style: TextStyle(color: primaryColor),
-            //           ),
-            //         ),
-            //         TextButton(
-            //           onPressed: onPressedPrint,
-            //           child: const Text(
-            //             'موفق',
-            //             style: TextStyle(color: primaryColor),
-            //           ),
-            //         ),
-            //       ],
-            //     );
-            //   },
-            // ),
-          ),
-        ],
+                                  PrintInvoice(connected),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: CustomButton(
+                                          buttonColors: greenColor,
+                                          onPressed: onPressedPrint,
+                                          text: 'موافق',
+                                          textColors: Colors.white,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: CustomButton(
+                                          buttonColors: redColor,
+                                          onPressed: () =>
+                                              Navigator.pop(context, 'Cancel'),
+                                          text: 'إلغاء',
+                                          textColors: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
 }
 
-// Future<void> showFilterModal(BuildContext context) {
-//   return showModalBottomSheet<void>(
-//     context: context,
-//     isDismissible: false,
-//     builder: (BuildContext context) {
-//       return BottomSheet(
-//         onClosing: () {},
-//         builder: (BuildContext context) {
-//           return StatefulBuilder(builder: (BuildContext ctx, setState) {
-//             return Column(
-//               children: [
-//                 Text(
-//                   'تنبيه!!',
-//                 ),
-//                 Text(
-//                   'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
-//                 ),
-//                 PrintInvoice(),
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: CustomButton(
-//                         buttonColors: greenColor,
-//                         onPressed: onPressedPrint,
-//                         text: 'موافق',
-//                         textColors: Colors.white,
-//                       ),
-//                     ),
-//                     Expanded(
-//                       child: CustomButton(
-//                         buttonColors: redColor,
-//                         onPressed: () => Navigator.pop(context, 'Cancel'),
-//                         text: 'إلغاء',
-//                         textColors: Colors.white,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             );
-//           });
-//         },
-//       );
-//     },
-//   );
-// }
 //===========================================Invoice Items Table Details===========================================
 
 class InvoiceItemsTableDetails extends StatefulWidget {
