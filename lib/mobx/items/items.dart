@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:mobx/mobx.dart';
 import 'package:petrol_naas/models/item.dart';
 part 'items.g.dart';

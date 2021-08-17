@@ -41,11 +41,13 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   GlobalKey? key;
   Uint8List? bytes;
   bool isCaptured = false;
+  String? invNo;
 
   late Print thermalPrint;
 
   @override
   void initState() {
+    getLastInvNo();
     getTafqeet();
     super.initState();
     thermalPrint = Print();
@@ -88,6 +90,12 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     }
   }
 
+  Future<void> getLastInvNo() async {
+    Response response =
+        await Dio().get("http://192.168.1.2/petrolnaas/public/api/last-invno");
+    invNo = response.data.toString();
+  }
+
   final String today = DateFormat("dd-MM-yyyy").format(DateTime.now());
   //TODO: Timezone Soudia arabia +3
   @override
@@ -117,7 +125,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'الرقم : 100200',
+                                'الرقم : ' + (invNo ?? ""),
                                 style: TextStyle(
                                   fontSize: 19.0,
                                   color: darkColor,

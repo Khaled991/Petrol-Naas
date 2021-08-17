@@ -176,29 +176,29 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                     ),
                   ),
                   Divider(),
-                  Observer(builder: (_) {
-                    final customersStore = context.watch<CustomerStore>();
+                  // Observer(builder: (_) {
+                  //   final customersStore = context.watch<CustomerStore>();
 
-                    return SizedBox(
-                      width: double.infinity,
-                      child: CustomDropdown(
-                        dropdownValue: _cutName.current,
-                        itemsList: customersStore
-                            .getCustomersNames(customersStore.customers),
-                        text: 'اسم العميل',
-                        onChange: (int idx) {
-                          if (_cutName.current != null &&
-                              _custNo.current != null) {
-                            _cutName.pervious = _cutName.current;
-                            _custNo.pervious = _custNo.current;
-                          }
-                          _cutName.current =
-                              customersStore.customers[idx].accName;
-                          _custNo.current = customersStore.customers[idx].accNo;
-                        },
-                      ),
-                    );
-                  }),
+                  //   return SizedBox(
+                  //     width: double.infinity,
+                  //     child: CustomDropdown(
+                  //       dropdownValue: _cutName.current,
+                  //       itemsList: customersStore
+                  //           .getCustomersNames(customersStore.customers),
+                  //       text: 'اسم العميل',
+                  //       onChange: (int idx) {
+                  //         if (_cutName.current != null &&
+                  //             _custNo.current != null) {
+                  //           _cutName.pervious = _cutName.current;
+                  //           _custNo.pervious = _custNo.current;
+                  //         }
+                  //         _cutName.current =
+                  //             customersStore.customers[idx].accName;
+                  //         _custNo.current = customersStore.customers[idx].accNo;
+                  //       },
+                  //     ),
+                  //   );
+                  // }),
                   Divider(),
                   Text(
                     'اختر تاريخ',

@@ -33,12 +33,14 @@ class _HomeBodyState extends State<HomeBody> {
   CreateInvoice createInvoice = CreateInvoice();
   InvoiceItem invoiceItem = InvoiceItem();
   bool connected = false;
-  Item item = Item();
   List<ViewInvoiceItem> viewInvoiceItems = [];
   late bool isLoading;
   void changeLoadingState(bool state) => setState(() => isLoading = state);
   List<String> products = [];
-  Item selectedProduct = Item();
+
+  String? _selectedPayType;
+  Customer? _selectedCustomer;
+  Item? _selectedItem;
 
   final TextEditingController qtyController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
@@ -118,68 +120,64 @@ class _HomeBodyState extends State<HomeBody> {
     return items;
   }
 
-  void onPressAddItem() {
-    print(selectedProduct);
-    if (qtyController.text == '' && selectedProduct == null) {
-      ShowSnackBar(context, 'يجب إضافة كمية و اختيار صنف');
+  void addCurrentItemToCreateInvoiceObj() {
+    int? itemIdx = createInvoice.items
+        ?.indexWhere((InvoiceItem item) => item.itemno == invoiceItem.itemno);
+    // if(createInvoice.items.firstWhere((InvoiceItem item) => false))
+    print(itemIdx);
+    final bool alreadyExists = itemIdx != null && itemIdx >= 0;
+    if (alreadyExists) {
+      setState(() {
+        createInvoice.items![itemIdx].qty =
+            createInvoice.items![itemIdx].qty! + invoiceItem.qty!;
+      });
+    } else {
+      List<InvoiceItem> mergedOldAndNewItems = (createInvoice.items ?? [])
+        ..add(invoiceItem);
 
-      return;
+      setState(() => createInvoice.items = mergedOldAndNewItems);
+    }
+  }
+
+  void onPressAddItem() {
+    // print(_selectedItem);
+    final bool emptyQtyAndProduct =
+        qtyController.text == '' && _selectedItem == null;
+    if (emptyQtyAndProduct) {
+      return ShowSnackBar(context, 'يجب إضافة كمية و اختيار صنف');
     }
 
-    handleQty();
+    addQtyFromTextFieldToObject();
+    addCurrentItemToCreateInvoiceObj();
+    calculateNewTotal();
 
-    List<InvoiceItem> mergedOldAndNewItems = createInvoice.items ?? [];
-    mergedOldAndNewItems.add(invoiceItem);
-
-    setState(
-      () {
-        createInvoice = createInvoice.copyWith(items: mergedOldAndNewItems);
-      },
-    );
-    handleTotalSaleHeader();
     qtyController.text = '';
     setState(() {
-      selectedProduct = Item();
+      _selectedItem = null;
     });
     FocusScope.of(context).requestFocus(FocusNode()); //dismiss keyboard
   }
 
-  void onChangePayType(int payTypeIdx) {
-    Map<int, int> payTypeDecode = {
-      0: 1,
-      1: 3,
-    };
-
-    final int payType = payTypeDecode[payTypeIdx]!;
-
-    setState(() {
-      createInvoice = createInvoice.copyWith(payType: payType);
-    });
-  }
-
-  Customer selectedCustomer = Customer();
-
   void onChangeCustomer(Customer customer) {
-    selectedCustomer = customer;
-    createInvoice = createInvoice.copyWith(custno: customer.accNo!);
+    _selectedCustomer = customer;
+    createInvoice.custno = customer.accNo!;
   }
 
   double total = 0.0;
 
-  void handleTotalSaleHeader() {
+  void calculateNewTotal() {
     if (createInvoice.items == null) return;
     List<InvoiceItem> items = createInvoice.items!;
-    double total = 0;
+    double total = 0.0;
 
     for (int i = 0; i < items.length; i++) {
       InvoiceItem item = items[i];
-      // Item itemFromAvailableItems = findItemByItemNo(item.itemno!);
-      double sellPrice = getItemSellPrice(selectedProduct);
+      double sellPrice = getItemSellPrice(_selectedItem!);
       int qty = item.qty!;
       total += sellPrice * qty.toDouble();
 
       bool isLastItem = i == items.length - 1;
-      if (isLastItem) addItemToViewInvoiceItemsList(selectedProduct);
+      if (isLastItem) addItemToViewInvoiceItemsList(_selectedItem!);
     }
 
     setState(() {
@@ -214,21 +212,8 @@ class _HomeBodyState extends State<HomeBody> {
     ));
   }
 
-  void onChangeItem(int idx) {
-    final itemsStore = context.read<ItemsStore>();
-    Item item = itemsStore.items[idx];
-    setState(() {
-      invoiceItem = invoiceItem.copyWith(itemno: item.itemno);
-      selectedProduct = item;
-    });
-  }
-
-  void handleQty() {
-    invoiceItem = invoiceItem.copyWith(qty: int.parse(qtyController.text));
-  }
-
-  void changeNotes() {
-    createInvoice = createInvoice.copyWith(notes: noteController.text);
+  void addQtyFromTextFieldToObject() {
+    invoiceItem.qty = int.parse(qtyController.text);
   }
 
   List<String> getProductsNames(List<Item> items) {
@@ -244,12 +229,10 @@ class _HomeBodyState extends State<HomeBody> {
         final double fee = double.parse(response.data) / 100.0;
         this.fee = fee;
       });
-
-      throw Error();
     } on DioError catch (e) {
       print("error getting fee");
     } catch (e) {
-      print("error by Error");
+      print(e);
     }
   }
 
@@ -259,19 +242,20 @@ class _HomeBodyState extends State<HomeBody> {
   }
 
   String invoiceTotal() {
-    return (total + getVatAmount()).toString();
+    return (total + getVatAmount()).toStringAsFixed(2);
   }
 
   void fillRestDataOfInvoice() {
     final userStore = context.read<UserStore>();
-    if (createInvoice.payType == 1) {
-      createInvoice = createInvoice.copyWith(accno: userStore.user.cashAccno!);
-    } else {
-      createInvoice = createInvoice.copyWith(accno: selectedCustomer.accNo!);
+    if (createInvoice.payType == "1") {
+      createInvoice.accno = userStore.user.cashAccno!;
+    } else if (createInvoice.payType == "3") {
+      createInvoice.accno = _selectedCustomer!.accNo!;
     }
-    createInvoice = createInvoice.copyWith(userno: userStore.user.userNo!);
-    createInvoice = createInvoice.copyWith(salesman: userStore.user.salesman!);
-    createInvoice = createInvoice.copyWith(whno: userStore.user.whno!);
+    createInvoice.userno = userStore.user.userNo!;
+    createInvoice.salesman = userStore.user.salesman!;
+    createInvoice.whno = userStore.user.whno!;
+    createInvoice.notes = noteController.text;
   }
 
   bool fieldsIsFilled() {
@@ -279,11 +263,20 @@ class _HomeBodyState extends State<HomeBody> {
         createInvoice.salesman != null &&
         createInvoice.custno != null &&
         createInvoice.whno != null &&
-        createInvoice.payType != null &&
         createInvoice.accno != null &&
         createInvoice.items != null &&
-        selectedCustomer.accName != null &&
         total != 0;
+  }
+
+  void resetData() {
+    setState(() {
+      createInvoice = CreateInvoice();
+      viewInvoiceItems = [];
+      _selectedPayType = null;
+      _selectedCustomer = null;
+      _selectedItem = null;
+      noteController.text = '';
+    });
   }
 
   Future<void> sendInvoiceToApi() async {
@@ -293,23 +286,30 @@ class _HomeBodyState extends State<HomeBody> {
       Response res = await Dio().post(url, data: createInvoice.toJson());
       final response = res.data;
       print(response);
-
       // invoice = Invoice.fromJson(jsonResponse);
+      resetData();
     } catch (e) {
       print(e);
     }
   }
 
-  void onPressedPrint() {
-    changeNotes();
-    fillRestDataOfInvoice();
+  void onConfirmPrint() {
     print(createInvoice);
+    if (createInvoice.payType == null) {
+      Navigator.pop(context, 'Cancel');
+      ShowSnackBar(context, 'يجب تحديد نوع الدفع');
+      return;
+    }
+
+    fillRestDataOfInvoice();
+
     if (!fieldsIsFilled()) {
       Navigator.pop(context, 'Cancel');
       ShowSnackBar(context, 'يجب ملئ جميع البيانات');
       return;
     }
 
+    //TODO: make connected != true
     if (connected != false) {
       ShowSnackBar(context, 'يرجي التأكد من توصيل الطابعة');
       return;
@@ -325,21 +325,46 @@ class _HomeBodyState extends State<HomeBody> {
           fee: getVatAmount(),
           total: total,
           items: viewInvoiceItems,
-          customerName: selectedCustomer.accName!,
+          customerName: _selectedCustomer!.accName!,
         ),
       ),
     );
-    createInvoice = CreateInvoice();
-    // selectedCustomer.accName = '';
-    // createInvoice.payType = null;
-    // viewInvoiceItems = [];
-    // total = 0.0;
+  }
+
+  void setPayTypeDropDownValue(payTypeText) {
+    _selectedPayType = payTypeText;
+
+    Map<String, String> payTypeDecode = {
+      "نقدي كاش": "1",
+      "اجل": "3",
+    };
+
+    final String payType = payTypeDecode[payTypeText]!;
+
+    setState(() {
+      createInvoice.payType = payType;
+    });
+  }
+
+  void setCustomerDropDownValue(customer) {
+    setState(() => createInvoice.custno = customer.accNo);
+    _selectedCustomer = customer;
+  }
+
+  void setItemDropDownValue(item) {
+    setState(() => invoiceItem.itemno = item.itemno);
+    _selectedItem = item;
+  }
+
+  void onPressDeleteItemFromInvoice(int idx) {
+    setState(() {
+      createInvoice.items!.removeAt(idx);
+      viewInvoiceItems.removeAt(idx);
+    });
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         color: Colors.white,
@@ -352,33 +377,34 @@ class _HomeBodyState extends State<HomeBody> {
             : ListView(
                 padding: EdgeInsets.all(0),
                 children: [
-                  CustomDropdown(
-                    text: 'نوع الدفع',
-                    itemsList: <String>["نقدي كاش", "آجل"],
-                    onChange: onChangePayType,
-                    dropdownValue: createInvoice.payType == 3
-                        ? 'آجل'
-                        : createInvoice.payType == 1
-                            ? 'نقدي كاش'
-                            : null,
+                  CustomDropdown<String>(
+                    elements: <String>["نقدي كاش", "آجل"],
+                    label: 'نوع الدفع',
+                    selectedValue: _selectedPayType,
+                    onChanged: setPayTypeDropDownValue,
                   ),
                   Observer(builder: (_) {
                     final customersStore = context.watch<CustomerStore>();
-                    return CustomDropdown(
-                      text: 'العميل',
-                      itemsList: customersStore
-                          .getCustomersNames(customersStore.customers),
-                      onChange: (int idx) =>
-                          onChangeCustomer(customersStore.customers[idx]),
-                      dropdownValue: selectedCustomer.accName,
+
+                    return CustomDropdown<Customer>(
+                      elements: customersStore.customers,
+                      textProperty: 'AccName',
+                      label: 'العميل',
+                      selectedValue: _selectedCustomer,
+                      onChanged: setCustomerDropDownValue,
                     );
                   }),
-                  CustomDropdown(
-                    text: 'الصنف',
-                    itemsList: products,
-                    onChange: onChangeItem,
-                    dropdownValue: selectedProduct.itemDesc,
-                  ),
+                  Observer(builder: (_) {
+                    final itemsStore = context.watch<ItemsStore>();
+
+                    return CustomDropdown<Item>(
+                      elements: itemsStore.items,
+                      textProperty: 'itemDesc',
+                      label: 'الصنف',
+                      selectedValue: _selectedItem,
+                      onChanged: setItemDropDownValue,
+                    );
+                  }),
                   CustomInput(
                     hintText: 'الكمية',
                     keyboardType: TextInputType.number,
@@ -392,17 +418,20 @@ class _HomeBodyState extends State<HomeBody> {
                     icon: Icons.add,
                     onPressed: onPressAddItem,
                   ),
-                  InvoiceItemsTableDetails(items: viewInvoiceItems),
+                  InvoiceItemsTable(
+                    items: viewInvoiceItems,
+                    onPressDeleteItemFromInvoice: onPressDeleteItemFromInvoice,
+                  ),
                   ExpandCustomTextField(
                     controller: noteController,
                   ),
                   InvoiceDetails(
                     title: 'الاجمالي :',
-                    result: total.toString(),
+                    result: total.toStringAsFixed(2),
                   ),
                   InvoiceDetails(
                     title: 'الضريبـــة :',
-                    result: getVatAmount().toString(),
+                    result: getVatAmount().toStringAsFixed(2),
                   ),
                   InvoiceDetails(
                     title: 'اجمالي الفاتورة :',
@@ -416,7 +445,6 @@ class _HomeBodyState extends State<HomeBody> {
                     onPressed: () => showModalBottomSheet<void>(
                       context: context,
                       builder: (BuildContext context) {
-                        print(createInvoice);
                         return BottomSheet(
                           onClosing: () {},
                           builder: (BuildContext context) {
@@ -450,7 +478,7 @@ class _HomeBodyState extends State<HomeBody> {
                                       Expanded(
                                         child: CustomButton(
                                           buttonColors: greenColor,
-                                          onPressed: onPressedPrint,
+                                          onPressed: onConfirmPrint,
                                           text: 'موافق',
                                           textColors: Colors.white,
                                         ),
@@ -483,16 +511,16 @@ class _HomeBodyState extends State<HomeBody> {
 
 //===========================================Invoice Items Table Details===========================================
 
-class InvoiceItemsTableDetails extends StatefulWidget {
-  final List<ViewInvoiceItem> items;
-  const InvoiceItemsTableDetails({Key? key, required this.items})
-      : super(key: key);
-  @override
-  State<InvoiceItemsTableDetails> createState() =>
-      _InvoiceItemsTableDetailsState();
-}
+class InvoiceItemsTable extends StatelessWidget {
+  List<ViewInvoiceItem> items;
+  void Function(int) onPressDeleteItemFromInvoice;
 
-class _InvoiceItemsTableDetailsState extends State<InvoiceItemsTableDetails> {
+  InvoiceItemsTable(
+      {Key? key,
+      required this.items,
+      required this.onPressDeleteItemFromInvoice})
+      : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -509,6 +537,7 @@ class _InvoiceItemsTableDetailsState extends State<InvoiceItemsTableDetails> {
                 const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
             child: DataTable(
               columns: [
+                DataColumn(label: Text('')),
                 DataColumn(label: Text('الرقم')),
                 DataColumn(label: Text('اسم الصنف')),
                 DataColumn(label: Text('الكمية')),
@@ -516,21 +545,35 @@ class _InvoiceItemsTableDetailsState extends State<InvoiceItemsTableDetails> {
                 DataColumn(label: Text('الاجمالي')),
                 DataColumn(label: Text('القطع المجانية')),
               ],
-              rows: widget.items
-                  .map(
-                    (ViewInvoiceItem item) => DataRow(
-                      cells: [
-                        DataCell(Text(item.itemno!)),
-                        DataCell(Text(item.itemDesc!)),
-                        DataCell(Text(item.qty.toString())),
-                        DataCell(Text(item.sellPrice.toString())),
-                        DataCell(
-                            Text((item.sellPrice! * item.qty!).toString())),
-                        DataCell(Text(item.freeItemsQty.toString())),
-                      ],
-                    ),
-                  )
-                  .toList(),
+              rows: List.generate(
+                items.length,
+                (int index) {
+                  final ViewInvoiceItem item = items[index];
+                  return DataRow(
+                    cells: [
+                      DataCell(TextButton(
+                        onPressed: () => onPressDeleteItemFromInvoice(index),
+                        child: Icon(
+                          Icons.clear,
+                          size: 25.0,
+                          color: redColor,
+                        ),
+                      )),
+                      DataCell(Text(item.itemno!)),
+                      DataCell(Text(item.itemDesc!)),
+                      DataCell(Text(item.qty.toString())),
+                      DataCell(Text(item.sellPrice.toString())),
+                      DataCell(Text((item.sellPrice! * item.qty!).toString())),
+                      DataCell(Text(item.freeItemsQty.toString())),
+                    ],
+                  );
+                },
+              ),
+              // widget.items
+              //     .map(
+              //       (ViewInvoiceItem item) =>
+              //     )
+              //     .toList(),
             ),
           ),
         ),

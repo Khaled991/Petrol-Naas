@@ -39,17 +39,6 @@ mixin _$CustomerStore on _CustomerStoreBase, Store {
   }
 
   @override
-  List<String> getCustomersNames(List<Customer> customers) {
-    final _$actionInfo = _$_CustomerStoreBaseActionController.startAction(
-        name: '_CustomerStoreBase.getCustomersNames');
-    try {
-      return super.getCustomersNames(customers);
-    } finally {
-      _$_CustomerStoreBaseActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
   String toString() {
     return '''
 customers: ${customers}

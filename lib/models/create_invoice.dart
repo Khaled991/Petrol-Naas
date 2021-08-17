@@ -5,7 +5,7 @@ class CreateInvoice {
   String? salesman;
   String? custno;
   String? whno;
-  int? payType;
+  String? payType;
   String? accno;
   String? notes;
   List<InvoiceItem>? items;
@@ -31,7 +31,7 @@ class CreateInvoice {
         salesman: json['Salesman'] as String?,
         custno: json['Custno'] as String?,
         whno: json['whno'] as String?,
-        payType: json['PayType'] as int?,
+        payType: json['PayType'] as String?,
         accno: json['Accno'] as String?,
         notes: json['notes'] as String?,
         items: (json['Items'] as List<dynamic>?)
@@ -55,7 +55,7 @@ class CreateInvoice {
     String? salesman,
     String? custno,
     String? whno,
-    int? payType,
+    String? payType,
     String? accno,
     String? notes,
     List<InvoiceItem>? items,
