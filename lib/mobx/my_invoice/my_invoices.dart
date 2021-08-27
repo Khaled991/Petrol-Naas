@@ -9,11 +9,13 @@ abstract class _MyInvoicesBase with Store {
   List<Invoice> myInvoices = [];
 
   @action
-  setMyInvoices(List<Invoice> value) => myInvoices = value;
+  jsonToInvoicesList(dynamic json) {
+    myInvoices.addAll(prepareInvoiceList(json));
+  }
 
   @action
-  jsonToInvoicesList(dynamic json) {
-    myInvoices = prepareInvoiceList(json);
+  resetList() {
+    myInvoices = [];
   }
 
   List<Invoice> prepareInvoiceList(dynamic myInvoiceList) {

@@ -44,9 +44,11 @@ dependencies:
   flutter_mobx: ^2.0.1
   mobx: ^2.0.3
   provider: ^5.0.0
-  path_provider: ^2.0.2
+  path_provider:
   blue_thermal_printer: ^1.1.4
   skeleton_loader: ^2.0.0+4
+  printing: ^5.5.0
+  pdf: ^3.4.2
 
 dev_dependencies:
   flutter_test:
@@ -59,7 +61,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^1.0.0
   mobx_codegen: ^2.0.2
-  build_runner: ^2.1.0
+  build_runner: ^2.1.1
   intl: ^0.17.0
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

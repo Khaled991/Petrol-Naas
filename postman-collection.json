@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "b6ee2097-23db-45ac-876c-8f6195dc84b1",
+    "name": "Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "id": "9edcd60f-c267-4da1-9f0a-b1997a6f952c",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"User_no\": 29,\r\n    \"user_pwd\": \"2640\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://192.168.1.41/petrolnaas/public/api/login"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Customers",
+      "id": "0a20c733-8393-484e-8adf-04976dadd98d",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://5.9.215.57/petrolnaas/public/api/customer?Salesman=3",
+          "protocol": "http",
+          "host": ["5", "9", "215", "57"],
+          "path": ["petrolnaas", "public", "api", "customer"],
+          "query": [
+            {
+              "key": "Salesman",
+              "value": "3"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Fee",
+      "id": "5daa61f5-fffc-4549-937c-68ed51c24c9a",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:8000/api/fee"
+      },
+      "response": []
+    },
+    {
+      "name": "Create invoice cash (paytype = 1) (users.CashAccno)",
+      "id": "36e9781f-910a-4b15-a844-c9e91e9e1550",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"userno\": 29,\r\n    \"Salesman\": 3,\r\n    \"Custno\": 3,\r\n    \"whno\": 202,\r\n    \"PayType\": 1,\r\n    \"Accno\": 1132003,\r\n    \"total\": 100,\r\n    \"notes\": \"this is a note\",\r\n    \"Items\": [\r\n        {\r\n            \"itemno\": \"F01\",\r\n            \"qty\":88\r\n        },\r\n        {\r\n            \"itemno\": \"P05\",\r\n            \"qty\":21\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://5.9.215.57/petrolnaas/public/api/invoice"
+      },
+      "response": []
+    },
+    {
+      "name": "Create invoice deferred (paytype = 3) (account.AccNo)",
+      "id": "70753839-1ba9-455f-bcf1-276cc7facfd5",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"userno\": 29,\r\n    \"Salesman\": 3,\r\n    \"Custno\": 1,\r\n    \"whno\": 202,\r\n    \"PayType\": 3,\r\n    \"Accno\": 1132003,\r\n    \"total\": 100,\r\n    \"notes\": \"this is a note\",\r\n    \"Items\": [\r\n        {\r\n            \"itemno\": \"F01\",\r\n            \"qty\":55\r\n        },\r\n        {\r\n            \"itemno\": \"002\",\r\n            \"qty\":2\r\n        },\r\n        {\r\n            \"itemno\": \"P05\",\r\n            \"qty\":7\r\n        },\r\n        {\r\n            \"itemno\": \"003\",\r\n            \"qty\":1\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "http://localhost:8000/api/invoice"
+      },
+      "response": []
+    },
+    {
+      "name": "Get invoices",
+      "id": "ebf3658a-9963-466e-83eb-c3b4c944d632",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=29&page=1",
+          "protocol": "http",
+          "host": ["5", "9", "215", "57"],
+          "path": ["petrolnaas", "public", "api", "invoice"],
+          "query": [
+            {
+              "key": "from",
+              "value": "2021-07-27",
+              "description": "SaleHeader.invdate",
+              "disabled": true
+            },
+            {
+              "key": "to",
+              "value": "2021-07-28",
+              "description": "SaleHeader.invdate",
+              "disabled": true
+            },
+            {
+              "key": "Custno",
+              "value": "3",
+              "disabled": true
+            },
+            {
+              "key": "Createduserno",
+              "value": "29"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get items",
+      "id": "e2cc193f-b319-4a08-a13e-0eb10c585a15",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://5.9.215.57/petrolnaas/public/api/items"
+      },
+      "response": []
+    },
+    {
+      "name": "Get items Copy",
+      "id": "ebc4a6d5-8bc4-436a-82f3-5fdd5ee8712f",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "http://localhost:8000/api/items"
+      },
+      "response": []
+    }
+  ]
+}

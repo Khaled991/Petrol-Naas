@@ -43,7 +43,7 @@ class InvoiceList extends StatelessWidget {
                   ),
                 ),
                 subtitle: Text(
-                  '$billNumber',
+                  billNumber,
                 ),
                 trailing: Text(date),
                 onTap: onTap,

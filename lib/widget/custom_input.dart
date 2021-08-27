@@ -124,11 +124,11 @@ class CustomInput extends StatelessWidget {
   }
 
   dynamic getInput(String type) {
-    if (type == 'white')
+    if (type == 'white') {
       return normalInput();
-    else if (type == 'password')
+    } else if (type == 'password') {
       return passwordInput();
-    else if (type == 'yellow') return yellowInput();
+    } else if (type == 'yellow') return yellowInput();
   }
 
   @override

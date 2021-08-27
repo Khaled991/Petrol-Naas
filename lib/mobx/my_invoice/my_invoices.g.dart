@@ -28,22 +28,22 @@ mixin _$MyInvoices on _MyInvoicesBase, Store {
       ActionController(name: '_MyInvoicesBase');
 
   @override
-  dynamic setMyInvoices(List<Invoice> value) {
+  dynamic jsonToInvoicesList(dynamic json) {
     final _$actionInfo = _$_MyInvoicesBaseActionController.startAction(
-        name: '_MyInvoicesBase.setMyInvoices');
+        name: '_MyInvoicesBase.jsonToInvoicesList');
     try {
-      return super.setMyInvoices(value);
+      return super.jsonToInvoicesList(json);
     } finally {
       _$_MyInvoicesBaseActionController.endAction(_$actionInfo);
     }
   }
 
   @override
-  dynamic jsonToInvoicesList(dynamic json) {
+  dynamic resetList() {
     final _$actionInfo = _$_MyInvoicesBaseActionController.startAction(
-        name: '_MyInvoicesBase.jsonToInvoicesList');
+        name: '_MyInvoicesBase.resetList');
     try {
-      return super.jsonToInvoicesList(json);
+      return super.resetList();
     } finally {
       _$_MyInvoicesBaseActionController.endAction(_$actionInfo);
     }

@@ -57,7 +57,7 @@ class InvoiceScreenHeader extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
-                  'دخال مبيعات',
+                  'فاتورة مبيعات',
                   style: TextStyle(
                     fontSize: 20.0,
                     color: darkColor,
@@ -67,20 +67,23 @@ class InvoiceScreenHeader extends StatelessWidget {
             ),
           ],
         ),
-        isColored
-            ? Image.asset(
-                'assets/images/logo.png',
-                width: 110,
-              )
-            : Padding(
-                padding: const EdgeInsets.only(left: 25.0),
-                child: SvgPicture.asset(
-                  'assets/images/Logo_greyscale.svg',
-                  semanticsLabel: 'Logo',
-                  width: 75,
-                ),
-              ),
+        Padding(
+          padding: const EdgeInsets.only(left: 25.0),
+          child: SvgPicture.asset(
+            'assets/images/Logo_greyscale.svg',
+            semanticsLabel: 'Logo',
+            width: 75,
+          ),
+        ),
       ],
     );
   }
 }
+
+
+// isColored
+//             ? Image.asset(
+//                 'assets/images/logo.png',
+//                 width: 110,
+//               )
+//             :

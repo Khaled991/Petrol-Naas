@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:petrol_naas/home/sign_in.dart';
+import 'package:petrol_naas/pages/sign_in/sign_in.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:provider/src/provider.dart';
-
-import '../constants.dart';
+import '../../constants.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({
@@ -51,7 +50,8 @@ class CustomDrawer extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20.0,
-                    overflow: TextOverflow.ellipsis,
+                    //TODO: enable overflow
+                    // overflow: TextOverflow.ellipsis,
                   ),
                 );
               }),

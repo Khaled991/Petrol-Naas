@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,31 +7,34 @@ import 'package:intl/intl.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/my_invoice/my_invoices.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
+import 'package:petrol_naas/models/customer.dart';
 import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/memorizable_state.dart';
+import 'package:petrol_naas/widget/snack_bars/bottom_sheet_snack_bar.dart';
 import 'package:provider/src/provider.dart';
 
 import '../constants.dart';
 import 'custom_button.dart';
 import 'custom_dropdown.dart';
 
-class InvoiceHeader extends StatefulWidget {
+class MyInvoicesScreenHeader extends StatefulWidget {
   final void Function(bool state) changeLoadingState;
-  const InvoiceHeader({
+  const MyInvoicesScreenHeader({
     required this.changeLoadingState,
     Key? key,
   }) : super(key: key);
 
   @override
-  State<InvoiceHeader> createState() => _InvoiceHeaderState();
+  State<MyInvoicesScreenHeader> createState() => _MyInvoicesScreenHeaderState();
 }
 
-class _InvoiceHeaderState extends State<InvoiceHeader> {
+class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
   final MemorizableState<String> _firstDate = MemorizableState();
   final MemorizableState<String> _lastDate = MemorizableState();
   final MemorizableState<String> _custNo = MemorizableState();
-  final MemorizableState<String> _cutName = MemorizableState();
+  final MemorizableState<Customer> _selectedCustomer = MemorizableState();
   bool isErrorInDate = false;
+  bool showNameFilterWidget = false;
 
   List<Invoice> prepareInvoiceList(dynamic invoiceList) {
     List<Invoice> invoices = List<Invoice>.from(
@@ -54,77 +56,81 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
       widget.changeLoadingState(true);
 
       String url =
-          'http://192.168.1.2/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}';
+          'http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}';
 
       if (hasDateFilter()) {
         url += "&from=${_firstDate.current}&to=${_lastDate.current}";
       }
-      if (hasNameFilter()) url += "&Custno=${_custNo.current}";
-      Response response = await Dio().get(
-        url,
-      );
+      if (hasNameFilter()) {
+        url += "&Custno=${_custNo.current}";
+        showNameFilterWidget = true;
+      }
 
+      Response response = await Dio().get(url);
       final storeMyInvoices = context.read<MyInvoices>();
       var jsonRespone = response.data;
       storeMyInvoices.jsonToInvoicesList(jsonRespone);
       widget.changeLoadingState(false);
-    } on DioError catch (e) {
-      print(e);
+    } on DioError {
       widget.changeLoadingState(false);
     }
   }
 
+  void onPressClearNameFilter() {
+    setState(() {
+      _custNo.resetState();
+      _selectedCustomer.resetState();
+      showNameFilterWidget = false;
+    });
+    getInvoices();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 15.0),
+          child: Text(
             'جميع الفواتير',
             style: TextStyle(
               color: darkColor,
-              fontSize: 18.0,
+              fontSize: 20.0,
             ),
           ),
-          Row(
-            children: [
-              if (hasDateFilter() && !isErrorInDate)
-                ClearFilter(
-                  onPressed: () {
-                    setState(() {
-                      _lastDate.resetState();
-                      _firstDate.resetState();
-                    });
-                    getInvoices();
-                  },
-                  title: 'التاريخ',
-                ),
-              SizedBox(width: 10),
-              if (hasNameFilter())
-                ClearFilter(
-                  onPressed: () {
-                    setState(() {
-                      _custNo.resetState();
-                      _cutName.resetState();
-                    });
-                    getInvoices();
-                  },
-                  title: 'اسم العميل',
-                ),
-              TextButton(
-                child: Icon(
-                  Icons.filter_alt_outlined,
-                  size: 33.0,
-                  color: primaryColor,
-                ),
-                onPressed: () => showFilterModal(context),
+        ),
+        Row(
+          children: [
+            if (hasDateFilter() && !isErrorInDate)
+              ClearFilter(
+                onPressed: () {
+                  setState(() {
+                    _lastDate.resetState();
+                    _firstDate.resetState();
+                  });
+                  getInvoices();
+                },
+                title: 'التاريخ',
               ),
-            ],
-          ),
-        ],
-      ),
+            SizedBox(width: 10),
+            if (showNameFilterWidget)
+              ClearFilter(
+                onPressed: onPressClearNameFilter,
+                title: 'اسم العميل',
+              ),
+            IconButton(
+              padding: EdgeInsets.all(0),
+              icon: Icon(
+                Icons.filter_alt_outlined,
+                size: 33.0,
+                color: primaryColor,
+              ),
+              onPressed: () => showFilterModal(context),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -139,13 +145,6 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
         Timer(const Duration(seconds: 3), () {
           setState(() => isErrorInDate = false);
         });
-
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text('التاريخ غير صحيح'),
-        //     behavior: SnackBarBehavior.floating,
-        //   ),
-        // );
         return;
       }
       _firstDate.pervious = _firstDate.current;
@@ -155,9 +154,26 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
     Navigator.pop(context);
   }
 
-  Future<void> showFilterModal(BuildContext context) {
-    print(isErrorInDate);
+  void saveCurrentCustomerInPerviousIfExists() {
+    if (_selectedCustomer.current != null && _custNo.current != null) {
+      _selectedCustomer.pervious = _selectedCustomer.current;
+      _custNo.pervious = _custNo.current;
+    }
+  }
 
+  void saveCurrentCustomer(customer) {
+    _selectedCustomer.current = customer;
+    _custNo.current = customer.accNo;
+  }
+
+  void setCustomerDropDownValue(customer) {
+    saveCurrentCustomerInPerviousIfExists();
+    setState(() {
+      saveCurrentCustomer(customer);
+    });
+  }
+
+  Future<void> showFilterModal(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
       isDismissible: false,
@@ -176,29 +192,16 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                     ),
                   ),
                   Divider(),
-                  // Observer(builder: (_) {
-                  //   final customersStore = context.watch<CustomerStore>();
-
-                  //   return SizedBox(
-                  //     width: double.infinity,
-                  //     child: CustomDropdown(
-                  //       dropdownValue: _cutName.current,
-                  //       itemsList: customersStore
-                  //           .getCustomersNames(customersStore.customers),
-                  //       text: 'اسم العميل',
-                  //       onChange: (int idx) {
-                  //         if (_cutName.current != null &&
-                  //             _custNo.current != null) {
-                  //           _cutName.pervious = _cutName.current;
-                  //           _custNo.pervious = _custNo.current;
-                  //         }
-                  //         _cutName.current =
-                  //             customersStore.customers[idx].accName;
-                  //         _custNo.current = customersStore.customers[idx].accNo;
-                  //       },
-                  //     ),
-                  //   );
-                  // }),
+                  Observer(builder: (_) {
+                    final customersStore = context.watch<CustomerStore>();
+                    return CustomDropdown<Customer>(
+                      elements: customersStore.customers,
+                      textProperty: 'AccName',
+                      label: 'اسم العميل',
+                      selectedValue: _selectedCustomer.current,
+                      onChanged: setCustomerDropDownValue,
+                    );
+                  }),
                   Divider(),
                   Text(
                     'اختر تاريخ',
@@ -312,7 +315,8 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                             _firstDate.current = _firstDate.pervious;
                             _lastDate.current = _lastDate.pervious;
                             _custNo.current = _custNo.pervious;
-                            _cutName.current = _cutName.pervious;
+                            _selectedCustomer.current =
+                                _selectedCustomer.pervious;
                             Navigator.pop(context);
                           },
                           text: 'إلغاء',
@@ -324,7 +328,7 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
                   if (isErrorInDate)
                     Positioned(
                       top: 0,
-                      child: SnackBar(
+                      child: BottomSheetSnackBar(
                         text:
                             'لا يمكن اختيار تاريخ نهاية المدة أصغر من تاريخ بداية المدة',
                       ),
@@ -335,30 +339,6 @@ class _InvoiceHeaderState extends State<InvoiceHeader> {
           },
         );
       },
-    );
-  }
-}
-
-class SnackBar extends StatelessWidget {
-  final String text;
-  const SnackBar({
-    Key? key,
-    required this.text,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: darkColor,
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      width: MediaQuery.of(context).size.width - 40.0,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child:
-            Text(text, style: TextStyle(color: Colors.white, fontSize: 14.0)),
-      ),
     );
   }
 }

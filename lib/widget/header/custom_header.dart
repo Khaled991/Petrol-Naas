@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../constants.dart';
-
 class CustomHeader extends StatelessWidget {
   final String title;
 
@@ -75,31 +73,34 @@ class HeaderShepe extends StatelessWidget {
           color: headerColor,
         ),
         child: Padding(
-          padding: const EdgeInsets.only(
-            right: 30.0,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 30.0,
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (_scaffoldKey != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 50.0),
-                  child: TextButton(
-                    onPressed: () => _scaffoldKey!.currentState!.openDrawer(),
-                    child: Image.asset(
-                      'assets/images/menu.png',
-                      width: 35.0,
-                    ),
+                TextButton(
+                  onPressed: () => _scaffoldKey!.currentState!.openDrawer(),
+                  child: Image.asset(
+                    'assets/images/menu.png',
+                    width: 35.0,
                   ),
                 ),
               if (title != null)
-                Text(
-                  title!,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 25.0,
+                Center(
+                  child: Text(
+                    title!,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25.0,
+                    ),
                   ),
                 ),
+              SizedBox(
+                width: 35.5,
+              ),
             ],
           ),
         ),

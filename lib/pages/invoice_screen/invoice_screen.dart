@@ -1,17 +1,22 @@
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
-import 'package:petrol_naas/widget/print.dart';
+import 'package:petrol_naas/widget/print/print.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
 import 'package:petrol_naas/widget/invoice_details_prices.dart';
 import 'package:petrol_naas/widget/invoice_screen_header.dart';
 import 'package:petrol_naas/widget/items_info.dart';
-import 'package:petrol_naas/widget/utils.dart';
-import 'package:petrol_naas/widget/widget_to_image.dart';
-import '../constants.dart';
+import 'package:petrol_naas/widget/invoice_image/utils.dart';
+import 'package:petrol_naas/widget/invoice_image/widget_to_image.dart';
+import '../../constants.dart';
+
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class InvoiceScreen extends StatefulWidget {
   final Widget? child;
@@ -20,7 +25,8 @@ class InvoiceScreen extends StatefulWidget {
   final double fee;
   final List<ViewInvoiceItem> items;
   final String customerName;
-
+  final String invNo;
+  final bool isConnected;
   const InvoiceScreen({
     Key? key,
     this.child,
@@ -29,6 +35,8 @@ class InvoiceScreen extends StatefulWidget {
     required this.fee,
     required this.items,
     required this.customerName,
+    required this.invNo,
+    required this.isConnected,
   }) : super(key: key);
 
   @override
@@ -41,22 +49,52 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   GlobalKey? key;
   Uint8List? bytes;
   bool isCaptured = false;
-  String? invNo;
-
   late Print thermalPrint;
 
   @override
   void initState() {
-    getLastInvNo();
     getTafqeet();
     super.initState();
     thermalPrint = Print();
   }
 
-  Future<Uint8List> capture(key) async {
+  Future<void> capture(key) async {
     isCaptured = true;
-    final bytes = await Utils.capture(key);
-    return bytes;
+    bytes = await Utils.capture(key);
+  }
+
+  Future<Map<String, double>> getPrintDimensions() async {
+    final codec = await instantiateImageCodec(bytes!);
+    final frameInfo = await codec.getNextFrame();
+    final currentWidth = frameInfo.image.width;
+    final currentHeight = frameInfo.image.height;
+    final double ratio = currentHeight / currentWidth;
+    const double newWidth = 300.0;
+    final double newHeight = newWidth * ratio;
+    return <String, double>{"width": newWidth, "height": newHeight};
+  }
+
+  printPDF() async {
+    final doc = pw.Document();
+    final image = pw.MemoryImage(bytes!);
+    final paperDimensions = await getPrintDimensions();
+
+    final String imageFileName =
+        'فاتورة ${widget.customerName}${DateTime.now()}.pdf'
+            .replaceAll(" ", "-");
+
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(
+            paperDimensions["width"]!, paperDimensions["height"]!),
+        build: (pw.Context context) {
+          return pw.Center(
+            child: pw.Image(image),
+          );
+        },
+      ),
+    );
+    await Printing.sharePdf(bytes: await doc.save(), filename: imageFileName);
   }
 
   void getTafqeet() async {
@@ -79,28 +117,33 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       Timer(
         const Duration(seconds: 1),
         () async {
-          if (isCaptured == false && priceText != '') {
-            final imgBytes = await capture(key);
-            thermalPrint.print(imgBytes);
-          }
+          await capture(key);
+          printPDF();
         },
       );
     } catch (e) {
-      print(e);
+      // print(e);
     }
   }
 
-  Future<void> getLastInvNo() async {
-    Response response =
-        await Dio().get("http://192.168.1.2/petrolnaas/public/api/last-invno");
-    invNo = response.data.toString();
-  }
-
   final String today = DateFormat("dd-MM-yyyy").format(DateTime.now());
+
   //TODO: Timezone Soudia arabia +3
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('الفاتورة'),
+        centerTitle: true,
+        backgroundColor: Colors.grey[50],
+        shadowColor: Color(0x003d3d3d),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: printPDF,
+          )
+        ],
+      ),
       body: WidgetToImage(
         builder: (key) {
           this.key = key;
@@ -116,7 +159,6 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                         children: [
                           InvoiceScreenHeader(
                             taxNo: '3004687955200002',
-                            isColored: false,
                           ),
                           SizedBox(
                             height: 20.0,
@@ -125,7 +167,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'الرقم : ' + (invNo ?? ""),
+                                'الرقم : ${widget.invNo}',
                                 style: TextStyle(
                                   fontSize: 19.0,
                                   color: darkColor,
@@ -154,6 +196,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           ItemsInfoTable(
                             items: widget.items,
                           ),
+                          SizedBox(height: 5),
                           Divider(
                             height: 2,
                             color: darkColor,
@@ -175,7 +218,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             tittle: 'ضريبة القيمة المضافة',
                           ),
                           InvoiceDetailsPrices(
-                            price: widget.finalPrice.toString(),
+                            price: (widget.finalPrice + widget.fee).toString(),
                             tittle: 'قيمة الفاتورة',
                           ),
                           Text(

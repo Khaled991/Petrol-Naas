@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants.dart';
+import '../../constants.dart';
 import 'background.dart';
 
 class SplashScreenStyle extends StatelessWidget {
@@ -7,7 +7,7 @@ class SplashScreenStyle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Background(
+    return SplashBackground(
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +23,6 @@ class SplashScreenStyle extends StatelessWidget {
                 style: TextStyle(
                   color: secondaryColor,
                   fontSize: 25.0,
-                  fontFamily: 'Changa',
                 ),
               ),
             ),

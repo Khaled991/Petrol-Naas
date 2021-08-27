@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/models/invoice.dart';
@@ -5,10 +8,16 @@ import 'package:petrol_naas/models/invoice_details.dart';
 import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
 import 'package:petrol_naas/widget/invoice_details_prices.dart';
+import 'package:petrol_naas/widget/invoice_image/utils.dart';
+import 'package:petrol_naas/widget/invoice_image/widget_to_image.dart';
 import 'package:petrol_naas/widget/invoice_screen_header.dart';
 import 'package:petrol_naas/widget/items_info.dart';
-import 'package:petrol_naas/widget/widget_to_image.dart';
-import '../constants.dart';
+import 'package:petrol_naas/widget/print/print.dart';
+import '../../constants.dart';
+
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class MyInvoiceInfo extends StatefulWidget {
   final String invno;
@@ -27,27 +36,96 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   bool isCaptured = false;
   Invoice? invoice;
   bool isLoading = true;
+  bool isConnected = false;
+  late Print thermalPrint;
+  GlobalKey? key;
+  Uint8List? bytes;
+  List<ViewInvoiceItem> itemsListForView = [];
 
   void changeLoadingState(bool state) => setState(() => isLoading = state);
+
   @override
   void initState() {
     super.initState();
     getInvoiceData();
+    thermalPrint = Print();
+  }
+
+  void prepareItemsListForView() {
+    itemsListForView = invoice?.details!.map((InvoiceDetails invoiceDetails) {
+          return ViewInvoiceItem(
+            itemDesc: invoiceDetails.itemDesc,
+            sellPrice: double.parse(
+              invoiceDetails.unitPrice!,
+            ),
+            qty: invoiceDetails.qty! + invoiceDetails.freeQty!,
+            freeItemsQty: Item.calcFreeQty(
+              qty: invoiceDetails.qty!,
+              promotionQtyFree: invoiceDetails.promotionQtyFree!,
+              promotionQtyReq: invoiceDetails.promotionQtyReq!,
+            ),
+          );
+        }).toList() ??
+        [];
+  }
+
+  Future<void> capture() async {
+    if (isCaptured) return;
+    isCaptured = true;
+    bytes = await Utils.capture(key);
+  }
+
+  Future<Map<String, double>> getPrintDimensions() async {
+    final codec = await instantiateImageCodec(bytes!);
+    final frameInfo = await codec.getNextFrame();
+    final currentWidth = frameInfo.image.width;
+    final currentHeight = frameInfo.image.height;
+    final double ratio = currentHeight / currentWidth;
+    const double newWidth = 300.0;
+    final double newHeight = newWidth * ratio;
+    return <String, double>{"width": newWidth, "height": newHeight};
+  }
+
+  printPDF() async {
+    final pw.Document doc = pw.Document();
+    final pw.MemoryImage image = pw.MemoryImage(bytes!);
+    final Map<String, double> paperDimensions = await getPrintDimensions();
+
+    final String imageFileName =
+        'فاتورة ${invoice?.header!.custName! ?? ""}${DateTime.now()}.pdf'
+            .replaceAll("/", "-");
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(
+            paperDimensions["width"]!, paperDimensions["height"]!),
+        build: (pw.Context context) {
+          return pw.Center(
+            child: pw.Image(image),
+          );
+        },
+      ),
+    );
+    await Printing.sharePdf(bytes: await doc.save(), filename: imageFileName);
+  }
+
+  void changePrinterConnection(bool state) {
+    setState(() {
+      isConnected = state;
+    });
   }
 
   void getInvoiceData() async {
     try {
       changeLoadingState(true);
       final String url =
-          "http://192.168.1.2/petrolnaas/public/api/invoice/${widget.invno}";
-
+          "http://5.9.215.57/petrolnaas/public/api/invoice/${widget.invno}";
       Response response = await Dio().get(url);
       final jsonResponse = response.data;
       invoice = Invoice.fromJson(jsonResponse);
-      print(invoice);
       getTafqeet(invoice!.header!.totAfterVat!);
+      prepareItemsListForView();
     } catch (e) {
-      print(e);
+      // print(e);
     }
   }
 
@@ -68,8 +146,13 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
         this.priceText = priceText;
       });
       changeLoadingState(false);
+      Timer(
+        const Duration(seconds: 1),
+        () async {
+          await capture();
+        },
+      );
     } catch (e) {
-      print(e);
       changeLoadingState(false);
     }
   }
@@ -77,31 +160,33 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('الفاتورة'),
-          centerTitle: true,
-          backgroundColor: Colors.grey[50],
-          shadowColor: Color(0x003d3d3d),
-        ),
-        body: isLoading
-            ? Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
-                ),
-              )
-            : SafeArea(
-                child: Container(
-                  color: Colors.grey[50],
-                  child: ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Divider(
-                          height: 2,
-                          color: darkColor,
-                        ),
-                      ),
-                      Padding(
+      appBar: AppBar(
+        title: Text('الفاتورة'),
+        centerTitle: true,
+        backgroundColor: Colors.grey[50],
+        shadowColor: Color(0x003d3d3d),
+        actions: [
+          if (isCaptured)
+            IconButton(
+              icon: Icon(Icons.share),
+              onPressed: printPDF,
+            )
+        ],
+      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
+              ),
+            )
+          : SafeArea(
+              child: Container(
+                color: Colors.grey[50],
+                child: ListView(
+                  children: [
+                    WidgetToImage(builder: (key) {
+                      this.key = key;
+                      return Padding(
                         padding: const EdgeInsets.all(10.0),
                         child: Column(
                           children: [
@@ -147,29 +232,9 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                   height: 2,
                                   color: darkColor,
                                 ),
-                                ItemsInfoTable(
-                                    items: invoice?.details!.map(
-                                            (InvoiceDetails invoiceDetails) {
-                                          print("invoiceDetails");
-                                          print(invoiceDetails);
-                                          return ViewInvoiceItem(
-                                            itemDesc: invoiceDetails.itemDesc,
-                                            sellPrice: double.parse(
-                                              invoiceDetails.unitPrice!,
-                                            ),
-                                            qty: invoiceDetails.qty,
-                                            freeItemsQty: Item.calcFreeQty(
-                                              qty: invoiceDetails.qty!,
-                                              promotionQtyFree: invoiceDetails
-                                                  .promotionQtyFree!,
-                                              promotionQtyReq: invoiceDetails
-                                                  .promotionQtyReq!,
-                                            ),
-                                          );
-                                        }).toList() ??
-                                        []),
+                                ItemsInfoTable(items: itemsListForView),
                                 Divider(
-                                  height: 2,
+                                  height: 20,
                                   color: darkColor,
                                 ),
                                 InvoiceDetailsPrices(
@@ -194,8 +259,10 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                 ),
                                 Text(
                                   (priceText ?? "") + " فقط لا غير",
-                                  style:
-                                      TextStyle(color: darkColor, fontSize: 17),
+                                  style: TextStyle(
+                                    color: darkColor,
+                                    fontSize: 17,
+                                  ),
                                 ),
                                 Text(
                                   'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
@@ -207,10 +274,19 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
+                      );
+                    }),
+                    // CustomButton(
+                    //   text: 'طباعة الفاتورة',
+                    //   buttonColors: primaryColor,
+                    //   textColors: Colors.white,
+                    //   icon: Icons.print,
+                    //   onPressed: () => onPressPrint,
+                    // ),
+                  ],
                 ),
-              ));
+              ),
+            ),
+    );
   }
 }

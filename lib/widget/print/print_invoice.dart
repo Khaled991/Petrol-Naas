@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:flutter/services.dart';
-import 'package:petrol_naas/components/custom_button.dart';
-import 'package:petrol_naas/components/show_snack_bar.dart';
+import 'package:petrol_naas/widget/custom_button.dart';
+import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 
-import '../constants.dart';
+import '../../constants.dart';
 
 class PrintInvoice extends StatefulWidget {
   final bool connected;
-  const PrintInvoice(this.connected);
+  final void Function(bool state) changePrinterConnection;
+  const PrintInvoice(this.connected, this.changePrinterConnection);
   @override
   _PrintInvoiceState createState() => _PrintInvoiceState();
 }
@@ -48,23 +49,22 @@ class _PrintInvoiceState extends State<PrintInvoice> {
     try {
       devices = await bluetooth.getBondedDevices();
     } on PlatformException {
-      // TODO - Error
+      ShowSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
     }
 
     bluetooth.onStateChanged().listen((state) {
       switch (state) {
         case BlueThermalPrinter.CONNECTED:
           setState(() {
-            _connected = true;
+            widget.changePrinterConnection(true);
           });
           break;
         case BlueThermalPrinter.DISCONNECTED:
           setState(() {
-            _connected = false;
+            widget.changePrinterConnection(false);
           });
           break;
         default:
-          print(state);
           break;
       }
     });
@@ -154,7 +154,7 @@ class _PrintInvoiceState extends State<PrintInvoice> {
               child: CustomButton(
                 buttonColors: _connected ? redColor : greenColor,
                 textColors: Colors.white,
-                text: _connected ? 'قطع الاتصال بالطابعة' : 'اتصال بالطابعة',
+                text: _connected ? 'فصل الطابعة' : 'اتصال بالطابعة',
                 onPressed: _connected ? _disconnect : _connect,
               ),
             ),
@@ -181,12 +181,12 @@ class _PrintInvoiceState extends State<PrintInvoice> {
         child: Text('اختر طابعة'),
       ));
     } else {
-      _devices.forEach((device) {
+      for (var device in _devices) {
         items.add(DropdownMenuItem(
           child: Text(device.name ?? ""),
           value: device,
         ));
-      });
+      }
     }
     return items;
   }

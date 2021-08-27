@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:petrol_naas/components/custom_drawer.dart';
-import 'package:petrol_naas/components/custom_header.dart';
-import 'package:petrol_naas/home/home_body.dart';
-import 'my_invoices_screen.dart';
+import 'package:petrol_naas/widget/header/custom_drawer.dart';
+import 'package:petrol_naas/widget/header/custom_header.dart';
+import 'package:petrol_naas/pages/add_invoice/add_invoice.dart';
+import '../my_invoice_screen/my_invoices_screen.dart';
 
 class NavigationsScreen extends StatefulWidget {
   final Widget? child;
@@ -15,7 +15,7 @@ class NavigationsScreen extends StatefulWidget {
 class _NavigationsScreenState extends State<NavigationsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _currentScreenIdx;
-  List<Widget> bodies = [HomeBody(), MyInvoicesScreen()];
+  List<Widget> bodies = [AddInvoice(), MyInvoicesScreen()];
   List<String> headerTitles = ["إضافة فاتورة", "الفواتير"];
 
   @override
@@ -47,10 +47,7 @@ class _NavigationsScreenState extends State<NavigationsScreen> {
             title: _getTitle(),
           ),
           Expanded(
-            child: Container(
-              // color: Colors.white,
-              child: _getBody(),
-            ),
+            child: _getBody(),
           ),
         ],
       ),

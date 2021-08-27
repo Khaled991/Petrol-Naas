@@ -7,8 +7,8 @@ class MemorizableState<T> {
   });
 
   resetState() {
-    this.pervious = null;
-    this.current = null;
+    pervious = null;
+    current = null;
   }
 
   @override
