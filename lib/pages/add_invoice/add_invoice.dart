@@ -1,15 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:petrol_naas/widget/custom_button.dart';
-import 'package:petrol_naas/widget/custom_dropdown.dart';
-import 'package:petrol_naas/widget/custom_input.dart';
-import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.dart';
-import 'package:petrol_naas/widget/add_invoice_widget/invoice_details.dart';
-import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
+import 'package:provider/src/provider.dart';
+
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/items/items.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
@@ -18,8 +15,14 @@ import 'package:petrol_naas/models/customer.dart';
 import 'package:petrol_naas/models/invoice_item.dart';
 import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
+import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.dart';
+import 'package:petrol_naas/widget/add_invoice_widget/invoice_details.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/invoice_item_table.dart';
-import 'package:provider/src/provider.dart';
+import 'package:petrol_naas/widget/custom_button.dart';
+import 'package:petrol_naas/widget/custom_dropdown.dart';
+import 'package:petrol_naas/widget/custom_input.dart';
+import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
+
 import '../../constants.dart';
 import '../invoice_screen/invoice_screen.dart';
 
@@ -32,6 +35,63 @@ class AddInvoice extends StatefulWidget {
   State<AddInvoice> createState() => _AddInvoiceState();
 }
 
+// class Acsacsav {
+//   String? invNo;
+//   double total = 0.0;
+//   double vat = 0.0;
+//   double totalPlusVat = 0.0;
+//   double? fee;
+//   late List<InvoiceItem> items;
+
+//   Acsacsav(InvoiceItem item) {
+//     getFee();
+//     addItem(item);
+//     calculateTotalAndVatAndFinalPrice();
+//   }
+
+//   Future<void> getFee() async {
+//     try {
+//       Response response = await Dio().get(
+//         'http://5.9.215.57/petrolnaas/public/api/fee',
+//       );
+//       final double fee = double.parse(response.data) / 100.0;
+//       this.fee = fee;
+//     } on DioError {
+//       print('حدث خطأ ما اثناء الحصول علي الضريبة، الرجاء التواصل مع الادارة');
+//     }
+//   }
+
+//   addItem(InvoiceItem item) {
+//     items.add(item);
+//   }
+
+//   removeItem(InvoiceItem item) {
+//     items.remove(item);
+//   }
+
+//   void calculateTotalAndVatAndFinalPrice() {
+//     total = calculateNewTotal();
+//     vat = getVat();
+//     totalPlusVat = total + vat;
+//   }
+
+//   double calculateNewTotal() {
+//     double total = 0.0;
+//     for (int i = 0; i < items.length; i++) {
+//       InvoiceItem item = items[i];
+//       double sellPrice = item.price!;
+//       int qty = item.qty!;
+//       total += sellPrice * qty.toDouble();
+//     }
+
+//     return total;
+//   }
+
+//   double getVat() {
+//     double vatAmount = fee! * total;
+//     return vatAmount;
+//   }
+// }
 class _AddInvoiceState extends State<AddInvoice> {
   CreateInvoice createInvoice = CreateInvoice();
   InvoiceItem invoiceItem = InvoiceItem();
@@ -44,6 +104,9 @@ class _AddInvoiceState extends State<AddInvoice> {
   Customer? _selectedCustomer;
   Item? _selectedItem;
   String? invNo;
+  double _total = 0.0;
+  double _vat = 0.0;
+  double _totalPlusVat = 0.0;
 
   late TextEditingController qtyController;
   late TextEditingController noteController;
@@ -78,6 +141,7 @@ class _AddInvoiceState extends State<AddInvoice> {
       Response response = await Dio().get(
         'http://5.9.215.57/petrolnaas/public/api/customer?Salesman=$salesman',
       );
+      if (!mounted) return;
       var jsonRespone = response.data;
       final customersStore = context.read<CustomerStore>();
 
@@ -153,6 +217,7 @@ class _AddInvoiceState extends State<AddInvoice> {
     addQtyFromTextFieldToObject();
     addCurrentItemToCreateInvoiceObj();
     calculateTotalAndVatAndFinalPrice();
+    addItemToViewInvoiceItemsList(_selectedItem!);
 
     qtyController.text = '';
     setState(() {
@@ -166,23 +231,15 @@ class _AddInvoiceState extends State<AddInvoice> {
     createInvoice.custno = customer.accNo!;
   }
 
-  double _total = 0.0;
-  double _vat = 0.0;
-  double _totalPlusVat = 0.0;
-
   double calculateNewTotal() {
     if (createInvoice.items == null) return 0.0;
     List<InvoiceItem> items = createInvoice.items!;
     double total = 0.0;
-
     for (int i = 0; i < items.length; i++) {
       InvoiceItem item = items[i];
       double sellPrice = item.price!;
       int qty = item.qty!;
       total += sellPrice * qty.toDouble();
-
-      bool isLastItem = i == items.length - 1;
-      if (isLastItem) addItemToViewInvoiceItemsList(_selectedItem!);
     }
 
     return total;
@@ -351,8 +408,10 @@ class _AddInvoiceState extends State<AddInvoice> {
         ),
       ),
     );
+
     Timer(const Duration(seconds: 4), () {
       resetData();
+      FocusScope.of(context).requestFocus(FocusNode()); //dismiss keyboard
     });
   }
 
@@ -391,17 +450,21 @@ class _AddInvoiceState extends State<AddInvoice> {
     calculateTotalAndVatAndFinalPrice();
   }
 
+  Widget _customloading() {
+    return Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         color: Colors.white,
         child: isLoading
-            ? Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
-                ),
-              )
+            ? _customloading()
             : ListView(
                 controller: scrollController,
                 padding: EdgeInsets.all(0),
