@@ -135,6 +135,9 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
   }
 
   void onPressFilter(StateSetter setState) {
+    final invoicesStore = context.read<MyInvoices>();
+    invoicesStore.resetList();
+
     if (hasDateFilter()) {
       DateTime from = DateTime.parse(_firstDate.current!);
       DateTime to = DateTime.parse(_lastDate.current!);

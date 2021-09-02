@@ -1,5 +1,5 @@
 class InvoiceDetails {
-  String? invno;
+  String? itemno;
   int? qty;
   String? unitPrice;
   String? itemDesc;
@@ -9,7 +9,7 @@ class InvoiceDetails {
   int? freeQty;
 
   InvoiceDetails({
-    this.invno,
+    this.itemno,
     this.qty,
     this.unitPrice,
     this.itemDesc,
@@ -21,11 +21,11 @@ class InvoiceDetails {
 
   @override
   String toString() {
-    return 'Details(invno: $invno, qty: $qty, unitPrice: $unitPrice, itemDesc: $itemDesc, promotionQtyReq: $promotionQtyReq, promotionQtyFree: $promotionQtyFree, totalPrice: $totalPrice, freeQty: $freeQty)';
+    return 'Details(itemno: $itemno, qty: $qty, unitPrice: $unitPrice, itemDesc: $itemDesc, promotionQtyReq: $promotionQtyReq, promotionQtyFree: $promotionQtyFree, totalPrice: $totalPrice, freeQty: $freeQty)';
   }
 
   factory InvoiceDetails.fromJson(Map<String, dynamic> json) => InvoiceDetails(
-        invno: json['Invno'] as String?,
+        itemno: json['itemno'] as String?,
         qty: json['QTY'] as int?,
         unitPrice: json['unitPrice'] as String?,
         itemDesc: json['itemDesc'] as String?,
@@ -36,7 +36,7 @@ class InvoiceDetails {
       );
 
   Map<String, dynamic> toJson() => {
-        'Invno': invno,
+        'itemno': itemno,
         'QTY': qty,
         'unitPrice': unitPrice,
         'itemDesc': itemDesc,
@@ -47,7 +47,7 @@ class InvoiceDetails {
       };
 
   InvoiceDetails copyWith({
-    String? invno,
+    String? itemno,
     int? qty,
     String? unitPrice,
     String? itemDesc,
@@ -57,7 +57,7 @@ class InvoiceDetails {
     int? freeQty,
   }) {
     return InvoiceDetails(
-      invno: invno ?? this.invno,
+      itemno: itemno ?? this.itemno,
       qty: qty ?? this.qty,
       unitPrice: unitPrice ?? this.unitPrice,
       itemDesc: itemDesc ?? this.itemDesc,

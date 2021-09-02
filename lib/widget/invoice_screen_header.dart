@@ -57,7 +57,7 @@ class InvoiceScreenHeader extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
-                  'فاتورة مبيعات',
+                  'فاتورة مبيعات ضريبية',
                   style: TextStyle(
                     fontSize: 20.0,
                     color: darkColor,

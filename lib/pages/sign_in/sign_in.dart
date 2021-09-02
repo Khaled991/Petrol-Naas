@@ -6,6 +6,7 @@ import 'package:petrol_naas/widget/custom_input.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/user.dart';
 import 'package:petrol_naas/models/user_sign_in.dart';
+import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 import 'package:provider/src/provider.dart';
 import '../../constants.dart';
 import '../home/navigations_screen.dart';
@@ -27,20 +28,27 @@ class _SignInState extends State<SignIn> {
 
   UserSignIn signInData = UserSignIn();
 
+  void onPressSignIn() async {
+    signInData.userNo = userNoController.text;
+    signInData.userPwd = passwordController.text;
+
+    if (signInData.userNo == '') {
+      ShowSnackBar(context, 'الرجاء ادخال رقم المندوب');
+      return;
+    } else if (signInData.userPwd == '') {
+      ShowSnackBar(context, 'الرجاء ادخال كلمة المرور');
+      return;
+    }
+    bool isValid = await fetchSignIn();
+    if (isValid) navigateToUserScreens();
+  }
+
   void navigateToUserScreens() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => NavigationsScreen(),
       ),
     );
-  }
-
-  void onPressSignIn() async {
-    signInData.userNo = userNoController.text;
-    signInData.userPwd = passwordController.text;
-
-    bool isValid = await fetchSignIn();
-    if (isValid) navigateToUserScreens();
   }
 
   Future<bool> fetchSignIn() async {
@@ -55,11 +63,7 @@ class _SignInState extends State<SignIn> {
       return true;
     } on DioError catch (e) {
       if (e.response?.statusCode == 400) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.response!.data['message']),
-          ),
-        );
+        ShowSnackBar(context, 'البيانات غير صحيحة');
       }
       return false;
     }
@@ -179,6 +183,7 @@ class _SignInState extends State<SignIn> {
                                 hintText: 'رقم المندوب',
                                 type: 'white',
                                 controller: userNoController,
+                                keyboardType: TextInputType.number,
                               ),
                             ),
                             CustomInput(

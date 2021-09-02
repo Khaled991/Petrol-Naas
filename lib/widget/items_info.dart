@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
 
+import '../constants.dart';
+
 class ItemsInfoTable extends StatefulWidget {
   final List<ViewInvoiceItem> items;
 
@@ -16,31 +18,63 @@ class ItemsInfoTable extends StatefulWidget {
 class _ItemsInfoTableState extends State<ItemsInfoTable> {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        horizontalMargin: 10.0,
-        columns: [
-          DataColumn(label: Text('الاجمالي')),
-          DataColumn(label: Text('سعر')),
-          DataColumn(label: Text('الكمية')),
-          DataColumn(label: Text('القطع المجانية')),
-          DataColumn(label: Text('اسم الصنف')),
-        ],
-        rows: widget.items
-            .map(
-              (ViewInvoiceItem item) => DataRow(
-                cells: [
-                  DataCell(Text((item.sellPrice! * item.qty!).toString())),
-                  DataCell(Text(item.sellPrice.toString())),
-                  DataCell(Text((item.qty! + item.freeItemsQty!).toString())),
-                  DataCell(Text((item.freeItemsQty!).toString())),
-                  DataCell(Text(item.itemDesc!)),
+    return Column(
+      children: widget.items
+          .map((ViewInvoiceItem item) => Column(
+                children: [
+                  Table(
+                    contentText: item.itemno!,
+                    title: 'رقم الصنف',
+                  ),
+                  Table(
+                    contentText: item.itemDesc!,
+                    title: 'اسم الصنف',
+                  ),
+                  Table(
+                    contentText: item.sellPrice.toString(),
+                    title: 'سعر',
+                  ),
+                  Table(
+                    contentText: (item.qty! + item.freeItemsQty!).toString(),
+                    title: 'الكمية',
+                  ),
+                  Table(
+                    contentText: (item.freeItemsQty!).toString(),
+                    title: 'القطع المجانية',
+                  ),
+                  Table(
+                    contentText: (item.sellPrice! * item.qty!).toString(),
+                    title: 'الاجمالي',
+                  ),
+                  Divider(
+                    height: 20.0,
+                    color: darkColor,
+                    thickness: 2.0,
+                  ),
                 ],
-              ),
-            )
-            .toList(),
-      ),
+              ))
+          .toList(),
+    );
+  }
+}
+
+class Table extends StatelessWidget {
+  final String title;
+  final String contentText;
+  const Table({
+    Key? key,
+    required this.title,
+    required this.contentText,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title),
+        Text(contentText),
+      ],
     );
   }
 }

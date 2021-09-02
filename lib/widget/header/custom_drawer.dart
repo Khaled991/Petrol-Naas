@@ -29,7 +29,6 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = context.watch<UserStore>();
-
     return SafeArea(
       child: Drawer(
         child: Column(
@@ -69,6 +68,7 @@ class CustomDrawer extends StatelessWidget {
                 Navigator.of(context).pop();
               },
             ), //_buildDrawerOption
+
             _buildDrawerOption(
               Icon(
                 Icons.receipt_outlined,

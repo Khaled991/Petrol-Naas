@@ -6,7 +6,6 @@ import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'widget/splash_screen/splash_screen.dart';
 import 'constants.dart';
 import 'mobx/items/items.dart';
-import 'mobx/my_invoice/my_invoices.dart';
 import 'mobx/user/user.dart';
 
 void main() {
@@ -19,7 +18,6 @@ class MyApp extends StatelessWidget {
   final _userStore = UserStore();
   final _customersStore = CustomerStore();
   final _itemsStore = ItemsStore();
-  final _myInvoices = MyInvoices();
   MyApp({
     Key? key,
   }) : super(key: key);
@@ -31,7 +29,6 @@ class MyApp extends StatelessWidget {
         Provider<UserStore>(create: (_) => _userStore),
         Provider<CustomerStore>(create: (_) => _customersStore),
         Provider<ItemsStore>(create: (_) => _itemsStore),
-        Provider<MyInvoices>(create: (_) => _myInvoices),
       ],
       child: MaterialApp(
         title: 'Petrol Naas',

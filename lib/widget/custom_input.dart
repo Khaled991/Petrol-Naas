@@ -20,6 +20,7 @@ class CustomInput extends StatelessWidget {
         fontSize: 17,
         color: Colors.white,
       ),
+      keyboardType: keyboardType,
       controller: controller,
       decoration: InputDecoration(
         hintStyle: TextStyle(fontSize: 18.0, color: Colors.white70),
@@ -53,6 +54,7 @@ class CustomInput extends StatelessWidget {
         fontSize: 17,
         color: Colors.white,
       ),
+      keyboardType: keyboardType,
       controller: controller,
       decoration: InputDecoration(
         hintStyle: TextStyle(fontSize: 18.0, color: Colors.white70),
