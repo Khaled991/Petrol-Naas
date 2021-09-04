@@ -227,8 +227,6 @@ class _AddInvoiceState extends State<AddInvoice> {
       return ShowSnackBar(
           context, 'لا يمكن اضافة عنصر غير مجاني ولم يحدد له ثمن بعد');
 
-    // if()
-
     addQtyFromTextFieldToObject();
     addCurrentItemToCreateInvoiceObj();
     calculateTotalAndVatAndFinalPrice();
