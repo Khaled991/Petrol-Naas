@@ -1,64 +1,72 @@
 class Item {
   String? itemno;
   String? itemDesc;
-  double? sellPrice1;
+  double? sellPrice;
   double? avgCost;
   String? itemProd;
   int? promotionQtyReq;
   int? promotionQtyFree;
+  bool? isFree;
 
   Item({
     this.itemno,
     this.itemDesc,
-    this.sellPrice1,
+    this.sellPrice,
     this.avgCost,
     this.itemProd,
     this.promotionQtyReq,
     this.promotionQtyFree,
+    this.isFree,
   });
 
   @override
   String toString() {
-    return 'Items(itemno: $itemno, itemDesc: $itemDesc, sellPrice1: $sellPrice1, avgCost: $avgCost, itemProd: $itemProd, promotionQtyReq: $promotionQtyReq, promotionQtyFree: $promotionQtyFree)';
+    return 'Items(itemno: $itemno, itemDesc: $itemDesc, sellPrice: $sellPrice, avgCost: $avgCost, itemProd: $itemProd, promotionQtyReq: $promotionQtyReq, promotionQtyFree: $promotionQtyFree), isFree: $isFree';
   }
 
-  factory Item.fromJson(Map<String, dynamic> json) => Item(
-        itemno: json['itemno'] as String?,
-        itemDesc: json['itemDesc'] as String?,
-        sellPrice1: json['SellPrice1']?.toDouble() ?? 0.0,
-        avgCost: json['AvgCost']?.toDouble() ?? 0.0,
-        itemProd: json['ItemProd'] as String?,
-        promotionQtyReq: json['PromotionQtyReq'].toInt(),
-        promotionQtyFree: json['PromotionQtyFree'].toInt(),
-      );
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      itemno: json['itemno'] as String?,
+      itemDesc: json['itemDesc'] as String?,
+      sellPrice: double.parse(json['sellPrice']),
+      avgCost: json['AvgCost']?.toDouble() ?? 0.0,
+      itemProd: json['ItemProd'] as String?,
+      promotionQtyReq: json['PromotionQtyReq'].toInt(),
+      promotionQtyFree: json['PromotionQtyFree'].toInt(),
+      isFree: json['isFree'] == '1',
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'itemno': itemno,
         'itemDesc': itemDesc,
-        'SellPrice1': sellPrice1,
+        'SellPrice': sellPrice,
         'AvgCost': avgCost,
         'ItemProd': itemProd,
         'PromotionQtyReq': promotionQtyReq,
         'PromotionQtyFree': promotionQtyFree,
+        'isFree': isFree,
       };
 
   Item copyWith({
     String? itemno,
     String? itemDesc,
-    double? sellPrice1,
+    double? sellPrice,
     double? avgCost,
     String? itemProd,
     int? promotionQtyReq,
     int? promotionQtyFree,
+    bool? isFree,
   }) {
     return Item(
       itemno: itemno ?? this.itemno,
       itemDesc: itemDesc ?? this.itemDesc,
-      sellPrice1: sellPrice1 ?? this.sellPrice1,
+      sellPrice: sellPrice ?? this.sellPrice,
       avgCost: avgCost ?? this.avgCost,
       itemProd: itemProd ?? this.itemProd,
       promotionQtyReq: promotionQtyReq ?? this.promotionQtyReq,
       promotionQtyFree: promotionQtyFree ?? this.promotionQtyFree,
+      isFree: isFree ?? this.isFree,
     );
   }
 

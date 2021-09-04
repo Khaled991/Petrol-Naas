@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../constants.dart';
 
 class CustomDropdown<T> extends StatelessWidget {
-  final String? textProperty;
+  final dynamic textProperty;
   late final List<T> elements;
   late String label;
   T? selectedValue;
@@ -31,6 +31,11 @@ class CustomDropdown<T> extends StatelessWidget {
 
         if (textProperty == null) {
           displayedText = element.toString();
+        } else if (textProperty is List<String>) {
+          displayedText = textProperty
+              .map((String property) => element.toJson()[property])
+              .join(": ")
+              .toString();
         } else {
           displayedText = element.toJson()[textProperty].toString();
         }

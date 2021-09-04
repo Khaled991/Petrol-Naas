@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:mobx/mobx.dart';
 import 'package:provider/provider.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'widget/splash_screen/splash_screen.dart';
@@ -9,8 +8,6 @@ import 'mobx/items/items.dart';
 import 'mobx/user/user.dart';
 
 void main() {
-  // ignore: avoid_print
-  mainContext.spy(print);
   runApp(MyApp());
 }
 

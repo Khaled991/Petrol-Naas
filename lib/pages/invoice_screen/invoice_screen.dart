@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
@@ -28,7 +27,12 @@ class InvoiceScreen extends StatefulWidget {
   final String customerName;
   final String invNo;
   final bool isConnected;
+<<<<<<< HEAD
   final String payType;
+=======
+  final String? customerVATnum;
+
+>>>>>>> ed69faee0e04bd94f5d34431cfc0382c9086a4d6
   const InvoiceScreen({
     Key? key,
     this.child,
@@ -39,7 +43,11 @@ class InvoiceScreen extends StatefulWidget {
     required this.customerName,
     required this.invNo,
     required this.isConnected,
+<<<<<<< HEAD
     required this.payType,
+=======
+    required this.customerVATnum,
+>>>>>>> ed69faee0e04bd94f5d34431cfc0382c9086a4d6
   }) : super(key: key);
 
   @override
@@ -47,7 +55,6 @@ class InvoiceScreen extends StatefulWidget {
 }
 
 class _InvoiceScreenState extends State<InvoiceScreen> {
-  BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
   String priceText = "";
   GlobalKey? key;
   Uint8List? bytes;
@@ -202,6 +209,14 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             color: darkColor,
                           ),
                         ),
+                        if (widget.customerVATnum != null)
+                          Text(
+                            'الرقم الضريبي للعميل : ${widget.customerVATnum}',
+                            style: TextStyle(
+                              fontSize: 19.0,
+                              color: darkColor,
+                            ),
+                          ),
                         Text(
                           'المندوب : ${userStore.user.name}',
                           style: TextStyle(
