@@ -35,7 +35,7 @@ class _ItemsInfoTableState extends State<ItemsInfoTable> {
                     title: 'سعر',
                   ),
                   Table(
-                    contentText: (item.qty! + item.freeItemsQty!).toString(),
+                    contentText: item.qty!.toString(),
                     title: 'الكمية',
                   ),
                   Table(

@@ -143,6 +143,7 @@ class _AddInvoiceState extends State<AddInvoice> {
       );
       if (!mounted) return;
       var jsonRespone = response.data;
+      print(jsonRespone);
       final customersStore = context.read<CustomerStore>();
 
       customersStore.setCustomers(prepareCustomersList(jsonRespone));
@@ -164,12 +165,13 @@ class _AddInvoiceState extends State<AddInvoice> {
   Future<void> getItems() async {
     try {
       changeLoadingState(true);
+      final userStore = context.read<UserStore>();
+
       Response response = await Dio().get(
-        'http://5.9.215.57/petrolnaas/public/api/items',
+        'http://5.9.215.57/petrolnaas/public/api/items?sellPriceNo=${userStore.user.sellPriceNo}',
       );
       var jsonRespone = response.data;
       final itemsStore = context.read<ItemsStore>();
-
       itemsStore.setItems(prepareItemsList(jsonRespone));
       products = getProductsNames(itemsStore.items);
 
@@ -209,10 +211,21 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   void onPressAddItem() {
     final bool emptyQtyAndProduct =
-        qtyController.text == '' && _selectedItem == null;
+        qtyController.text == '' || _selectedItem == null;
     if (emptyQtyAndProduct) {
       return ShowSnackBar(context, 'يجب إضافة كمية و اختيار صنف');
     }
+
+    try {
+      if (int.parse(qtyController.text) <= 0) {
+        return ShowSnackBar(context, 'الكمية لابد أن تكون عدد موجب');
+      }
+    } catch (e) {
+      return ShowSnackBar(context, 'الكمية لابد أن تكون عدد صحيح');
+    }
+    print("_selectedItem");
+    print(_selectedItem);
+    // if()
 
     addQtyFromTextFieldToObject();
     addCurrentItemToCreateInvoiceObj();
@@ -237,6 +250,7 @@ class _AddInvoiceState extends State<AddInvoice> {
     double total = 0.0;
     for (int i = 0; i < items.length; i++) {
       InvoiceItem item = items[i];
+      print(item);
       double sellPrice = item.price!;
       int qty = item.qty!;
       total += sellPrice * qty.toDouble();
@@ -251,7 +265,7 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   double getItemSellPrice(Item item) {
-    double sellPrice = item.sellPrice1 ?? 0.0;
+    double sellPrice = item.sellPrice ?? 0.0;
     return sellPrice;
   }
 
@@ -276,7 +290,7 @@ class _AddInvoiceState extends State<AddInvoice> {
             promotionQtyFree: item.promotionQtyFree!,
             promotionQtyReq: item.promotionQtyReq!,
           ),
-          sellPrice: item.sellPrice1!,
+          sellPrice: item.sellPrice!,
         ));
       });
     }
@@ -372,6 +386,8 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   Future<void> onConfirmPrint(setState) async {
+    print(_selectedCustomer);
+
     if (createInvoice.payType == null) {
       Navigator.pop(context, 'Cancel');
       ShowSnackBar(context, 'يجب تحديد نوع الدفع');
@@ -393,7 +409,6 @@ class _AddInvoiceState extends State<AddInvoice> {
       ShowSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
       return;
     }
-
     Navigator.pop(context, 'Cancel');
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -404,6 +419,7 @@ class _AddInvoiceState extends State<AddInvoice> {
           total: _total,
           items: viewInvoiceItems,
           customerName: _selectedCustomer!.accName!,
+          customerVATnum: _selectedCustomer!.VATnum,
           invNo: invNo!,
         ),
       ),
@@ -437,7 +453,7 @@ class _AddInvoiceState extends State<AddInvoice> {
   void setItemDropDownValue(item) {
     setState(() {
       invoiceItem.itemno = item.itemno;
-      invoiceItem.price = item.sellPrice1;
+      invoiceItem.price = item.sellPrice;
     });
     _selectedItem = item;
   }
@@ -491,7 +507,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
                     return CustomDropdown<Item>(
                       elements: itemsStore.items,
-                      textProperty: 'itemDesc',
+                      textProperty: ['itemno', 'itemDesc'],
                       label: 'الصنف',
                       selectedValue: _selectedItem,
                       onChanged: setItemDropDownValue,

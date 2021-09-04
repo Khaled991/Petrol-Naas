@@ -243,6 +243,14 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                       color: darkColor,
                                     ),
                                   ),
+                                  if (invoice?.header!.VATnum != null)
+                                    Text(
+                                      'الرقم الضريبي للعميل : ${invoice?.header!.VATnum!}',
+                                      style: TextStyle(
+                                        fontSize: 19.0,
+                                        color: darkColor,
+                                      ),
+                                    ),
                                   Text(
                                     "المندوب : " +
                                         (invoice?.header!

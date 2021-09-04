@@ -8,6 +8,7 @@ class InoviceHeader {
   String? vaTamount;
   String? totAfterVat;
   String? createdDelegateName;
+  String? VATnum;
 
   InoviceHeader({
     this.invno,
@@ -19,11 +20,12 @@ class InoviceHeader {
     this.vaTamount,
     this.totAfterVat,
     this.createdDelegateName,
+    this.VATnum,
   });
 
   @override
   String toString() {
-    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName)';
+    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName), VATnum: $VATnum';
   }
 
   factory InoviceHeader.fromJson(Map<String, dynamic> json) => InoviceHeader(
@@ -36,6 +38,7 @@ class InoviceHeader {
         vaTamount: json['VATamount'] as String?,
         totAfterVat: json['TotAfterVAT'] as String?,
         createdDelegateName: json['User_Name'] as String?,
+        VATnum: json['VATnum'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -48,6 +51,7 @@ class InoviceHeader {
         'VATamount': vaTamount,
         'TotAfterVAT': totAfterVat,
         'User_Name': createdDelegateName,
+        'VATnum': VATnum,
       };
 
   InoviceHeader copyWith({
@@ -60,6 +64,7 @@ class InoviceHeader {
     String? vaTamount,
     String? totAfterVat,
     String? userName,
+    String? VATnum,
   }) {
     return InoviceHeader(
       invno: invno ?? this.invno,
@@ -70,7 +75,8 @@ class InoviceHeader {
       netTotal: netTotal ?? this.netTotal,
       vaTamount: vaTamount ?? this.vaTamount,
       totAfterVat: totAfterVat ?? this.totAfterVat,
-      createdDelegateName: userName ?? this.createdDelegateName,
+      createdDelegateName: userName ?? createdDelegateName,
+      VATnum: VATnum ?? this.VATnum,
     );
   }
 }
