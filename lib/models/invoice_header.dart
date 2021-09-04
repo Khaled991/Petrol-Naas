@@ -8,6 +8,7 @@ class InoviceHeader {
   String? vaTamount;
   String? totAfterVat;
   String? createdDelegateName;
+  String? payType;
   String? VATnum;
 
   InoviceHeader({
@@ -20,11 +21,13 @@ class InoviceHeader {
     this.vaTamount,
     this.totAfterVat,
     this.createdDelegateName,
+    this.payType,
     this.VATnum,
   });
 
   @override
   String toString() {
+    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName), payType: $payType)';
     return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName), VATnum: $VATnum';
   }
 
@@ -38,6 +41,7 @@ class InoviceHeader {
         vaTamount: json['VATamount'] as String?,
         totAfterVat: json['TotAfterVAT'] as String?,
         createdDelegateName: json['User_Name'] as String?,
+        payType: decodePayType(json['PayType'] as String?),
         VATnum: json['VATnum'] as String?,
       );
 
@@ -67,6 +71,7 @@ class InoviceHeader {
         'VATamount': vaTamount,
         'TotAfterVAT': totAfterVat,
         'User_Name': createdDelegateName,
+        'PayType': payType,
         'VATnum': VATnum,
       };
 
@@ -80,6 +85,7 @@ class InoviceHeader {
     String? vaTamount,
     String? totAfterVat,
     String? userName,
+    String? payType,
     String? VATnum,
   }) {
     return InoviceHeader(
@@ -92,6 +98,7 @@ class InoviceHeader {
       vaTamount: vaTamount ?? this.vaTamount,
       totAfterVat: totAfterVat ?? this.totAfterVat,
       createdDelegateName: userName ?? createdDelegateName,
+      payType: payType ?? this.payType,
       VATnum: VATnum ?? this.VATnum,
     );
   }

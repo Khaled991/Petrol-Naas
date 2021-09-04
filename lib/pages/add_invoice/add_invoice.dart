@@ -209,15 +209,9 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   void onPressAddItem() {
-<<<<<<< HEAD
     final bool emptyQtyOrProduct =
         qtyController.text == '' || _selectedItem == null;
     if (emptyQtyOrProduct) {
-=======
-    final bool emptyQtyAndProduct =
-        qtyController.text == '' || _selectedItem == null;
-    if (emptyQtyAndProduct) {
->>>>>>> ed69faee0e04bd94f5d34431cfc0382c9086a4d6
       return ShowSnackBar(context, 'يجب إضافة كمية و اختيار صنف');
     }
 
@@ -394,19 +388,6 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   Future<void> onConfirmPrint(setState) async {
-<<<<<<< HEAD
-=======
-    print(_selectedCustomer);
-
-    if (createInvoice.payType == null) {
-      Navigator.pop(context, 'Cancel');
-      ShowSnackBar(context, 'يجب تحديد نوع الدفع');
-      return;
-    }
-
-    fillRestDataOfInvoice();
-
->>>>>>> ed69faee0e04bd94f5d34431cfc0382c9086a4d6
     if (!fieldsIsFilled()) {
       Navigator.pop(context, 'Cancel');
       ShowSnackBar(context, 'يجب ملئ جميع البيانات');
