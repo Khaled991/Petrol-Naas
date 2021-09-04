@@ -26,9 +26,13 @@ class _ItemsInfoTableState extends State<ItemsInfoTable> {
                     contentText: item.itemno!,
                     title: 'رقم الصنف',
                   ),
-                  Table(
-                    contentText: item.itemDesc!,
-                    title: 'اسم الصنف',
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width - 28),
+                    child: Table(
+                      contentText: item.itemDesc!,
+                      title: 'اسم الصنف',
+                    ),
                   ),
                   Table(
                     contentText: item.sellPrice.toString(),
@@ -70,10 +74,12 @@ class Table extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title),
-        Text(contentText),
+        Expanded(
+          child: Text(contentText, textAlign: TextAlign.left),
+        ),
       ],
     );
   }

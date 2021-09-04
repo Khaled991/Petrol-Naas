@@ -6,21 +6,29 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/my_invoice/my_invoices.dart';
-import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/customer.dart';
+import 'package:petrol_naas/models/filters.dart';
 import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/memorizable_state.dart';
 import 'package:petrol_naas/widget/snack_bars/bottom_sheet_snack_bar.dart';
 import 'package:provider/src/provider.dart';
-
 import '../constants.dart';
 import 'custom_button.dart';
 import 'custom_dropdown.dart';
 
 class MyInvoicesScreenHeader extends StatefulWidget {
   final void Function(bool state) changeLoadingState;
+  final void Function() getInvoices;
+  final Filters filters;
+  final void Function() setFirstPage;
+  final Function() moveScrollToTop;
+
   const MyInvoicesScreenHeader({
     required this.changeLoadingState,
+    required this.filters,
+    required this.getInvoices,
+    required this.setFirstPage,
+    required this.moveScrollToTop,
     Key? key,
   }) : super(key: key);
 
@@ -29,12 +37,10 @@ class MyInvoicesScreenHeader extends StatefulWidget {
 }
 
 class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
-  final MemorizableState<String> _firstDate = MemorizableState();
-  final MemorizableState<String> _lastDate = MemorizableState();
-  final MemorizableState<String> _custNo = MemorizableState();
   final MemorizableState<Customer> _selectedCustomer = MemorizableState();
-  bool isErrorInDate = false;
+  bool thereIsError = false;
   bool showNameFilterWidget = false;
+  String _errorMessage = "";
 
   List<Invoice> prepareInvoiceList(dynamic invoiceList) {
     List<Invoice> invoices = List<Invoice>.from(
@@ -45,44 +51,31 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
     return invoices;
   }
 
-  bool hasDateFilter() =>
-      _firstDate.current != null && _lastDate.current != null;
-
-  bool hasNameFilter() => _custNo.current != null;
-
-  Future<void> getInvoices() async {
-    try {
-      final store = context.read<UserStore>();
-      widget.changeLoadingState(true);
-
-      String url =
-          'http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}';
-
-      if (hasDateFilter()) {
-        url += "&from=${_firstDate.current}&to=${_lastDate.current}";
-      }
-      if (hasNameFilter()) {
-        url += "&Custno=${_custNo.current}";
-        showNameFilterWidget = true;
-      }
-
-      Response response = await Dio().get(url);
-      final storeMyInvoices = context.read<MyInvoices>();
-      var jsonRespone = response.data;
-      storeMyInvoices.jsonToInvoicesList(jsonRespone);
-      widget.changeLoadingState(false);
-    } on DioError {
-      widget.changeLoadingState(false);
-    }
-  }
-
   void onPressClearNameFilter() {
+    widget.changeLoadingState(true);
+    final invoicesStore = context.read<MyInvoices>();
+    invoicesStore.resetList();
+
     setState(() {
-      _custNo.resetState();
+      widget.setFirstPage();
+      widget.filters.resetCustNoFilter();
       _selectedCustomer.resetState();
       showNameFilterWidget = false;
     });
-    getInvoices();
+    widget.getInvoices();
+  }
+
+  void onPressClearDateFilter() {
+    widget.changeLoadingState(true);
+    final invoicesStore = context.read<MyInvoices>();
+    invoicesStore.resetList();
+
+    setState(() {
+      widget.setFirstPage();
+      widget.filters.lastDate.resetState();
+      widget.filters.firstDate.resetState();
+    });
+    widget.getInvoices();
   }
 
   @override
@@ -102,15 +95,9 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
         ),
         Row(
           children: [
-            if (hasDateFilter() && !isErrorInDate)
+            if (widget.filters.hasDateFilter() && !thereIsError)
               ClearFilter(
-                onPressed: () {
-                  setState(() {
-                    _lastDate.resetState();
-                    _firstDate.resetState();
-                  });
-                  getInvoices();
-                },
+                onPressed: onPressClearDateFilter,
                 title: 'التاريخ',
               ),
             SizedBox(width: 10),
@@ -134,39 +121,71 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
     );
   }
 
+  void showError(message, StateSetter setState) {
+    enableError(setState);
+    _errorMessage = message;
+    disableError(setState);
+  }
+
+  void enableError(StateSetter setState) {
+    setState(() {
+      thereIsError = true;
+    });
+  }
+
+  void disableError(StateSetter setState) {
+    Timer(const Duration(seconds: 3), () {
+      setState(() => thereIsError = false);
+    });
+  }
+
   void onPressFilter(StateSetter setState) {
+    if (!(widget.filters.hasCustomerFilter() ||
+        widget.filters.hasDateFilter())) {
+      return showError("من فضلك اختر تصفية", setState);
+    }
+
+    widget.setFirstPage();
+
     final invoicesStore = context.read<MyInvoices>();
     invoicesStore.resetList();
 
-    if (hasDateFilter()) {
-      DateTime from = DateTime.parse(_firstDate.current!);
-      DateTime to = DateTime.parse(_lastDate.current!);
+    if (widget.filters.hasCustomerFilter()) {
+      showNameFilterWidget = true;
+    }
+    if (widget.filters.hasDateFilter()) {
+      DateTime from = DateTime.parse(widget.filters.firstDate.current!);
+      DateTime to = DateTime.parse(widget.filters.lastDate.current!);
 
       bool toIsGreaterThanFrom = from.compareTo(to) <= 0;
       if (!toIsGreaterThanFrom) {
-        setState(() => isErrorInDate = true);
-        Timer(const Duration(seconds: 3), () {
-          setState(() => isErrorInDate = false);
-        });
-        return;
+        return showError(
+          'لا يمكن اختيار تاريخ نهاية المدة أصغر من تاريخ بداية المدة',
+          setState,
+        );
       }
-      _firstDate.pervious = _firstDate.current;
-      _lastDate.pervious = _lastDate.current;
     }
-    getInvoices();
+
+    widget.changeLoadingState(true);
+
+    widget.filters.confirmFilters();
+
+    widget.getInvoices();
     Navigator.pop(context);
+    widget.moveScrollToTop();
   }
 
   void saveCurrentCustomerInPerviousIfExists() {
-    if (_selectedCustomer.current != null && _custNo.current != null) {
+    if (_selectedCustomer.current != null &&
+        widget.filters.custNo.current != null) {
       _selectedCustomer.pervious = _selectedCustomer.current;
-      _custNo.pervious = _custNo.current;
+      widget.filters.confirmCustomerFilter();
     }
   }
 
   void saveCurrentCustomer(customer) {
     _selectedCustomer.current = customer;
-    _custNo.current = customer.accNo;
+    widget.filters.custNo.current = customer.accNo;
   }
 
   void setCustomerDropDownValue(customer) {
@@ -226,11 +245,12 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                             ).then(
                               (date) {
                                 setState(() {
-                                  if (_firstDate.current != null) {
-                                    _firstDate.pervious = _firstDate.current;
+                                  if (widget.filters.firstDate.current !=
+                                      null) {
+                                    widget.filters.confirmDateFilter();
                                   }
 
-                                  _firstDate.current =
+                                  widget.filters.firstDate.current =
                                       DateFormat("yyyy-MM-dd").format(date!);
                                 });
                               },
@@ -242,13 +262,13 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                           textColors: Colors.white,
                         ),
                       ),
-                      if (_firstDate.current != null)
+                      if (widget.filters.firstDate.current != null)
                         Padding(
                           padding: const EdgeInsets.only(
                             left: 10.0,
                           ),
                           child: Text(
-                            _firstDate.current!,
+                            widget.filters.firstDate.current!,
                             style: TextStyle(
                               color: darkColor,
                               fontSize: 18.0,
@@ -270,11 +290,12 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                             ).then(
                               (date) {
                                 setState(() {
-                                  if (_lastDate.current != null) {
-                                    _lastDate.pervious = _lastDate.current;
+                                  if (widget.filters.lastDate.current != null) {
+                                    widget.filters.lastDate
+                                        .assignCurrentToPervious();
                                   }
 
-                                  _lastDate.current =
+                                  widget.filters.lastDate.current =
                                       DateFormat("yyyy-MM-dd").format(date!);
                                 });
                               },
@@ -286,13 +307,13 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                           textColors: Colors.white,
                         ),
                       ),
-                      if (_lastDate.current != null)
+                      if (widget.filters.lastDate.current != null)
                         Padding(
                           padding: const EdgeInsets.only(
                             left: 10.0,
                           ),
                           child: Text(
-                            _lastDate.current!,
+                            widget.filters.lastDate.current!,
                             style: TextStyle(
                               color: darkColor,
                               fontSize: 18.0,
@@ -315,9 +336,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                         child: CustomButton(
                           buttonColors: redColor,
                           onPressed: () {
-                            _firstDate.current = _firstDate.pervious;
-                            _lastDate.current = _lastDate.pervious;
-                            _custNo.current = _custNo.pervious;
+                            widget.filters.cancelFilters();
                             _selectedCustomer.current =
                                 _selectedCustomer.pervious;
                             Navigator.pop(context);
@@ -328,12 +347,12 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                       ),
                     ],
                   ),
-                  if (isErrorInDate)
-                    Positioned(
-                      top: 0,
+                  if (thereIsError)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                          maxHeight: 50.0, maxWidth: double.infinity),
                       child: BottomSheetSnackBar(
-                        text:
-                            'لا يمكن اختيار تاريخ نهاية المدة أصغر من تاريخ بداية المدة',
+                        text: _errorMessage,
                       ),
                     ),
                 ],

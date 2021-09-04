@@ -13,6 +13,7 @@ import 'package:petrol_naas/widget/invoice_image/utils.dart';
 import 'package:petrol_naas/widget/invoice_image/widget_to_image.dart';
 import 'package:petrol_naas/widget/invoice_screen_header.dart';
 import 'package:petrol_naas/widget/items_info.dart';
+import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../constants.dart';
 
@@ -22,10 +23,11 @@ import 'package:printing/printing.dart';
 
 class MyInvoiceInfo extends StatefulWidget {
   final String invno;
-
+  final Invoice invoice;
   const MyInvoiceInfo({
     Key? key,
     required this.invno,
+    required this.invoice,
   }) : super(key: key);
 
   @override
@@ -35,7 +37,6 @@ class MyInvoiceInfo extends StatefulWidget {
 class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   String? priceText;
   bool isCaptured = false;
-  Invoice? invoice;
   bool isLoading = true;
   bool isConnected = false;
   GlobalKey? key;
@@ -48,26 +49,27 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   @override
   void initState() {
     super.initState();
-    getInvoiceData();
+    getTafqeet(widget.invoice.header!.totAfterVat!);
+    prepareItemsListForView();
   }
 
   void prepareItemsListForView() {
-    itemsListForView = invoice?.details!.map((InvoiceDetails invoiceDetails) {
-          return ViewInvoiceItem(
-            itemno: invoiceDetails.itemno,
-            itemDesc: invoiceDetails.itemDesc,
-            sellPrice: double.parse(
-              invoiceDetails.unitPrice!,
-            ),
-            qty: invoiceDetails.qty! + invoiceDetails.freeQty!,
-            freeItemsQty: Item.calcFreeQty(
-              qty: invoiceDetails.qty!,
-              promotionQtyFree: invoiceDetails.promotionQtyFree!,
-              promotionQtyReq: invoiceDetails.promotionQtyReq!,
-            ),
-          );
-        }).toList() ??
-        [];
+    itemsListForView =
+        widget.invoice.details!.map((InvoiceDetails invoiceDetails) {
+      return ViewInvoiceItem(
+        itemno: invoiceDetails.itemno,
+        itemDesc: invoiceDetails.itemDesc,
+        sellPrice: double.parse(
+          invoiceDetails.unitPrice!,
+        ),
+        qty: invoiceDetails.qty! + invoiceDetails.freeQty!,
+        freeItemsQty: Item.calcFreeQty(
+          qty: invoiceDetails.qty!,
+          promotionQtyFree: invoiceDetails.promotionQtyFree!,
+          promotionQtyReq: invoiceDetails.promotionQtyReq!,
+        ),
+      );
+    }).toList();
   }
 
   Future<void> capture() async {
@@ -94,7 +96,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
     final Map<String, double> paperDimensions = await getPrintDimensions();
 
     final String imageFileName =
-        'فاتورة ${invoice?.header!.custName! ?? ""}${DateTime.now()}.pdf'
+        'فاتورة ${widget.invoice.header!.custName!}${DateTime.now()}.pdf'
             .replaceAll("/", "-");
     doc.addPage(
       pw.Page(
@@ -116,20 +118,20 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
     });
   }
 
-  void getInvoiceData() async {
-    try {
-      changeLoadingState(true);
-      final String url =
-          "http://5.9.215.57/petrolnaas/public/api/invoice/${widget.invno}";
-      Response response = await Dio().get(url);
-      final jsonResponse = response.data;
-      invoice = Invoice.fromJson(jsonResponse);
-      getTafqeet(invoice!.header!.totAfterVat!);
-      prepareItemsListForView();
-    } catch (e) {
-      // print(e);
-    }
-  }
+  // void getInvoiceData() async {
+  //   try {
+  //     changeLoadingState(true);
+  //     final String url =
+  //         "http://5.9.215.57/petrolnaas/public/api/invoice/${widget.invno}";
+  //     Response response = await Dio().get(url);
+  //     final jsonResponse = response.data;
+  //     invoice = Invoice.fromJson(jsonResponse);
+  //     getTafqeet(invoice!.header!.totAfterVat!);
+  //     prepareItemsListForView();
+  //   } catch (e) {
+  //     // print(e);
+  //   }
+  // }
 
   void getTafqeet(finalPrice) async {
     try {
@@ -150,8 +152,8 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
       qrData = """اسم المورد : شركة مصنع بترول ناس
 الرقم الضريبي : 300468968200003
 التاريخ والوقت : ${prepareDateAndTimeToPrintInInvoice()}
-الإجمالي شامل الضريبة : ${invoice?.header!.totAfterVat!}
-قيمة الضريبة : ${invoice?.header!.vaTamount!}""";
+الإجمالي شامل الضريبة : ${widget.invoice.header!.totAfterVat!}
+قيمة الضريبة : ${widget.invoice.header!.vaTamount!}""";
       changeLoadingState(false);
       Timer(
         const Duration(seconds: 1),
@@ -161,16 +163,17 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
       );
     } catch (e) {
       changeLoadingState(false);
+      ShowSnackBar(context, "حدث خطأ ما، الرجاء المحاولة مرة أخرى");
     }
   }
 
   String prepareDateAndTimeToPrintInInvoice() {
-    DateTime invoiceDate = DateTime.parse(invoice?.header!.invdate! ?? "");
+    DateTime invoiceDate = DateTime.parse(widget.invoice.header!.invdate!);
     String dateString = DateFormat("dd-MM-yyyy hh:mma").format(invoiceDate);
 
     return dateString;
   }
-  // final String today = DateFormat("dd-MM-yyyy hh:mma").format(invoice?.header!.invdate! ?? "" );
+  // final String today = DateFormat("dd-MM-yyyy hh:mma").format(widget.invoice.header!.invdate! ?? "" );
 
   @override
   Widget build(BuildContext context) {
@@ -214,30 +217,31 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                   SizedBox(
                                     height: 20.0,
                                   ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'الرقم : ' + widget.invno,
-                                        style: TextStyle(
-                                          fontSize: 19.0,
-                                          color: darkColor,
-                                        ),
-                                      ),
-                                      Text(
-                                        "التاريخ : " +
-                                            prepareDateAndTimeToPrintInInvoice(),
-                                        style: TextStyle(
-                                          fontSize: 19.0,
-                                          color: darkColor,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    'الرقم : ' + widget.invno,
+                                    style: TextStyle(
+                                      fontSize: 19.0,
+                                      color: darkColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    "التاريخ : " +
+                                        prepareDateAndTimeToPrintInInvoice(),
+                                    style: TextStyle(
+                                      fontSize: 19.0,
+                                      color: darkColor,
+                                    ),
+                                  ),
+                                  Text(
+                                    'نوع الدفع : ${widget.invoice.header?.payType ?? ""}',
+                                    style: TextStyle(
+                                      fontSize: 19.0,
+                                      color: darkColor,
+                                    ),
                                   ),
                                   Text(
                                     "العميل : " +
-                                        (invoice?.header!.custName! ?? ""),
+                                        (widget.invoice.header!.custName!),
                                     style: TextStyle(
                                       fontSize: 19.0,
                                       color: darkColor,
@@ -245,9 +249,8 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                   ),
                                   Text(
                                     "المندوب : " +
-                                        (invoice?.header!
-                                                .createdDelegateName! ??
-                                            ""),
+                                        (widget.invoice.header!
+                                            .createdDelegateName!),
                                     style: TextStyle(
                                       fontSize: 19.0,
                                       color: darkColor,
@@ -260,25 +263,25 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                   ),
                                   ItemsInfoTable(items: itemsListForView),
                                   InvoiceDetailsPrices(
-                                    price: invoice?.header!.total! ?? "",
-                                    tittle: 'الاجمالي',
+                                    price: widget.invoice.header!.total!,
+                                    title: 'الاجمالي',
                                   ),
                                   InvoiceDetailsPrices(
                                     price:
-                                        invoice?.header!.discountTotal! ?? "",
-                                    tittle: 'الخصم',
+                                        widget.invoice.header!.discountTotal!,
+                                    title: 'الخصم',
                                   ),
                                   InvoiceDetailsPrices(
-                                    price: invoice?.header!.netTotal! ?? "",
-                                    tittle: 'الصافي',
+                                    price: widget.invoice.header!.netTotal!,
+                                    title: 'الصافي',
                                   ),
                                   InvoiceDetailsPrices(
-                                    price: invoice?.header!.vaTamount! ?? "",
-                                    tittle: 'ضريبة القيمة المضافة',
+                                    price: widget.invoice.header!.vaTamount!,
+                                    title: 'ضريبة القيمة المضافة',
                                   ),
                                   InvoiceDetailsPrices(
-                                    price: invoice?.header!.totAfterVat! ?? "",
-                                    tittle: 'قيمة الفاتورة',
+                                    price: widget.invoice.header!.totAfterVat!,
+                                    title: 'قيمة الفاتورة',
                                   ),
                                   Text(
                                     (priceText ?? "") + " فقط لا غير",

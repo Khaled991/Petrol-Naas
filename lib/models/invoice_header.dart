@@ -8,6 +8,7 @@ class InoviceHeader {
   String? vaTamount;
   String? totAfterVat;
   String? createdDelegateName;
+  String? payType;
 
   InoviceHeader({
     this.invno,
@@ -19,11 +20,12 @@ class InoviceHeader {
     this.vaTamount,
     this.totAfterVat,
     this.createdDelegateName,
+    this.payType,
   });
 
   @override
   String toString() {
-    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName)';
+    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName), payType: $payType)';
   }
 
   factory InoviceHeader.fromJson(Map<String, dynamic> json) => InoviceHeader(
@@ -36,7 +38,24 @@ class InoviceHeader {
         vaTamount: json['VATamount'] as String?,
         totAfterVat: json['TotAfterVAT'] as String?,
         createdDelegateName: json['User_Name'] as String?,
+        payType: decodePayType(json['PayType'] as String?),
       );
+
+  static String? decodePayType(String? payType) {
+    Map<String, String> payTypeDecode = {
+      "1": "نقدي كاش",
+      "3": "آجل",
+    };
+    return payTypeDecode[payType];
+  }
+
+  static String? encodePayType(String? payTypeText) {
+    Map<String, String> payTypeEncode = {
+      "نقدي كاش": "1",
+      "آجل": "3",
+    };
+    return payTypeEncode[payTypeText];
+  }
 
   Map<String, dynamic> toJson() => {
         'invno': invno,
@@ -48,6 +67,7 @@ class InoviceHeader {
         'VATamount': vaTamount,
         'TotAfterVAT': totAfterVat,
         'User_Name': createdDelegateName,
+        'PayType': payType,
       };
 
   InoviceHeader copyWith({
@@ -60,6 +80,7 @@ class InoviceHeader {
     String? vaTamount,
     String? totAfterVat,
     String? userName,
+    String? payType,
   }) {
     return InoviceHeader(
       invno: invno ?? this.invno,
@@ -70,7 +91,8 @@ class InoviceHeader {
       netTotal: netTotal ?? this.netTotal,
       vaTamount: vaTamount ?? this.vaTamount,
       totAfterVat: totAfterVat ?? this.totAfterVat,
-      createdDelegateName: userName ?? this.createdDelegateName,
+      createdDelegateName: userName ?? createdDelegateName,
+      payType: payType ?? this.payType,
     );
   }
 }

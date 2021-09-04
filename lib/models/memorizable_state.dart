@@ -11,6 +11,14 @@ class MemorizableState<T> {
     current = null;
   }
 
+  assignCurrentToPervious() {
+    pervious = current;
+  }
+
+  assignPerviousToCurrent() {
+    current = pervious;
+  }
+
   @override
   String toString() =>
       'MemorizableState(pervious: $pervious, current: $current)';

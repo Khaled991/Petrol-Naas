@@ -21,10 +21,12 @@ class SignIn extends StatefulWidget {
 
 class _SignInState extends State<SignIn> {
   final TextEditingController userNoController =
-      TextEditingController(text: "29");
+      TextEditingController(text: "");
+  // TextEditingController(text: "29");
 
   final TextEditingController passwordController =
-      TextEditingController(text: "2640");
+      TextEditingController(text: "");
+  // TextEditingController(text: "2640");
 
   UserSignIn signInData = UserSignIn();
 
@@ -44,7 +46,7 @@ class _SignInState extends State<SignIn> {
   }
 
   void navigateToUserScreens() {
-    Navigator.of(context).push(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => NavigationsScreen(),
       ),

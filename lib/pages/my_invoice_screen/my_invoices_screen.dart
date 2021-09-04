@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
+import 'package:petrol_naas/models/filters.dart';
 import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 import 'package:provider/src/provider.dart';
 import 'package:petrol_naas/widget/my_invoices_screen_header.dart';
@@ -24,6 +25,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
   int _page = 1;
   final ScrollController _myInvoicesScrollController = ScrollController();
   final _myInvoices = MyInvoices();
+  Filters filters = Filters();
 
   @override
   void initState() {
@@ -57,16 +59,25 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
   void changeLoadingState(bool state) => setState(() => isLoading = state);
 
   Future<void> getInvoices() async {
-    final store = context.read<UserStore>();
     try {
+      final userStore = context.read<UserStore>();
+
       String url =
-          'http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=${store.user.userNo}&page=$_page';
+          'http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=${userStore.user.userNo}&page=$_page';
+
+      if (filters.hasDateFilter()) {
+        url +=
+            "&from=${filters.firstDate.current}&to=${filters.lastDate.current}";
+      }
+      if (filters.hasCustomerFilter()) {
+        url += "&Custno=${filters.custNo.current}";
+      }
+
       Response response = await Dio().get(url);
 
       final storeMyInvoices = _myInvoices;
       var jsonRespone = response.data;
       storeMyInvoices.jsonToInvoicesList(jsonRespone);
-
       changeLoadingState(false);
     } on DioError {
       ShowSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
@@ -92,6 +103,14 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
     );
   }
 
+  void setFirstPage() {
+    _page = 1;
+  }
+
+  void moveScrollToTop() {
+    _myInvoicesScrollController.jumpTo(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final storeMyInvoices = _myInvoices;
@@ -102,7 +121,13 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
         color: Colors.white,
         child: Column(
           children: [
-            MyInvoicesScreenHeader(changeLoadingState: changeLoadingState),
+            MyInvoicesScreenHeader(
+              changeLoadingState: changeLoadingState,
+              filters: filters,
+              getInvoices: getInvoices,
+              setFirstPage: setFirstPage,
+              moveScrollToTop: moveScrollToTop,
+            ),
             Expanded(
               child: isLoading
                   ? MyInvoiceSkeleton()
@@ -125,6 +150,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
                                   MaterialPageRoute(
                                     builder: (_) => MyInvoiceInfo(
                                       invno: invno,
+                                      invoice: invoice,
                                     ),
                                   ),
                                 ),
