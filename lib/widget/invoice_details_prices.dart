@@ -5,10 +5,10 @@ import '../constants.dart';
 class InvoiceDetailsPrices extends StatelessWidget {
   const InvoiceDetailsPrices({
     Key? key,
-    required this.tittle,
+    required this.title,
     required this.price,
   }) : super(key: key);
-  final String tittle;
+  final String title;
   final String price;
 
   @override
@@ -37,7 +37,7 @@ class InvoiceDetailsPrices extends StatelessWidget {
           ),
         ),
         Text(
-          tittle,
+          title,
           style: TextStyle(fontSize: 18.0),
         ),
       ],

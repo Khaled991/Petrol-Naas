@@ -27,6 +27,7 @@ class InvoiceScreen extends StatefulWidget {
   final String customerName;
   final String invNo;
   final bool isConnected;
+  final String payType;
   final String? customerVATnum;
 
   const InvoiceScreen({
@@ -39,6 +40,7 @@ class InvoiceScreen extends StatefulWidget {
     required this.customerName,
     required this.invNo,
     required this.isConnected,
+    required this.payType,
     required this.customerVATnum,
   }) : super(key: key);
 
@@ -173,25 +175,26 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                         SizedBox(
                           height: 20.0,
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'الرقم : ${widget.invNo}',
-                              style: TextStyle(
-                                fontSize: 19.0,
-                                color: darkColor,
-                              ),
-                            ),
-                            Text(
-                              'التاريخ : ' +
-                                  prepareDateAndTimeToPrintInInvoice(),
-                              style: TextStyle(
-                                fontSize: 19.0,
-                                color: darkColor,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'الرقم : ${widget.invNo}',
+                          style: TextStyle(
+                            fontSize: 19.0,
+                            color: darkColor,
+                          ),
+                        ),
+                        Text(
+                          'التاريخ : ' + prepareDateAndTimeToPrintInInvoice(),
+                          style: TextStyle(
+                            fontSize: 19.0,
+                            color: darkColor,
+                          ),
+                        ),
+                        Text(
+                          'نوع الدفع : ${widget.payType}',
+                          style: TextStyle(
+                            fontSize: 19.0,
+                            color: darkColor,
+                          ),
                         ),
                         Text(
                           'العميل : ${widget.customerName}',
@@ -225,23 +228,23 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                         ),
                         InvoiceDetailsPrices(
                           price: widget.total.toString(),
-                          tittle: 'الاجمالي',
+                          title: 'الاجمالي',
                         ),
                         InvoiceDetailsPrices(
                           price: '0.00',
-                          tittle: 'الخصم',
+                          title: 'الخصم',
                         ),
                         InvoiceDetailsPrices(
                           price: widget.total.toString(),
-                          tittle: 'الصافي',
+                          title: 'الصافي',
                         ),
                         InvoiceDetailsPrices(
                           price: widget.fee.toString(),
-                          tittle: 'ضريبة القيمة المضافة',
+                          title: 'ضريبة القيمة المضافة',
                         ),
                         InvoiceDetailsPrices(
                           price: (widget.finalPrice + widget.fee).toString(),
-                          tittle: 'قيمة الفاتورة',
+                          title: 'قيمة الفاتورة',
                         ),
                         Text(
                           priceText + " فقط لا غير",

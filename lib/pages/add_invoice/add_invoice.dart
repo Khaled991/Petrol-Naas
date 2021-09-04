@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:petrol_naas/models/invoice_header.dart';
 import 'package:provider/src/provider.dart';
-
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/items/items.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
@@ -131,6 +129,7 @@ class _AddInvoiceState extends State<AddInvoice> {
   @override
   void dispose() {
     super.dispose();
+    scrollController.dispose();
   }
 
   Future<void> getCustomers() async {
@@ -210,9 +209,9 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   void onPressAddItem() {
-    final bool emptyQtyAndProduct =
+    final bool emptyQtyOrProduct =
         qtyController.text == '' || _selectedItem == null;
-    if (emptyQtyAndProduct) {
+    if (emptyQtyOrProduct) {
       return ShowSnackBar(context, 'يجب إضافة كمية و اختيار صنف');
     }
 
@@ -278,6 +277,11 @@ class _AddInvoiceState extends State<AddInvoice> {
     if (alreadyExists) {
       setState(() {
         viewInvoiceItems[itemIdx].qty = invoiceItem.qty!;
+        viewInvoiceItems[itemIdx].freeItemsQty = Item.calcFreeQty(
+          qty: invoiceItem.qty!,
+          promotionQtyFree: item.promotionQtyFree!,
+          promotionQtyReq: item.promotionQtyReq!,
+        );
       });
     } else {
       setState(() {
@@ -341,13 +345,9 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   bool fieldsIsFilled() {
-    return createInvoice.accno != null &&
-        createInvoice.salesman != null &&
+    return createInvoice.payType != null &&
         createInvoice.custno != null &&
-        createInvoice.whno != null &&
-        createInvoice.accno != null &&
-        createInvoice.items != null &&
-        _total != 0;
+        !(createInvoice.items == null || createInvoice.items!.isEmpty);
   }
 
   void scrollToTop() {
@@ -386,21 +386,13 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   Future<void> onConfirmPrint(setState) async {
-    print(_selectedCustomer);
-
-    if (createInvoice.payType == null) {
-      Navigator.pop(context, 'Cancel');
-      ShowSnackBar(context, 'يجب تحديد نوع الدفع');
-      return;
-    }
-
-    fillRestDataOfInvoice();
-
     if (!fieldsIsFilled()) {
       Navigator.pop(context, 'Cancel');
       ShowSnackBar(context, 'يجب ملئ جميع البيانات');
       return;
     }
+
+    fillRestDataOfInvoice();
 
     await sendInvoiceToApi();
 
@@ -421,6 +413,7 @@ class _AddInvoiceState extends State<AddInvoice> {
           customerName: _selectedCustomer!.accName!,
           customerVATnum: _selectedCustomer!.VATnum,
           invNo: invNo!,
+          payType: InoviceHeader.decodePayType(createInvoice.payType!)!,
         ),
       ),
     );
@@ -431,18 +424,13 @@ class _AddInvoiceState extends State<AddInvoice> {
     });
   }
 
-  void setPayTypeDropDownValue(payTypeText) {
-    _selectedPayType = payTypeText;
-
-    Map<String, String> payTypeDecode = {
-      "نقدي كاش": "1",
-      "آجل": "3",
-    };
-    final String payType = payTypeDecode[payTypeText]!;
-
-    setState(() {
-      createInvoice.payType = payType;
-    });
+  void setPayTypeDropDownValue(String? payTypeText) {
+    final String? payType = InoviceHeader.encodePayType(payTypeText);
+    if (payType != null) {
+      setState(() {
+        createInvoice.payType = payType;
+      });
+    }
   }
 
   void setCustomerDropDownValue(customer) {

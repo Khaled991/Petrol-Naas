@@ -49,8 +49,6 @@ class CustomDrawer extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20.0,
-                    //TODO: enable overflow
-                    // overflow: TextOverflow.ellipsis,
                   ),
                 );
               }),
