@@ -223,8 +223,10 @@ class _AddInvoiceState extends State<AddInvoice> {
     } catch (e) {
       return ShowSnackBar(context, 'الكمية لابد أن تكون عدد صحيح');
     }
-    print("_selectedItem");
-    print(_selectedItem);
+    if (_selectedItem!.sellPrice == 0.0 && !_selectedItem!.isFree!)
+      return ShowSnackBar(
+          context, 'لا يمكن اضافة عنصر غير مجاني ولم يحدد له ثمن بعد');
+
     // if()
 
     addQtyFromTextFieldToObject();
