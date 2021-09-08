@@ -249,7 +249,6 @@ class _AddInvoiceState extends State<AddInvoice> {
     double total = 0.0;
     for (int i = 0; i < items.length; i++) {
       InvoiceItem item = items[i];
-      print(item);
       double sellPrice = item.price!;
       int qty = item.qty!;
       total += sellPrice * qty.toDouble();

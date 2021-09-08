@@ -5,7 +5,7 @@ class InvoiceDetails {
   String? itemDesc;
   int? promotionQtyReq;
   int? promotionQtyFree;
-  int? totalPrice;
+  double? totalPrice;
   int? freeQty;
 
   InvoiceDetails({
@@ -31,7 +31,7 @@ class InvoiceDetails {
         itemDesc: json['itemDesc'] as String?,
         promotionQtyReq: double.parse(json['PromotionQtyReq']).toInt(),
         promotionQtyFree: double.parse(json['PromotionQtyFree']).toInt(),
-        totalPrice: json['totalPrice'] as int?,
+        totalPrice: json['totalPrice'].toDouble(),
         freeQty: json['freeQty'] as int?,
       );
 
@@ -53,7 +53,7 @@ class InvoiceDetails {
     String? itemDesc,
     int? promotionQtyReq,
     int? promotionQtyFree,
-    int? totalPrice,
+    double? totalPrice,
     int? freeQty,
   }) {
     return InvoiceDetails(
