@@ -4,10 +4,10 @@ import 'package:petrol_naas/models/view_invoice_item.dart';
 import '../../constants.dart';
 
 class InvoiceItemsTable extends StatelessWidget {
-  List<ViewInvoiceItem> items;
-  void Function(int) onPressDeleteItemFromInvoice;
+  final List<ViewInvoiceItem> items;
+  final void Function(int) onPressDeleteItemFromInvoice;
 
-  InvoiceItemsTable(
+  const InvoiceItemsTable(
       {Key? key,
       required this.items,
       required this.onPressDeleteItemFromInvoice})

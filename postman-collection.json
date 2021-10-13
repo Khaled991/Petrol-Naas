@@ -31,7 +31,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://5.9.215.57/petrolnaas/public/api/customer?Salesman=3",
+          "raw": "http://5.9.215.57:8080/petrolnaas/public/api/customer?Salesman=3",
           "protocol": "http",
           "host": ["5", "9", "215", "57"],
           "path": ["petrolnaas", "public", "api", "customer"],
@@ -70,7 +70,7 @@
             }
           }
         },
-        "url": "http://5.9.215.57/petrolnaas/public/api/invoice"
+        "url": "http://5.9.215.57:8080/petrolnaas/public/api/invoice"
       },
       "response": []
     },
@@ -100,7 +100,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=29&page=1",
+          "raw": "http://5.9.215.57:8080/petrolnaas/public/api/invoice?Createduserno=29&page=1",
           "protocol": "http",
           "host": ["5", "9", "215", "57"],
           "path": ["petrolnaas", "public", "api", "invoice"],
@@ -141,7 +141,7 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": "http://5.9.215.57/petrolnaas/public/api/items"
+        "url": "http://5.9.215.57:8080/petrolnaas/public/api/items"
       },
       "response": []
     },

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/filters.dart';
 import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
+// ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 import 'package:petrol_naas/widget/my_invoices_screen_header.dart';
 import 'package:petrol_naas/widget/invoice_list_style.dart';
@@ -63,7 +64,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
       final userStore = context.read<UserStore>();
 
       String url =
-          'http://5.9.215.57/petrolnaas/public/api/invoice?Createduserno=${userStore.user.userNo}&page=$_page';
+          'http://5.9.215.57:8080/petrolnaas/public/api/invoice?Createduserno=${userStore.user.userNo}&page=$_page';
 
       if (filters.hasDateFilter()) {
         url +=
@@ -80,7 +81,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
       storeMyInvoices.jsonToInvoicesList(jsonRespone);
       changeLoadingState(false);
     } on DioError {
-      ShowSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
+      showSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
       changeLoadingState(false);
     }
   }

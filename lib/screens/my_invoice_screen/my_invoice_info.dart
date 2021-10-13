@@ -62,7 +62,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
         sellPrice: double.parse(
           invoiceDetails.unitPrice!,
         ),
-        qty: invoiceDetails.qty! + invoiceDetails.freeQty!,
+        qty: invoiceDetails.qty!,
         freeItemsQty: Item.calcFreeQty(
           qty: invoiceDetails.qty!,
           promotionQtyFree: invoiceDetails.promotionQtyFree!,
@@ -122,7 +122,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   //   try {
   //     changeLoadingState(true);
   //     final String url =
-  //         "http://5.9.215.57/petrolnaas/public/api/invoice/${widget.invno}";
+  //         "http://5.9.215.57:8080/petrolnaas/public/api/invoice/${widget.invno}";
   //     Response response = await Dio().get(url);
   //     final jsonResponse = response.data;
   //     invoice = Invoice.fromJson(jsonResponse);
@@ -163,7 +163,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
       );
     } catch (e) {
       changeLoadingState(false);
-      ShowSnackBar(context, "حدث خطأ ما، الرجاء المحاولة مرة أخرى");
+      showSnackBar(context, "حدث خطأ ما، الرجاء المحاولة مرة أخرى");
     }
   }
 
@@ -247,9 +247,9 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
                                       color: darkColor,
                                     ),
                                   ),
-                                  if (widget.invoice.header!.VATnum != null)
+                                  if (widget.invoice.header!.vatNum != null)
                                     Text(
-                                      'الرقم الضريبي للعميل : ${widget.invoice.header!.VATnum!}',
+                                      'الرقم الضريبي للعميل : ${widget.invoice.header!.vatNum!}',
                                       style: TextStyle(
                                         fontSize: 19.0,
                                         color: darkColor,

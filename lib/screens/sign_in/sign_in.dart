@@ -7,6 +7,7 @@ import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/user.dart';
 import 'package:petrol_naas/models/user_sign_in.dart';
 import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
+// ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 import '../../constants.dart';
 import '../home/navigations_screen.dart';
@@ -21,12 +22,14 @@ class SignIn extends StatefulWidget {
 
 class _SignInState extends State<SignIn> {
   final TextEditingController userNoController =
-      TextEditingController(text: "");
-  // TextEditingController(text: "29");
+      // TextEditingController(text: "");
+      // TextEditingController(text: "29");
+      TextEditingController(text: "23");
 
   final TextEditingController passwordController =
-      TextEditingController(text: "");
-  // TextEditingController(text: "2640");
+      // TextEditingController(text: "");
+      // TextEditingController(text: "2640");
+      TextEditingController(text: "1560");
 
   UserSignIn signInData = UserSignIn();
 
@@ -35,10 +38,10 @@ class _SignInState extends State<SignIn> {
     signInData.userPwd = passwordController.text;
 
     if (signInData.userNo == '') {
-      ShowSnackBar(context, 'الرجاء ادخال رقم المندوب');
+      showSnackBar(context, 'الرجاء ادخال رقم المندوب');
       return;
     } else if (signInData.userPwd == '') {
-      ShowSnackBar(context, 'الرجاء ادخال كلمة المرور');
+      showSnackBar(context, 'الرجاء ادخال كلمة المرور');
       return;
     }
     bool isValid = await fetchSignIn();
@@ -56,17 +59,27 @@ class _SignInState extends State<SignIn> {
   Future<bool> fetchSignIn() async {
     try {
       Response response = await Dio().post(
-        'http://5.9.215.57/petrolnaas/public/api/login',
+        'http://5.9.215.57:8080/petrolnaas/public/api/login',
         data: signInData.toJson(),
       );
       var jsonRespone = response.data;
+
       final store = context.read<UserStore>();
       store.setUser(User.fromJson(jsonRespone, signInData.userNo));
       return true;
     } on DioError catch (e) {
+      // ignore: avoid_print
+      print(e);
       if (e.response?.statusCode == 400) {
-        ShowSnackBar(context, 'البيانات غير صحيحة');
+        showSnackBar(context, 'البيانات غير صحيحة');
+      } else {
+        showSnackBar(context, 'حدث خطأ ما الرجاء التواصل مع الادارة');
       }
+      return false;
+    } catch (e) {
+      // ignore: avoid_print
+      print(e);
+      showSnackBar(context, 'حدث خطأ ما الرجاء التواصل مع الادارة');
       return false;
     }
   }

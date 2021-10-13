@@ -8,6 +8,7 @@ class CreateInvoice {
   String? payType;
   String? accno;
   String? notes;
+  String? sellPriceNo;
   List<InvoiceItem>? items;
 
   CreateInvoice({
@@ -18,12 +19,13 @@ class CreateInvoice {
     this.payType,
     this.accno,
     this.notes,
+    this.sellPriceNo,
     this.items,
   });
 
   @override
   String toString() {
-    return 'CreateInvoice(userno: $userno, salesman: $salesman, custno: $custno, whno: $whno, payType: $payType, accno: $accno, notes: $notes, items: $items)';
+    return 'CreateInvoice(userno: $userno, salesman: $salesman, custno: $custno, whno: $whno, payType: $payType, accno: $accno, notes: $notes, sellPriceNo: $sellPriceNo, items: $items)';
   }
 
   factory CreateInvoice.fromJson(Map<String, dynamic> json) => CreateInvoice(
@@ -34,19 +36,21 @@ class CreateInvoice {
         payType: json['PayType'] as String?,
         accno: json['Accno'] as String?,
         notes: json['notes'] as String?,
+        sellPriceNo: json['sellPriceNo'] as String?,
         items: (json['Items'] as List<dynamic>?)
             ?.map((e) => InvoiceItem.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
 
   Map<String, dynamic> toJson() => {
-        'userno': userno,
-        'Salesman': salesman,
-        'Custno': custno,
-        'whno': whno,
-        'PayType': payType,
-        'Accno': accno,
+        'userno': double.parse(userno!),
+        'Salesman': double.parse(salesman!),
+        'Custno': double.parse(custno!),
+        'whno': double.parse(whno!),
+        'PayType': double.parse(payType!),
+        'Accno': double.parse(accno!),
         'notes': notes,
+        'sellPriceNo': sellPriceNo,
         'Items': items?.map((e) => e.toJson()).toList(),
       };
 
@@ -58,6 +62,7 @@ class CreateInvoice {
     String? payType,
     String? accno,
     String? notes,
+    String? sellPriceNo,
     List<InvoiceItem>? items,
   }) {
     return CreateInvoice(
@@ -68,6 +73,7 @@ class CreateInvoice {
       payType: payType ?? this.payType,
       accno: accno ?? this.accno,
       notes: notes ?? this.notes,
+      sellPriceNo: sellPriceNo ?? this.sellPriceNo,
       items: items ?? this.items,
     );
   }

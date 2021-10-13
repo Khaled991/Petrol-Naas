@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:petrol_naas/widget/header/custom_drawer.dart';
 import 'package:petrol_naas/widget/header/custom_header.dart';
-import 'package:petrol_naas/pages/add_invoice/add_invoice.dart';
+import 'package:petrol_naas/screens/add_invoice/add_invoice.dart';
 import '../my_invoice_screen/my_invoices_screen.dart';
 
 class NavigationsScreen extends StatefulWidget {
@@ -15,8 +15,11 @@ class NavigationsScreen extends StatefulWidget {
 class _NavigationsScreenState extends State<NavigationsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _currentScreenIdx;
-  List<Widget> bodies = [AddInvoice(), MyInvoicesScreen()];
-  List<String> headerTitles = ["إضافة فاتورة", "الفواتير"];
+  List<Widget> bodies = [
+    AddInvoice(),
+    MyInvoicesScreen(),
+  ];
+  List<String> headerTitles = ["إضافة فاتورة", "الفواتير", "إضافة صنف"];
 
   @override
   void initState() {

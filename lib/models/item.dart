@@ -7,6 +7,7 @@ class Item {
   int? promotionQtyReq;
   int? promotionQtyFree;
   bool? isFree;
+  int? availableQty;
 
   Item({
     this.itemno,
@@ -17,11 +18,12 @@ class Item {
     this.promotionQtyReq,
     this.promotionQtyFree,
     this.isFree,
+    this.availableQty,
   });
 
   @override
   String toString() {
-    return 'Items(itemno: $itemno, itemDesc: $itemDesc, sellPrice: $sellPrice, avgCost: $avgCost, itemProd: $itemProd, promotionQtyReq: $promotionQtyReq, promotionQtyFree: $promotionQtyFree), isFree: $isFree';
+    return 'Items(itemno: $itemno, itemDesc: $itemDesc, sellPrice: $sellPrice, avgCost: $avgCost, itemProd: $itemProd, promotionQtyReq: $promotionQtyReq, promotionQtyFree: $promotionQtyFree), isFree: $isFree, availableQty: $availableQty';
   }
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -34,8 +36,12 @@ class Item {
       promotionQtyReq: json['PromotionQtyReq'].toInt(),
       promotionQtyFree: json['PromotionQtyFree'].toInt(),
       isFree: json['isFree'] == '1',
+      availableQty:
+          fixNegativeQunatities(double.parse(json['availableQty']).toInt()),
     );
   }
+
+  static int fixNegativeQunatities(int qty) => qty < 0 ? 0 : qty;
 
   Map<String, dynamic> toJson() => {
         'itemno': itemno,
@@ -46,6 +52,7 @@ class Item {
         'PromotionQtyReq': promotionQtyReq,
         'PromotionQtyFree': promotionQtyFree,
         'isFree': isFree,
+        'availableQty': availableQty,
       };
 
   Item copyWith({
@@ -57,6 +64,7 @@ class Item {
     int? promotionQtyReq,
     int? promotionQtyFree,
     bool? isFree,
+    int? availableQty,
   }) {
     return Item(
       itemno: itemno ?? this.itemno,
@@ -67,6 +75,7 @@ class Item {
       promotionQtyReq: promotionQtyReq ?? this.promotionQtyReq,
       promotionQtyFree: promotionQtyFree ?? this.promotionQtyFree,
       isFree: isFree ?? this.isFree,
+      availableQty: availableQty ?? this.availableQty,
     );
   }
 

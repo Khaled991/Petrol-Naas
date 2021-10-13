@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomHeader extends StatelessWidget {
   final String title;
+  final bool showBackButton;
 
   const CustomHeader({
     Key? key,
     required GlobalKey<ScaffoldState> scaffoldKey,
     required this.title,
+    this.showBackButton = false,
   })  : _scaffoldKey = scaffoldKey,
         super(key: key);
 
@@ -23,24 +26,27 @@ class CustomHeader extends StatelessWidget {
           Positioned(
             width: MediaQuery.of(context).size.width,
             left: -30,
-            child: HeaderShepe(
+            child: HeaderShape(
               headerColor: Color(0x66f8cf34),
+              showBackButton: showBackButton,
             ),
           ),
           Positioned(
             width: MediaQuery.of(context).size.width,
             top: -15,
             left: -15,
-            child: HeaderShepe(
+            child: HeaderShape(
               headerColor: Color(0x88f8cf34),
+              showBackButton: showBackButton,
             ),
           ),
           Positioned(
             width: MediaQuery.of(context).size.width,
             top: -30,
-            child: HeaderShepe(
+            child: HeaderShape(
               scaffoldKey: _scaffoldKey,
               title: title,
+              showBackButton: showBackButton,
               headerColor: Color(0xfff8cf34),
             ),
           ),
@@ -50,18 +56,20 @@ class CustomHeader extends StatelessWidget {
   }
 }
 
-class HeaderShepe extends StatelessWidget {
-  HeaderShepe({
+class HeaderShape extends StatelessWidget {
+  const HeaderShape({
     Key? key,
     GlobalKey<ScaffoldState>? scaffoldKey,
     this.title,
+    required this.showBackButton,
     required this.headerColor,
   })  : _scaffoldKey = scaffoldKey,
         super(key: key);
 
   final GlobalKey<ScaffoldState>? _scaffoldKey;
-  String? title;
+  final String? title;
   final Color headerColor;
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -80,13 +88,7 @@ class HeaderShepe extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (_scaffoldKey != null)
-                TextButton(
-                  onPressed: () => _scaffoldKey!.currentState!.openDrawer(),
-                  child: Image.asset(
-                    'assets/images/menu.png',
-                    width: 35.0,
-                  ),
-                ),
+                showBackButton ? _backButton(context) : _openDrawerButton(),
               if (title != null)
                 Center(
                   child: Text(
@@ -104,6 +106,28 @@ class HeaderShepe extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _backButton(BuildContext context) {
+    return TextButton(
+      onPressed: () => Navigator.of(context).pop(),
+      child: SvgPicture.asset(
+        "assets/SVG/back.svg",
+        color: Colors.white,
+        semanticsLabel: "Back Button",
+        height: 20.0,
+      ),
+    );
+  }
+
+  Widget _openDrawerButton() {
+    return TextButton(
+      onPressed: () => _scaffoldKey!.currentState!.openDrawer(),
+      child: Image.asset(
+        'assets/images/menu.png',
+        width: 35.0,
       ),
     );
   }

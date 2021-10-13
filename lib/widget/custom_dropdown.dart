@@ -6,9 +6,9 @@ class CustomDropdown<T> extends StatelessWidget {
   final dynamic textProperty;
   late final List<T> elements;
   late String label;
-  T? selectedValue;
+  final T? selectedValue;
 
-  void Function(T? value) onChanged;
+  final void Function(T? value) onChanged;
   CustomDropdown({
     Key? key,
     this.textProperty,

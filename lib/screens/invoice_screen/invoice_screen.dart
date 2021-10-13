@@ -16,11 +16,11 @@ import '../../constants.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+// ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 
 class InvoiceScreen extends StatefulWidget {
   final Widget? child;
-  final double finalPrice;
   final double total;
   final double fee;
   final List<ViewInvoiceItem> items;
@@ -33,7 +33,6 @@ class InvoiceScreen extends StatefulWidget {
   const InvoiceScreen({
     Key? key,
     this.child,
-    required this.finalPrice,
     required this.total,
     required this.fee,
     required this.items,
@@ -104,7 +103,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     try {
       var formData = FormData.fromMap({
         'coinname': 'SAR',
-        'number': widget.finalPrice + widget.fee,
+        'number': widget.total + widget.fee,
       });
 
       Response response = await Dio().post(
@@ -120,7 +119,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       qrData = """اسم المورد : شركة مصنع بترول ناس
 الرقم الضريبي : 300468968200003
 التاريخ والوقت : ${prepareDateAndTimeToPrintInInvoice()}
-الإجمالي شامل الضريبة : ${widget.finalPrice + widget.fee}
+الإجمالي شامل الضريبة : ${widget.total + widget.fee}
 قيمة الضريبة : ${widget.fee}""";
       Timer(
         const Duration(seconds: 1),
@@ -243,7 +242,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           title: 'ضريبة القيمة المضافة',
                         ),
                         InvoiceDetailsPrices(
-                          price: (widget.finalPrice + widget.fee).toString(),
+                          price: (widget.total + widget.fee).toString(),
                           title: 'قيمة الفاتورة',
                         ),
                         Text(

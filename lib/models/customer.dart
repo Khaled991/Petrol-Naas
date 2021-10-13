@@ -1,35 +1,35 @@
 class Customer {
   String? accNo;
   String? accName;
-  String? VATnum;
+  String? vatNum;
 
-  Customer({this.accNo, this.accName, this.VATnum});
+  Customer({this.accNo, this.accName, this.vatNum});
 
   @override
   String toString() =>
-      'Customer(accNo: $accNo, accName: $accName, VATnum: $VATnum)';
+      'Customer(accNo: $accNo, accName: $accName, VATnum: $vatNum)';
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
         accNo: json['AccNo'] as String?,
         accName: json['AccName'] as String?,
-        VATnum: json['VATnum'] as String?,
+        vatNum: json['VATnum'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
         'AccNo': accNo,
         'AccName': accName,
-        'VATnum': VATnum,
+        'VATnum': vatNum,
       };
 
   Customer copyWith({
     String? accNo,
     String? accName,
-    String? VATnum,
+    String? vatNum,
   }) {
     return Customer(
       accNo: accNo ?? this.accNo,
       accName: accName ?? this.accName,
-      VATnum: VATnum ?? this.VATnum,
+      vatNum: vatNum ?? this.vatNum,
     );
   }
 }

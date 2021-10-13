@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:petrol_naas/pages/sign_in/sign_in.dart';
+import 'package:petrol_naas/screens/sign_in/sign_in.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
+// ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 import '../../constants.dart';
 

@@ -4,13 +4,13 @@ import 'package:flutter_svg/svg.dart';
 import '../constants.dart';
 
 class InvoiceScreenHeader extends StatelessWidget {
-  InvoiceScreenHeader({
+  const InvoiceScreenHeader({
     Key? key,
     required this.taxNo,
     this.isColored = true,
   }) : super(key: key);
   final String taxNo;
-  bool isColored;
+  final bool isColored;
 
   @override
   Widget build(BuildContext context) {

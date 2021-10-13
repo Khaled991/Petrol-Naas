@@ -9,7 +9,7 @@ class InoviceHeader {
   String? totAfterVat;
   String? createdDelegateName;
   String? payType;
-  String? VATnum;
+  String? vatNum;
 
   InoviceHeader({
     this.invno,
@@ -22,13 +22,12 @@ class InoviceHeader {
     this.totAfterVat,
     this.createdDelegateName,
     this.payType,
-    this.VATnum,
+    this.vatNum,
   });
 
   @override
   String toString() {
-    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName), payType: $payType)';
-    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName), VATnum: $VATnum';
+    return 'Header(invno: $invno, invdate: $invdate, custName: $custName, total: $total, discountTotal: $discountTotal, netTotal: $netTotal, vaTamount: $vaTamount, totAfterVat: $totAfterVat, createdDelegateName: $createdDelegateName, payType: $payType, VATnum: $vatNum)';
   }
 
   factory InoviceHeader.fromJson(Map<String, dynamic> json) => InoviceHeader(
@@ -42,7 +41,7 @@ class InoviceHeader {
         totAfterVat: json['TotAfterVAT'] as String?,
         createdDelegateName: json['User_Name'] as String?,
         payType: decodePayType(json['PayType'] as String?),
-        VATnum: json['VATnum'] as String?,
+        vatNum: json['VATnum'] as String?,
       );
 
   static String? decodePayType(String? payType) {
@@ -72,7 +71,7 @@ class InoviceHeader {
         'TotAfterVAT': totAfterVat,
         'User_Name': createdDelegateName,
         'PayType': payType,
-        'VATnum': VATnum,
+        'VATnum': vatNum,
       };
 
   InoviceHeader copyWith({
@@ -86,7 +85,7 @@ class InoviceHeader {
     String? totAfterVat,
     String? userName,
     String? payType,
-    String? VATnum,
+    String? vatNum,
   }) {
     return InoviceHeader(
       invno: invno ?? this.invno,
@@ -99,7 +98,7 @@ class InoviceHeader {
       totAfterVat: totAfterVat ?? this.totAfterVat,
       createdDelegateName: userName ?? createdDelegateName,
       payType: payType ?? this.payType,
-      VATnum: VATnum ?? this.VATnum,
+      vatNum: vatNum ?? this.vatNum,
     );
   }
 }
