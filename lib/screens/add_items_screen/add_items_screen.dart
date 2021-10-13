@@ -131,7 +131,7 @@ class _AddItemExpansionPanelState extends State<AddItemExpansionPanel> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('الكمية المتاحة : ${widget.item.availableQty}'),
-            Text('${widget.item.sellPrice} : السعر'),
+            Text('السعر : ${widget.item.sellPrice!.toStringAsFixed(2)}'),
             if (!disabled)
               AdjustableQuantity(
                 setQty: setQty,
@@ -139,7 +139,9 @@ class _AddItemExpansionPanelState extends State<AddItemExpansionPanel> {
                 maxQty: widget.item.availableQty!,
                 isInline: true,
               ),
-            Text('${widget.item.sellPrice! * qty} : الاجمالي'),
+            Text(
+              'الاجمالي : ${(widget.item.sellPrice! * qty).toStringAsFixed(2)}',
+            ),
             if (hasPromotionQtyFree) _renderFreeQtyWidget(),
             _addButton(disabled: disabled),
             // _addButton(disabled: (widget.item.availableQty ?? 0) > 0),

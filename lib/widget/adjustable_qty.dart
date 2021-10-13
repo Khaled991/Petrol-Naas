@@ -23,6 +23,20 @@ class AdjustableQuantity extends StatefulWidget {
 }
 
 class _AdjustableQuantityState extends State<AdjustableQuantity> {
+  late FocusNode qtyFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    qtyFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    qtyFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return widget.isInline
@@ -65,7 +79,7 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
             child: IconButton(
               constraints: BoxConstraints(),
               iconSize: 18.0,
-              onPressed: () => handleClickAddQty(),
+              onPressed: handleClickAddQty,
               icon: Icon(
                 Icons.add,
               ),
@@ -75,17 +89,20 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
             width: 50.0,
             // height: 30.0,
             child: TextFormField(
+              enabled: false, //TODO: enable textfield and fix its bugs
+              focusNode: qtyFocusNode,
               controller: widget.qtyTextFieldController,
               textAlignVertical: TextAlignVertical.center,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               onChanged: (String newQty) {
-                RegExp invalidCharacterRegEx = RegExp(r"[^0-9]");
+                RegExp invalidCharacterRegEx = RegExp(r"^[0-9]*$");
                 bool hasInvalidCharacter =
                     invalidCharacterRegEx.hasMatch(newQty);
 
                 if (!hasInvalidCharacter && newQty != "") {
-                  return showSnackBar("يجب أن تكون الكمية عدد صحيح موجب");
+                  newQty = newQty.replaceAll(RegExp(r'[^0-9]'), '');
+                  showSnackBar("يجب أن تكون الكمية عدد صحيح موجب");
                 }
 
                 handleChangeQty(int.parse(newQty));
@@ -109,7 +126,7 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
             child: IconButton(
               constraints: BoxConstraints(),
               iconSize: 18.0,
-              onPressed: () => handleClickSubtraceQty(),
+              onPressed: handleClickSubtraceQty,
               icon: Icon(
                 Icons.remove,
               ),
@@ -140,11 +157,14 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
   void changeInputQtyAndFocusAgain(int newQty) {
     final String newQtyAsString = newQty.toString();
 
+    widget.setQty(newQty);
     widget.qtyTextFieldController!.value = TextEditingValue(
       text: newQtyAsString,
-      selection: TextSelection.collapsed(offset: newQtyAsString.length),
+      selection: TextSelection.fromPosition(
+        TextPosition(offset: newQtyAsString.length),
+      ),
     );
-    widget.setQty(newQty);
+    FocusScope.of(context).requestFocus(qtyFocusNode);
   }
 
   void showSnackBar(String msg) {
