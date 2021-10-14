@@ -157,6 +157,14 @@ class _AddInvoiceState extends State<AddInvoice> {
                 _renderCustomerDropdown(),
                 _renderNotesTextArea(),
                 _renderItemsList(),
+                TextButton(
+                  onPressed: () {
+                    fillInRestDataOfInvoice();
+                    print(createInvoice.items!.length);
+                    print(createInvoice.items);
+                  },
+                  child: Text("Fill Invoice"),
+                ),
                 _renderAddItemButton(),
                 _renderTotal(),
                 _renderVat(),
@@ -450,6 +458,8 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   void fillInItemsToViewInAddInviceAndInvoiceToBePrinted() {
+    clearAddItemsFromCreateInvoiceObj();
+
     final addedItemsToNewInvoiceStore =
         context.read<AddedItemsToNewInvoiceStore>();
 
@@ -461,7 +471,10 @@ class _AddInvoiceState extends State<AddInvoice> {
 
       addItemToCreateInvoiceItems(item, qty);
     }
-    removeRepeatedItemsIfExists(createInvoice.items ?? []);
+  }
+
+  void clearAddItemsFromCreateInvoiceObj() {
+    createInvoice.items = [];
   }
 
   void addItemToCreateInvoiceItems(Item item, int qty) {
@@ -469,10 +482,6 @@ class _AddInvoiceState extends State<AddInvoice> {
 
     createInvoice.items!.add(
         InvoiceItem(itemno: item.itemno!, price: item.sellPrice, qty: qty));
-  }
-
-  void removeRepeatedItemsIfExists(List<dynamic> items) {
-    items = items.toSet().toList();
   }
 
   bool isFieldsFilled() {
@@ -509,62 +518,3 @@ class _AddInvoiceState extends State<AddInvoice> {
     scrollController.jumpTo(0);
   }
 }
-
-
-// class Acsacsav {
-//   String? invNo;
-//   double total = 0.0;
-//   double vat = 0.0;
-//   double totalPlusVat = 0.0;
-//   double? fee;
-//   late List<InvoiceItem> items;
-
-//   Acsacsav(InvoiceItem item) {
-//     getFee();
-//     addItem(item);
-//     calculateTotalAndVatAndFinalPrice();
-//   }
-
-//   Future<void> getFee() async {
-//     try {
-//       Response response = await Dio().get(
-//         'http://5.9.215.57:8080/petrolnaas/public/api/fee',
-//       );
-//       final double fee = double.parse(response.data) / 100.0;
-//       this.fee = fee;
-//     } on DioError {
-//       print('حدث خطأ ما اثناء الحصول علي الضريبة، الرجاء التواصل مع الادارة');
-//     }
-//   }
-
-//   addItem(InvoiceItem item) {
-//     items.add(item);
-//   }
-
-//   removeItem(InvoiceItem item) {
-//     items.remove(item);
-//   }
-
-//   void calculateTotalAndVatAndFinalPrice() {
-//     total = calculateNewTotal();
-//     vat = getVat();
-//     totalPlusVat = total + vat;
-//   }
-
-//   double calculateNewTotal() {
-//     double total = 0.0;
-//     for (int i = 0; i < items.length; i++) {
-//       InvoiceItem item = items[i];
-//       double sellPrice = item.price!;
-//       int qty = item.qty!;
-//       total += sellPrice * qty.toDouble();
-//     }
-
-//     return total;
-//   }
-
-//   double getVat() {
-//     double vatAmount = fee! * total;
-//     return vatAmount;
-//   }
-// }
