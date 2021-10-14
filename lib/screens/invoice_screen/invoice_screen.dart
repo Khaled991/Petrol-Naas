@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:petrol_naas/mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
+import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
 import 'package:petrol_naas/widget/invoice_details_prices.dart';
 import 'package:petrol_naas/widget/invoice_screen_header.dart';
@@ -22,8 +24,7 @@ import 'package:provider/src/provider.dart';
 class InvoiceScreen extends StatefulWidget {
   final Widget? child;
   final double total;
-  final double fee;
-  final List<ViewInvoiceItem> items;
+  final double vat;
   final String customerName;
   final String invNo;
   final bool isConnected;
@@ -34,8 +35,7 @@ class InvoiceScreen extends StatefulWidget {
     Key? key,
     this.child,
     required this.total,
-    required this.fee,
-    required this.items,
+    required this.vat,
     required this.customerName,
     required this.invNo,
     required this.isConnected,
@@ -53,11 +53,41 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   Uint8List? bytes;
   bool isCaptured = false;
   String qrData = '';
+  final List<ViewInvoiceItem> items = [];
 
   @override
   void initState() {
     getTafqeet();
+    prepareItemsForView();
     super.initState();
+  }
+
+  void prepareItemsForView() {
+    final addedItemsToNewInvoiceStore =
+        context.read<AddedItemsToNewInvoiceStore>();
+
+    int itemsCount = addedItemsToNewInvoiceStore.items.length;
+    for (int i = 0; i < itemsCount; i++) {
+      int qty = addedItemsToNewInvoiceStore.quantities[i];
+      Item item = addedItemsToNewInvoiceStore.items[i];
+      addItemForView(item, qty);
+    }
+  }
+
+  void addItemForView(Item item, int qty) {
+    items.add(
+      ViewInvoiceItem(
+        qty: qty,
+        itemno: item.itemno,
+        freeItemsQty: Item.calcFreeQty(
+          qty: qty,
+          promotionQtyReq: item.promotionQtyReq!,
+          promotionQtyFree: item.promotionQtyFree!,
+        ),
+        itemDesc: item.itemDesc,
+        sellPrice: item.sellPrice,
+      ),
+    );
   }
 
   Future<void> capture(key) async {
@@ -103,7 +133,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     try {
       var formData = FormData.fromMap({
         'coinname': 'SAR',
-        'number': widget.total + widget.fee,
+        'number': widget.total + widget.vat,
       });
 
       Response response = await Dio().post(
@@ -119,8 +149,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       qrData = """اسم المورد : شركة مصنع بترول ناس
 الرقم الضريبي : 300468968200003
 التاريخ والوقت : ${prepareDateAndTimeToPrintInInvoice()}
-الإجمالي شامل الضريبة : ${widget.total + widget.fee}
-قيمة الضريبة : ${widget.fee}""";
+الإجمالي شامل الضريبة : ${widget.total + widget.vat}
+قيمة الضريبة : ${widget.vat}""";
       Timer(
         const Duration(seconds: 1),
         () async {
@@ -223,10 +253,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           thickness: 2.0,
                         ),
                         ItemsInfoTable(
-                          items: widget.items,
+                          items: items,
                         ),
                         InvoiceDetailsPrices(
-                          price: widget.total.toString(),
+                          price: widget.total.toStringAsFixed(2),
                           title: 'الاجمالي',
                         ),
                         InvoiceDetailsPrices(
@@ -234,15 +264,15 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           title: 'الخصم',
                         ),
                         InvoiceDetailsPrices(
-                          price: widget.total.toString(),
+                          price: widget.total.toStringAsFixed(2),
                           title: 'الصافي',
                         ),
                         InvoiceDetailsPrices(
-                          price: widget.fee.toString(),
+                          price: widget.vat.toStringAsFixed(2),
                           title: 'ضريبة القيمة المضافة',
                         ),
                         InvoiceDetailsPrices(
-                          price: (widget.total + widget.fee).toString(),
+                          price: (widget.total + widget.vat).toStringAsFixed(2),
                           title: 'قيمة الفاتورة',
                         ),
                         Text(

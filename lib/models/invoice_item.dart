@@ -29,4 +29,17 @@ class InvoiceItem {
       price: price ?? this.price,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is InvoiceItem &&
+        other.itemno == itemno &&
+        other.qty == qty &&
+        other.price == price;
+  }
+
+  @override
+  int get hashCode => itemno.hashCode ^ qty.hashCode ^ price.hashCode;
 }

@@ -48,19 +48,22 @@ abstract class _AddedItemsToNewInvoiceStoreBase with Store {
       totalPrice += items[i].sellPrice! * quantities[i];
     }
 
-    return totalPrice;
+    return roundToTwoDecimalPlaces(totalPrice);
   }
 
   double calculateVat(double fee) {
     double vat = fee * totalPrice;
 
-    return vat;
+    return roundToTwoDecimalPlaces(vat);
   }
 
   double calculateInvoiceTotal(double fee) {
     double vat = this.vat(fee);
     double invoiceTotal = totalPrice + vat;
 
-    return invoiceTotal;
+    return roundToTwoDecimalPlaces(invoiceTotal);
   }
+
+  double roundToTwoDecimalPlaces(double number) =>
+      double.parse((number).toStringAsFixed(2));
 }

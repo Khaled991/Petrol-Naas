@@ -134,6 +134,7 @@ class _AddItemExpansionPanelState extends State<AddItemExpansionPanel> {
             Text('السعر : ${widget.item.sellPrice!.toStringAsFixed(2)}'),
             if (!disabled)
               AdjustableQuantity(
+                key: Key(widget.item.itemno!),
                 setQty: setQty,
                 qty: qty,
                 maxQty: widget.item.availableQty!,

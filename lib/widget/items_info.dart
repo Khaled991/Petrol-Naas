@@ -35,19 +35,20 @@ class _ItemsInfoTableState extends State<ItemsInfoTable> {
                     ),
                   ),
                   Table(
-                    contentText: item.sellPrice.toString(),
+                    contentText: item.sellPrice!.toStringAsFixed(2),
                     title: 'سعر',
                   ),
                   Table(
-                    contentText: item.qty!.toString(),
+                    contentText: item.qty!.toStringAsFixed(2),
                     title: 'الكمية',
                   ),
                   Table(
-                    contentText: (item.freeItemsQty!).toString(),
+                    contentText: (item.freeItemsQty!).toStringAsFixed(2),
                     title: 'القطع المجانية',
                   ),
                   Table(
-                    contentText: (item.sellPrice! * item.qty!).toString(),
+                    contentText:
+                        (item.sellPrice! * item.qty!).toStringAsFixed(2),
                     title: 'الاجمالي',
                   ),
                   Divider(

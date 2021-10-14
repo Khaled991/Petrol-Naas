@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../constants.dart';
 
@@ -89,6 +90,9 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
             width: 50.0,
             // height: 30.0,
             child: TextFormField(
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+              ],
               enabled: false, //TODO: enable textfield and fix its bugs
               focusNode: qtyFocusNode,
               controller: widget.qtyTextFieldController,
@@ -96,16 +100,7 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               onChanged: (String newQty) {
-                RegExp invalidCharacterRegEx = RegExp(r"^[0-9]*$");
-                bool hasInvalidCharacter =
-                    invalidCharacterRegEx.hasMatch(newQty);
-
-                if (!hasInvalidCharacter && newQty != "") {
-                  newQty = newQty.replaceAll(RegExp(r'[^0-9]'), '');
-                  showSnackBar("يجب أن تكون الكمية عدد صحيح موجب");
-                }
-
-                handleChangeQty(int.parse(newQty));
+                changeInputQtyAndFocusAgain(int.parse(newQty));
               },
               decoration: const InputDecoration(
                 border: InputBorder.none,
@@ -149,7 +144,10 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
     } else if (newQty < 1) {
       changeInputQtyAndFocusAgain(1);
 
-      return showSnackBar("لا يمكنك تحديد كمية أقل من 1");
+      showSnackBar("لا يمكنك تحديد كمية أقل من 1");
+      FocusScope.of(context).requestFocus(qtyFocusNode);
+
+      return;
     }
     changeInputQtyAndFocusAgain(newQty);
   }
@@ -158,13 +156,13 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
     final String newQtyAsString = newQty.toString();
 
     widget.setQty(newQty);
+    FocusScope.of(context).requestFocus(qtyFocusNode);
     widget.qtyTextFieldController!.value = TextEditingValue(
       text: newQtyAsString,
       selection: TextSelection.fromPosition(
         TextPosition(offset: newQtyAsString.length),
       ),
     );
-    FocusScope.of(context).requestFocus(qtyFocusNode);
   }
 
   void showSnackBar(String msg) {
