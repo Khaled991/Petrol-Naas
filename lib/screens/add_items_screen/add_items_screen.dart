@@ -81,7 +81,11 @@ class _AddItemExpansionPanelState extends State<AddItemExpansionPanel> {
   @override
   void initState() {
     super.initState();
-    disabled = widget.item.availableQty! <= 0;
+
+    final bool hasNoAvailableQty = widget.item.availableQty! <= 0;
+    final bool hasNoSellPrice = widget.item.sellPrice! <= 0;
+    disabled = hasNoAvailableQty || hasNoSellPrice;
+
     hasPromotionQtyFree =
         widget.item.promotionQtyFree! > 0 && widget.item.promotionQtyReq! > 0;
   }
@@ -137,7 +141,7 @@ class _AddItemExpansionPanelState extends State<AddItemExpansionPanel> {
                 key: Key(widget.item.itemno!),
                 setQty: setQty,
                 qty: qty,
-                maxQty: widget.item.availableQty!,
+                item: widget.item,
                 isInline: true,
               ),
             Text(

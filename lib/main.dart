@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
-import 'mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
+import 'package:dio/dio.dart';
 import 'widget/splash_screen/splash_screen.dart';
+import 'mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
 import 'constants.dart';
 import 'mobx/items/items.dart';
 import 'mobx/user/user.dart';
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
   final _customersStore = CustomerStore();
   final _itemsStore = ItemsStore();
   final _addedItemsToNewInvoiceStore = AddedItemsToNewInvoiceStore();
+
   MyApp({
     Key? key,
   }) : super(key: key);

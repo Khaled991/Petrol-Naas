@@ -122,8 +122,8 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   //   try {
   //     changeLoadingState(true);
   //     final String url =
-  //         "http://5.9.215.57:8080/petrolnaas/public/api/invoice/${widget.invno}";
-  //     Response response = await Dio().get(url);
+  //         "/invoice/${widget.invno}";
+  //     Response response = await Dio(dioOptions).get(url);
   //     final jsonResponse = response.data;
   //     invoice = Invoice.fromJson(jsonResponse);
   //     getTafqeet(invoice!.header!.totAfterVat!);
@@ -140,7 +140,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
         'coinname': 'SAR',
         'number': finalPrice,
       });
-      Response response = await Dio().post(
+      Response response = await Dio(dioOptions).post(
         'https://ahsibli.com/wp-admin/admin-ajax.php?action=date_coins_1',
         data: formData,
       );

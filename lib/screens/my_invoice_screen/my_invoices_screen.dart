@@ -64,7 +64,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
       final userStore = context.read<UserStore>();
 
       String url =
-          'http://5.9.215.57:8080/petrolnaas/public/api/invoice?Createduserno=${userStore.user.userNo}&page=$_page';
+          '/invoice?Createduserno=${userStore.user.userNo}&page=$_page';
 
       if (filters.hasDateFilter()) {
         url +=
@@ -74,7 +74,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
         url += "&Custno=${filters.custNo.current}";
       }
 
-      Response response = await Dio().get(url);
+      Response response = await Dio(dioOptions).get(url);
 
       final storeMyInvoices = _myInvoices;
       var jsonRespone = response.data;

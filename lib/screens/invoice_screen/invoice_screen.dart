@@ -136,7 +136,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
         'number': widget.total + widget.vat,
       });
 
-      Response response = await Dio().post(
+      Response response = await Dio(dioOptions).post(
         'https://ahsibli.com/wp-admin/admin-ajax.php?action=date_coins_1',
         data: formData,
       );

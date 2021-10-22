@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:petrol_naas/models/item.dart';
 
 import '../constants.dart';
 
@@ -7,14 +8,14 @@ class AdjustableQuantity extends StatefulWidget {
   final void Function(int) setQty;
   final int qty;
   final TextEditingController? qtyTextFieldController;
-  final int maxQty;
+  final Item item;
   final bool isInline;
 
   AdjustableQuantity({
     Key? key,
     required this.setQty,
     required this.qty,
-    required this.maxQty,
+    required this.item,
     this.isInline = false,
   })  : qtyTextFieldController = TextEditingController(text: qty.toString()),
         super(key: key);
@@ -137,15 +138,21 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
   void handleClickSubtraceQty() => handleChangeQty(widget.qty - 1);
 
   void handleChangeQty(int newQty) {
-    if (newQty > widget.maxQty) {
-      changeInputQtyAndFocusAgain(widget.maxQty);
+    final int freeQty = Item.calcFreeQty(
+        qty: newQty,
+        promotionQtyReq: widget.item.promotionQtyReq!,
+        promotionQtyFree: widget.item.promotionQtyFree!);
+    final int newQtyWithFreeQty = newQty + freeQty;
 
+    if (newQtyWithFreeQty > widget.item.availableQty!) {
+      int maxAvailableQtyToBuy = widget.item.availableQty! - freeQty;
+      changeInputQtyAndFocusAgain(maxAvailableQtyToBuy);
       return showSnackBar("لا يمكنك تحديد كمية اكثر من المتوفرة");
     } else if (newQty < 1) {
       changeInputQtyAndFocusAgain(1);
 
       showSnackBar("لا يمكنك تحديد كمية أقل من 1");
-      FocusScope.of(context).requestFocus(qtyFocusNode);
+      // FocusScope.of(context).requestFocus(qtyFocusNode);
 
       return;
     }
@@ -156,7 +163,7 @@ class _AdjustableQuantityState extends State<AdjustableQuantity> {
     final String newQtyAsString = newQty.toString();
 
     widget.setQty(newQty);
-    FocusScope.of(context).requestFocus(qtyFocusNode);
+    // FocusScope.of(context).requestFocus(qtyFocusNode);
     widget.qtyTextFieldController!.value = TextEditingValue(
       text: newQtyAsString,
       selection: TextSelection.fromPosition(

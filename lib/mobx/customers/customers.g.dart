@@ -28,11 +28,11 @@ mixin _$CustomerStore on _CustomerStoreBase, Store {
       ActionController(name: '_CustomerStoreBase');
 
   @override
-  dynamic setCustomers(List<Customer> value) {
+  dynamic setCustomers(dynamic customersList) {
     final _$actionInfo = _$_CustomerStoreBaseActionController.startAction(
         name: '_CustomerStoreBase.setCustomers');
     try {
-      return super.setCustomers(value);
+      return super.setCustomers(customersList);
     } finally {
       _$_CustomerStoreBaseActionController.endAction(_$actionInfo);
     }

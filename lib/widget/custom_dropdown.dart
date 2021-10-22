@@ -31,19 +31,45 @@ class CustomDropdown<T> extends StatelessWidget {
 
         if (textProperty == null) {
           displayedText = element.toString();
+          dropDownElementsList.add(DropdownMenuItem(
+            child: Text(displayedText),
+            value: element,
+          ));
         } else if (textProperty is List<String>) {
-          displayedText = textProperty
-              .map((String property) => element.toJson()[property])
-              .join(": ")
-              .toString();
+          final List<Widget> listOfTextsWidget = List.generate(
+            textProperty.length,
+            (index) => index % 2 == 0
+                ? Expanded(
+                    child: Text("${element.toJson()[textProperty[index]]}"),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.only(right: 5.0),
+                    child: Text(
+                      "${element.toJson()[textProperty[index]]}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ),
+          );
+
+          // textProperty
+          //     .map<Text>((String property) => Text(element.toJson()[property]));
+
+          dropDownElementsList.add(DropdownMenuItem(
+            child: Row(
+              children: listOfTextsWidget,
+            ),
+            value: element,
+          ));
         } else {
           displayedText = element.toJson()[textProperty].toString();
+          dropDownElementsList.add(DropdownMenuItem(
+            child: Text(displayedText),
+            value: element,
+          ));
         }
-
-        dropDownElementsList.add(DropdownMenuItem(
-          child: Text(displayedText),
-          value: element,
-        ));
       }
     }
 

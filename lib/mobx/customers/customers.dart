@@ -9,5 +9,15 @@ abstract class _CustomerStoreBase with Store {
   List<Customer> customers = [];
 
   @action
-  setCustomers(List<Customer> value) => customers = value;
+  setCustomers(dynamic customersList) =>
+      customers = prepareCustomersList(customersList);
+
+  List<Customer> prepareCustomersList(dynamic customersList) {
+    List<Customer> customers = List<Customer>.from(
+      customersList.map(
+        (customer) => Customer.fromJson(customer),
+      ),
+    );
+    return customers;
+  }
 }

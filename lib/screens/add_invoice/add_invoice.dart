@@ -5,7 +5,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:petrol_naas/mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
 import 'package:petrol_naas/models/invoice_header.dart';
 import 'package:petrol_naas/screens/add_items_screen/add_items_screen.dart';
-import 'package:petrol_naas/widget/adjustable_qty.dart';
 import 'package:petrol_naas/widget/item_add_in_add_invoice.dart';
 // ignore: implementation_imports
 import 'package:provider/src/provider.dart';
@@ -16,7 +15,6 @@ import 'package:petrol_naas/models/create_invoice.dart';
 import 'package:petrol_naas/models/customer.dart';
 import 'package:petrol_naas/models/invoice_item.dart';
 import 'package:petrol_naas/models/item.dart';
-import 'package:petrol_naas/models/view_invoice_item.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/invoice_details.dart';
 import 'package:petrol_naas/widget/custom_button.dart';
@@ -67,14 +65,14 @@ class _AddInvoiceState extends State<AddInvoice> {
       final String salesman = context.read<UserStore>().user.salesman ?? '';
 
       changeLoadingState(true);
-      Response response = await Dio().get(
-        'http://5.9.215.57:8080/petrolnaas/public/api/customer?Salesman=$salesman',
+      Response response = await Dio(dioOptions).get(
+        '/customer?Salesman=$salesman',
       );
       if (!mounted) return;
       var jsonRespone = response.data;
       final customersStore = context.read<CustomerStore>();
 
-      customersStore.setCustomers(prepareCustomersList(jsonRespone));
+      customersStore.setCustomers(jsonRespone);
       changeLoadingState(false);
     } on DioError {
       changeLoadingState(false);
@@ -83,22 +81,16 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   void changeLoadingState(bool state) => setState(() => isLoading = state);
 
-  List<Customer> prepareCustomersList(dynamic customersList) {
-    List<Customer> customers = List<Customer>.from(
-      customersList.map(
-        (customer) => Customer.fromJson(customer),
-      ),
-    );
-    return customers;
-  }
-
   Future<void> getItems() async {
     try {
       changeLoadingState(true);
       final userStore = context.read<UserStore>();
 
-      Response response = await Dio().get(
-          "http://5.9.215.57:8080/petrolnaas/public/api/items?sellPriceNo=${userStore.user.sellPriceNo}");
+      print(
+          "${dioOptions.baseUrl}/items?sellPriceNo=${userStore.user.sellPriceNo}&whno=${userStore.user.whno}");
+
+      Response response = await Dio(dioOptions).get(
+          "/items?sellPriceNo=${userStore.user.sellPriceNo}&whno=${userStore.user.whno}");
       var jsonRespone = response.data;
       final itemsStore = context.read<ItemsStore>();
       itemsStore.setItems(prepareItemsList(jsonRespone));
@@ -122,8 +114,8 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   Future<void> getFee() async {
     try {
-      Response response = await Dio().get(
-        'http://5.9.215.57:8080/petrolnaas/public/api/fee',
+      Response response = await Dio(dioOptions).get(
+        '/fee',
       );
       setState(() {
         final double fee = double.parse(response.data) / 100.0;
@@ -157,14 +149,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                 _renderCustomerDropdown(),
                 _renderNotesTextArea(),
                 _renderItemsList(),
-                TextButton(
-                  onPressed: () {
-                    fillInRestDataOfInvoice();
-                    print(createInvoice.items!.length);
-                    print(createInvoice.items);
-                  },
-                  child: Text("Fill Invoice"),
-                ),
                 _renderAddItemButton(),
                 _renderTotal(),
                 _renderVat(),
@@ -213,7 +197,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
       return CustomDropdown<Customer>(
         elements: customersStore.customers,
-        textProperty: 'AccName',
+        textProperty: ['AccName', "remainingBalance"],
         label: 'العميل',
         selectedValue: _selectedCustomer,
         onChanged: setCustomerDropDownValue,
@@ -429,7 +413,7 @@ class _AddInvoiceState extends State<AddInvoice> {
         builder: (_) => InvoiceScreen(
           isConnected: isConnected,
           customerName: _selectedCustomer!.accName!,
-          customerVATnum: _selectedCustomer!.vatNum,
+          customerVATnum: _selectedCustomer!.vaTnum,
           invNo: invNo!,
           payType: payType,
           vat: vat,
@@ -479,9 +463,13 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   void addItemToCreateInvoiceItems(Item item, int qty) {
     createInvoice.items ??= [];
+    final int freeQty = Item.calcFreeQty(
+        qty: qty,
+        promotionQtyReq: item.promotionQtyReq!,
+        promotionQtyFree: item.promotionQtyFree!);
 
-    createInvoice.items!.add(
-        InvoiceItem(itemno: item.itemno!, price: item.sellPrice, qty: qty));
+    createInvoice.items!
+        .add(InvoiceItem(itemno: item.itemno!, freeQty: freeQty, qty: qty));
   }
 
   bool isFieldsFilled() {
@@ -492,8 +480,9 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   Future<void> sendInvoiceToApi() async {
     try {
-      const String url = "http://5.9.215.57:8080/petrolnaas/public/api/invoice";
-      Response res = await Dio().post(url, data: createInvoice.toJson());
+      const String url = "/invoice";
+      Response res =
+          await Dio(dioOptions).post(url, data: createInvoice.toJson());
       final response = res.data;
       invNo = response;
     } catch (e) {

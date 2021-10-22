@@ -63,8 +63,9 @@ class _ItemAddedInAddInvoiceState extends State<ItemAddedInAddInvoice> {
                 ],
               ),
               Text("رقم الصنف : ${widget.item.itemno!}"),
-              Text("الكمية المتاحة : ${widget.item.availableQty!}"),
-              Text("${widget.item.sellPrice!} : السعر"),
+              Text(
+                  "الكمية المتاحة : ${widget.item.availableQty!.toStringAsFixed(2)}"),
+              Text("${widget.item.sellPrice!.toStringAsFixed(2)} : السعر"),
               Text(
                   "${calculateTotalPrice(widget.item.sellPrice!, widget.qty)} : الاجمالي"),
               if (widget.item.promotionQtyFree != 0 &&
@@ -84,7 +85,7 @@ class _ItemAddedInAddInvoiceState extends State<ItemAddedInAddInvoice> {
             child: AdjustableQuantity(
               setQty: setQty,
               qty: widget.qty,
-              maxQty: widget.item.availableQty!,
+              item: widget.item,
             ),
           ),
         ],
@@ -92,7 +93,8 @@ class _ItemAddedInAddInvoiceState extends State<ItemAddedInAddInvoice> {
     );
   }
 
-  double calculateTotalPrice(double price, int qty) => price * qty;
+  double calculateTotalPrice(double price, int qty) =>
+      double.parse((price * qty).toStringAsFixed(2));
 
   void setQty(int newQty) {
     final addedItemsToNewInvoiceStore =
