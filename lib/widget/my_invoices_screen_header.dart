@@ -258,7 +258,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                             );
                           },
                           buttonColors: primaryColor,
-                          text: 'من',
+                          label: 'من',
                           icon: Icons.date_range_outlined,
                           textColors: Colors.white,
                         ),
@@ -303,7 +303,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                             );
                           },
                           buttonColors: primaryColor,
-                          text: 'إلي',
+                          label: 'إلي',
                           icon: Icons.date_range_outlined,
                           textColors: Colors.white,
                         ),
@@ -329,7 +329,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                         child: CustomButton(
                           buttonColors: greenColor,
                           onPressed: () => onPressFilter(setState),
-                          text: 'تصفية النتائج',
+                          label: 'تصفية النتائج',
                           textColors: Colors.white,
                         ),
                       ),
@@ -342,7 +342,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
                                 _selectedCustomer.pervious;
                             Navigator.pop(context);
                           },
-                          text: 'إلغاء',
+                          label: 'إلغاء',
                           textColors: Colors.white,
                         ),
                       ),

@@ -23,13 +23,13 @@ class SignIn extends StatefulWidget {
 class _SignInState extends State<SignIn> {
   final TextEditingController userNoController =
       // TextEditingController(text: "");
-      TextEditingController(text: "29");
-  // TextEditingController(text: "23");
+      // TextEditingController(text: "29");
+      TextEditingController(text: "23");
 
   final TextEditingController passwordController =
       // TextEditingController(text: "");
-      TextEditingController(text: "2640");
-  // TextEditingController(text: "1560");
+      // TextEditingController(text: "147258369");
+      TextEditingController(text: "963852741");
 
   UserSignIn signInData = UserSignIn();
 
@@ -69,7 +69,7 @@ class _SignInState extends State<SignIn> {
       return true;
     } on DioError catch (e) {
       // ignore: avoid_print
-      print(e);
+      print(e.response);
       if (e.response?.statusCode == 400) {
         showSnackBar(context, 'البيانات غير صحيحة');
       } else {
@@ -196,7 +196,7 @@ class _SignInState extends State<SignIn> {
                               padding: const EdgeInsets.only(top: 20.0),
                               child: CustomInput(
                                 hintText: 'رقم المندوب',
-                                type: 'white',
+                                type: CustomInputTypes.white,
                                 controller: userNoController,
                                 keyboardType: TextInputType.number,
                               ),
@@ -204,12 +204,12 @@ class _SignInState extends State<SignIn> {
                             CustomInput(
                               controller: passwordController,
                               hintText: 'كلمة المرور',
-                              type: 'password',
+                              type: CustomInputTypes.password,
                             ),
                             CustomButton(
                               buttonColors: Colors.white,
                               onPressed: () => onPressSignIn(),
-                              text: 'تسجيل الدخول',
+                              label: 'تسجيل الدخول',
                               textColors: primaryColor,
                             ),
                           ],

@@ -168,6 +168,7 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
   }
 
   String prepareDateAndTimeToPrintInInvoice() {
+    //TODO: timezone
     DateTime invoiceDate = DateTime.parse(widget.invoice.header!.invdate!);
     String dateString = DateFormat("dd-MM-yyyy hh:mma").format(invoiceDate);
 

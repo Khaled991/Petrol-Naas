@@ -2,20 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
+enum CustomInputTypes { white, password, yellow }
+
 class CustomInput extends StatelessWidget {
+  final String hintText;
+  final CustomInputTypes type;
+  final TextInputType keyboardType;
+  final TextEditingController? controller;
+  final void Function(String)? onChanged;
+
   const CustomInput({
     Key? key,
     required this.type,
     required this.hintText,
     this.keyboardType = TextInputType.text,
-    required this.controller,
+    this.controller,
+    this.onChanged,
   }) : super(key: key);
-  final String hintText, type;
-  final TextInputType keyboardType;
-  final TextEditingController controller;
 
   TextField normalInput() {
     return TextField(
+      onChanged: onChanged,
       style: TextStyle(
         fontSize: 17,
         color: Colors.white,
@@ -47,6 +54,7 @@ class CustomInput extends StatelessWidget {
 
   TextField passwordInput() {
     return TextField(
+      onChanged: onChanged,
       enableSuggestions: false,
       autocorrect: false,
       obscureText: true,
@@ -94,6 +102,7 @@ class CustomInput extends StatelessWidget {
           ),
         ),
         TextField(
+          onChanged: onChanged,
           style: TextStyle(
             fontSize: 17,
             color: darkColor,
@@ -125,12 +134,14 @@ class CustomInput extends StatelessWidget {
     );
   }
 
-  dynamic getInput(String type) {
-    if (type == 'white') {
+  dynamic getInput(CustomInputTypes type) {
+    if (type == CustomInputTypes.white) {
       return normalInput();
-    } else if (type == 'password') {
+    } else if (type == CustomInputTypes.password) {
       return passwordInput();
-    } else if (type == 'yellow') return yellowInput();
+    } else if (type == CustomInputTypes.yellow) {
+      return yellowInput();
+    }
   }
 
   @override

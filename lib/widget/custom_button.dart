@@ -5,7 +5,7 @@ class CustomButton extends StatelessWidget {
     Key? key,
     required this.buttonColors,
     required this.textColors,
-    required this.text,
+    required this.label,
     this.icon,
     required this.onPressed,
   }) : super(key: key);
@@ -13,7 +13,7 @@ class CustomButton extends StatelessWidget {
   final Color buttonColors;
   final Color textColors;
   final IconData? icon;
-  final String text;
+  final String label;
   final VoidCallback onPressed;
 
   @override
@@ -50,7 +50,7 @@ class CustomButton extends StatelessWidget {
                   size: 30,
                 ),
               ),
-            Text(text),
+            Text(label),
           ],
         ),
       ),

@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 
 class ExpandCustomTextField extends StatelessWidget {
+  final TextEditingController? controller;
+  final String label;
+  final void Function(String)? onChanged;
+
   const ExpandCustomTextField({
     Key? key,
-    required this.controller,
+    this.controller,
+    required this.label,
+    this.onChanged,
   }) : super(key: key);
-  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +24,7 @@ class ExpandCustomTextField extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
             child: Text(
-              'ملاحظات',
+              label,
               style: TextStyle(
                 fontSize: 18.0,
                 color: darkColor,
@@ -27,6 +32,7 @@ class ExpandCustomTextField extends StatelessWidget {
             ),
           ),
           TextFormField(
+            onChanged: onChanged,
             controller: controller,
             keyboardType: TextInputType.multiline,
             maxLines: 8,

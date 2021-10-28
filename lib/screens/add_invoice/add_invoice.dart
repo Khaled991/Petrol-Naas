@@ -215,6 +215,7 @@ class _AddInvoiceState extends State<AddInvoice> {
   ExpandCustomTextField _renderNotesTextArea() {
     return ExpandCustomTextField(
       controller: noteController,
+      label: 'ملاحظات',
     );
   }
 
@@ -269,7 +270,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   CustomButton _renderAddItemButton() {
     return CustomButton(
-      text: 'اضافة صنف',
+      label: 'اضافة صنف',
       buttonColors: greenColor,
       textColors: Colors.white,
       icon: Icons.add,
@@ -336,7 +337,7 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   CustomButton _renderPrintButton() {
     return CustomButton(
-      text: 'طباعة الفاتورة',
+      label: 'طباعة الفاتورة',
       buttonColors: primaryColor,
       textColors: Colors.white,
       icon: Icons.print,
