@@ -2,30 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import 'package:petrol_naas/mobx/user/user.dart';
+import 'package:petrol_naas/screens/my_invoice_screen/my_invoices_screen.dart';
+import 'package:petrol_naas/screens/my_receipts/my_receipts.dart';
 import 'package:petrol_naas/screens/sign_in/sign_in.dart';
+import 'package:petrol_naas/utils/utils.dart';
 // ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 import '../../constants.dart';
 
 class DrawerOptionModel {
   late final String title;
-  late final Widget body;
+  late final Widget screen;
   late final IconData icon;
   DrawerOptionModel({
     required this.title,
-    required this.body,
+    required this.screen,
     required this.icon,
   });
 }
 
-class CustomDrawer extends StatelessWidget {
-  final Function changeBodyIdx;
-  final List<DrawerOptionModel> drawerOptions;
+final List<DrawerOptionModel> drawerOptions = <DrawerOptionModel>[
+  DrawerOptionModel(
+    screen: MyInvoicesScreen(),
+    icon: Icons.receipt_outlined,
+    title: "الفواتير",
+  ),
+  // DrawerOptionModel(
+  //   screen: MyReceipts(),
+  //   icon: Icons.receipt_long_rounded,
+  //   title: "سندات القبض",
+  // ),
+];
 
+class CustomDrawer extends StatelessWidget {
   const CustomDrawer({
     Key? key,
-    required this.changeBodyIdx,
-    required this.drawerOptions,
   }) : super(key: key);
 
   _buildDrawerOption(Icon icon, String title, VoidCallback onTap) {
@@ -68,7 +79,6 @@ class CustomDrawer extends StatelessWidget {
                 );
               }),
             ),
-
             ...List.generate(drawerOptions.length, (int i) {
               DrawerOptionModel drawerOptionProperties = drawerOptions[i];
               return _buildDrawerOption(
@@ -79,38 +89,12 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 drawerOptionProperties.title,
                 () {
-                  changeBodyIdx(i);
                   Navigator.of(context).pop();
+                  navigatePushReplace(context, drawerOptionProperties.screen);
                 },
               );
             } //_buildDrawerOption
                 ).toList(),
-            // _buildDrawerOption(
-            //   Icon(
-            //     Icons.add_box_outlined,
-            //     size: 27,
-            //     color: primaryColor,
-            //   ),
-            //   'إضافة فاتورة',
-            //   () {
-            //     changeBodyIdx(0);
-            //     Navigator.of(context).pop();
-            //   },
-            // ), //_buildDrawerOption
-
-            // _buildDrawerOption(
-            //   Icon(
-            //     Icons.receipt_outlined,
-            //     size: 27,
-            //     color: primaryColor,
-            //   ),
-            //   'الفواتير',
-            //   () {
-            //     changeBodyIdx(1);
-            //     Navigator.of(context).pop();
-            //   },
-            // ), //_buildDrawerOption
-
             Expanded(
               child: Align(
                 alignment: FractionalOffset.bottomCenter,
@@ -136,3 +120,141 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 }
+// import 'package:flutter/material.dart';
+// import 'package:flutter_mobx/flutter_mobx.dart';
+
+// import 'package:petrol_naas/mobx/user/user.dart';
+// import 'package:petrol_naas/screens/sign_in/sign_in.dart';
+// // ignore: implementation_imports
+// import 'package:provider/src/provider.dart';
+// import '../../constants.dart';
+
+// class DrawerOptionModel {
+//   late final String title;
+//   late final Widget body;
+//   late final IconData icon;
+//   DrawerOptionModel({
+//     required this.title,
+//     required this.body,
+//     required this.icon,
+//   });
+// }
+
+// class CustomDrawer extends StatelessWidget {
+//   final Function changeBodyIdx;
+//   final List<DrawerOptionModel> drawerOptions;
+
+//   const CustomDrawer({
+//     Key? key,
+//     required this.changeBodyIdx,
+//     required this.drawerOptions,
+//   }) : super(key: key);
+
+//   _buildDrawerOption(Icon icon, String title, VoidCallback onTap) {
+//     return ListTile(
+//       leading: icon,
+//       title: Text(
+//         title,
+//         style: TextStyle(
+//           fontSize: 16.0,
+//         ),
+//       ),
+//       onTap: onTap,
+//     );
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final store = context.watch<UserStore>();
+//     return SafeArea(
+//       child: Drawer(
+//         child: Column(
+//           children: [
+//             Container(
+//               decoration: BoxDecoration(
+//                 color: Theme.of(context).primaryColor,
+//                 borderRadius: BorderRadius.only(
+//                   bottomLeft: Radius.circular(80),
+//                 ),
+//               ),
+//               alignment: Alignment.center,
+//               width: double.infinity - 10.0,
+//               height: 150.0,
+//               child: Observer(builder: (_) {
+//                 return Text(
+//                   store.user.name ?? "",
+//                   style: TextStyle(
+//                     color: Colors.white,
+//                     fontSize: 20.0,
+//                   ),
+//                 );
+//               }),
+//             ),
+
+//             ...List.generate(drawerOptions.length, (int i) {
+//               DrawerOptionModel drawerOptionProperties = drawerOptions[i];
+//               return _buildDrawerOption(
+//                 Icon(
+//                   drawerOptionProperties.icon,
+//                   size: 27,
+//                   color: primaryColor,
+//                 ),
+//                 drawerOptionProperties.title,
+//                 () {
+//                   changeBodyIdx(i);
+//                   Navigator.of(context).pop();
+//                 },
+//               );
+//             } //_buildDrawerOption
+//                 ).toList(),
+//             // _buildDrawerOption(
+//             //   Icon(
+//             //     Icons.add_box_outlined,
+//             //     size: 27,
+//             //     color: primaryColor,
+//             //   ),
+//             //   'إضافة فاتورة',
+//             //   () {
+//             //     changeBodyIdx(0);
+//             //     Navigator.of(context).pop();
+//             //   },
+//             // ), //_buildDrawerOption
+
+//             // _buildDrawerOption(
+//             //   Icon(
+//             //     Icons.receipt_outlined,
+//             //     size: 27,
+//             //     color: primaryColor,
+//             //   ),
+//             //   'الفواتير',
+//             //   () {
+//             //     changeBodyIdx(1);
+//             //     Navigator.of(context).pop();
+//             //   },
+//             // ), //_buildDrawerOption
+
+//             Expanded(
+//               child: Align(
+//                 alignment: FractionalOffset.bottomCenter,
+//                 child: _buildDrawerOption(
+//                   Icon(
+//                     Icons.logout_outlined,
+//                     size: 27,
+//                     color: primaryColor,
+//                   ),
+//                   'تسجيل الخروج',
+//                   () => Navigator.pushReplacement(
+//                     context,
+//                     MaterialPageRoute(
+//                       builder: (_) => SignIn(),
+//                     ),
+//                   ), //Navigator
+//                 ), //_buildDrawerOption,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

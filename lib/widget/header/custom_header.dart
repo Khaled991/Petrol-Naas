@@ -1,19 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:petrol_naas/models/state_node.dart';
+import 'package:petrol_naas/widget/custom_input.dart';
 
-class CustomHeader extends StatelessWidget {
+class HeaderTrailingModel {
+  IconData icon;
+  void Function()? onPressed;
+
+  HeaderTrailingModel({
+    required this.icon,
+    required this.onPressed,
+  });
+}
+
+class CustomHeader extends StatefulWidget {
   final String title;
-  final bool showBackButton;
+  final bool? showBackButton;
+  final HeaderTrailingModel? trailing;
+  final StateNode<bool>? isSearchingStateNode;
+  final void Function(String)? onSearchChanged;
+  final TextEditingController? searchTextFieldController;
 
   const CustomHeader({
     Key? key,
-    required GlobalKey<ScaffoldState> scaffoldKey,
     required this.title,
-    this.showBackButton = false,
-  })  : _scaffoldKey = scaffoldKey,
-        super(key: key);
+    this.trailing,
+    this.showBackButton,
+    this.isSearchingStateNode,
+    this.onSearchChanged,
+    this.searchTextFieldController,
+  }) : super(key: key);
 
-  final GlobalKey<ScaffoldState> _scaffoldKey;
+  @override
+  State<CustomHeader> createState() => _CustomHeaderState();
+}
+
+class _CustomHeaderState extends State<CustomHeader> {
+  void toggleSearch() {
+    widget.isSearchingStateNode!.setValue(widget.isSearchingStateNode!.value);
+    widget.searchTextFieldController!.text = "";
+
+    widget.isSearchingStateNode!.setValue(!widget.isSearchingStateNode!.value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +56,6 @@ class CustomHeader extends StatelessWidget {
             left: -30,
             child: HeaderShape(
               headerColor: Color(0x66f8cf34),
-              showBackButton: showBackButton,
             ),
           ),
           Positioned(
@@ -37,44 +64,133 @@ class CustomHeader extends StatelessWidget {
             left: -15,
             child: HeaderShape(
               headerColor: Color(0x88f8cf34),
-              showBackButton: showBackButton,
             ),
           ),
           Positioned(
             width: MediaQuery.of(context).size.width,
             top: -30,
             child: HeaderShape(
-              scaffoldKey: _scaffoldKey,
-              title: title,
-              showBackButton: showBackButton,
               headerColor: Color(0xfff8cf34),
+              child: widget.isSearchingStateNode != null &&
+                      widget.isSearchingStateNode!.value == true
+                  ? _renderSearchHeader()
+                  : _renderDefaultHeader(context),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _renderSearchHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        _backButton(toggleSearch),
+        Expanded(
+          child: CustomInput(
+            type: CustomInputTypes.transparent,
+            hintText: "بحث ...",
+            showClearButton: true,
+            controller: widget.searchTextFieldController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _renderDefaultHeader(context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        widget.showBackButton == true
+            ? _backButton()
+            : _openDrawerButton(context),
+        Center(
+          child: Text(
+            widget.title,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 25.0,
+            ),
+          ),
+        ),
+        widget.trailing != null
+            ? IconButton(
+                icon: Icon(
+                  widget.trailing!.icon,
+                  color: Colors.white,
+                  size: 30.0,
+                ),
+                onPressed: widget.trailing!.icon == Icons.search
+                    ? toggleSearch
+                    : widget.trailing?.onPressed,
+              )
+            : SizedBox(
+                width: 35.5,
+              ),
+      ],
+    );
+  }
+
+  Widget _backButton([void Function()? onPressed]) {
+    return IconButton(
+      onPressed: onPressed ?? () => Navigator.pop(context),
+      icon: Icon(
+        Icons.arrow_back_ios_rounded,
+        color: Colors.white,
+      ),
+    );
+
+    // MaterialButton(
+    //   onPressed: onPressed,
+    //   child: SvgPicture.asset(
+    //     'assets/SVG/back.svg',
+    //     color: Colors.white,
+    //     width: 20.0,
+    //     height: 20.0,
+    //   ),
+    // );
+  }
+
+  Widget _openDrawerButton(context) {
+    return TextButton(
+      onPressed: () => Scaffold.of(context).openDrawer(),
+      child: SvgPicture.asset(
+        'assets/SVG/menu.svg',
+        color: Colors.white,
+        width: 35.0,
+      ),
+    );
+  }
 }
 
 class HeaderShape extends StatelessWidget {
+  final Color headerColor;
+  final Widget? child;
+  // final GlobalKey<ScaffoldState>? _scaffoldKey;
+  // final HeaderTrailingModel? trailing;
+  // final String? title;
+  // final bool? showBackButton;
+  // final bool? isSearching;
+  // final void Function()? toggleSearch;
+
   const HeaderShape({
     Key? key,
-    GlobalKey<ScaffoldState>? scaffoldKey,
-    this.title,
-    required this.showBackButton,
     required this.headerColor,
-  })  : _scaffoldKey = scaffoldKey,
-        super(key: key);
-
-  final GlobalKey<ScaffoldState>? _scaffoldKey;
-  final String? title;
-  final Color headerColor;
-  final bool showBackButton;
+    this.child,
+    // this.title,
+    //   required this.showBackButton,
+    //   required this.trailing,
+    //   this.isSearching,
+    //   this.toggleSearch,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ClipPath(
-      clipper: MyClipper(),
+      clipper: HeaderClipper(),
       child: Container(
         height: 200.0,
         decoration: BoxDecoration(
@@ -84,56 +200,14 @@ class HeaderShape extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
             horizontal: 30.0,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (_scaffoldKey != null)
-                showBackButton ? _backButton(context) : _openDrawerButton(),
-              if (title != null)
-                Center(
-                  child: Text(
-                    title!,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 25.0,
-                    ),
-                  ),
-                ),
-              SizedBox(
-                width: 35.5,
-              ),
-            ],
-          ),
+          child: child,
         ),
-      ),
-    );
-  }
-
-  Widget _backButton(BuildContext context) {
-    return TextButton(
-      onPressed: () => Navigator.of(context).pop(),
-      child: SvgPicture.asset(
-        "assets/SVG/back.svg",
-        color: Colors.white,
-        semanticsLabel: "Back Button",
-        height: 20.0,
-      ),
-    );
-  }
-
-  Widget _openDrawerButton() {
-    return TextButton(
-      onPressed: () => _scaffoldKey!.currentState!.openDrawer(),
-      child: Image.asset(
-        'assets/images/menu.png',
-        width: 35.0,
       ),
     );
   }
 }
 
-class MyClipper extends CustomClipper<Path> {
+class HeaderClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();

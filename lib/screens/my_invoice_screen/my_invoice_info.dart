@@ -8,12 +8,12 @@ import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/invoice_details.dart';
 import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/models/view_invoice_item.dart';
+import 'package:petrol_naas/utils/utils.dart';
 import 'package:petrol_naas/widget/invoice_details_prices.dart';
 import 'package:petrol_naas/widget/invoice_image/utils.dart';
 import 'package:petrol_naas/widget/invoice_image/widget_to_image.dart';
 import 'package:petrol_naas/widget/invoice_screen_header.dart';
 import 'package:petrol_naas/widget/items_info.dart';
-import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../constants.dart';
 
@@ -181,14 +181,20 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
     double screenWidth = MediaQuery.of(context).size.width * 0.5;
     return Scaffold(
       appBar: AppBar(
-        title: Text('الفاتورة'),
+        iconTheme: IconThemeData(color: Colors.black),
+        title: Text(
+          'الفاتورة',
+          style: TextStyle(color: Colors.black),
+        ),
         centerTitle: true,
         backgroundColor: Colors.grey[50],
+        elevation: 0,
         shadowColor: Color(0x003d3d3d),
         actions: [
           if (isCaptured)
             IconButton(
               icon: Icon(Icons.print_outlined),
+              color: Colors.black,
               onPressed: printPDF,
             )
         ],

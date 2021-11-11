@@ -84,25 +84,27 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 15.0),
-          child: Text(
-            'جميع الفواتير',
-            style: TextStyle(
-              color: darkColor,
-              fontSize: 20.0,
-            ),
-          ),
-        ),
+        widget.filters.hasDateFilter() || widget.filters.hasCustomerFilter()
+            ? Padding(
+                padding: const EdgeInsets.only(right: 15.0),
+                child: Text(
+                  'التصفيات',
+                  style: TextStyle(
+                    color: darkColor,
+                    fontSize: 20.0,
+                  ),
+                ),
+              )
+            : SizedBox(),
         Row(
           children: [
-            if (widget.filters.hasDateFilter() && !thereIsError)
+            if (widget.filters.hasDateFilter())
               ClearFilter(
                 onPressed: onPressClearDateFilter,
                 title: 'التاريخ',
               ),
             SizedBox(width: 10),
-            if (showNameFilterWidget)
+            if (widget.filters.hasCustomerFilter())
               ClearFilter(
                 onPressed: onPressClearNameFilter,
                 title: 'اسم العميل',
@@ -141,7 +143,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
   }
 
   void onPressFilter(StateSetter setState) {
-    if (!(widget.filters.hasCustomerFilter() ||
+    if (!(widget.filters.hasCustomerSelectedForFilter() ||
         widget.filters.hasDateFilter())) {
       return showError("من فضلك اختر تصفية", setState);
     }
@@ -151,9 +153,6 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
     final invoicesStore = context.read<MyInvoices>();
     invoicesStore.resetList();
 
-    if (widget.filters.hasCustomerFilter()) {
-      showNameFilterWidget = true;
-    }
     if (widget.filters.hasDateFilter()) {
       DateTime from = DateTime.parse(widget.filters.firstDate.current!);
       DateTime to = DateTime.parse(widget.filters.lastDate.current!);
@@ -172,8 +171,13 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
     widget.filters.confirmFilters();
 
     widget.getInvoices();
-    Navigator.pop(context);
     widget.moveScrollToTop();
+
+    if (widget.filters.hasCustomerFilter()) {
+      showNameFilterWidget = true;
+    }
+
+    Navigator.pop(context);
   }
 
   void saveCurrentCustomerInPerviousIfExists() {

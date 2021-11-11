@@ -6,11 +6,11 @@ import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/customer.dart';
 import 'package:petrol_naas/models/receipt_voucher.dart';
+import 'package:petrol_naas/utils/utils.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.dart';
 import 'package:petrol_naas/widget/custom_button.dart';
 import 'package:petrol_naas/widget/custom_dropdown.dart';
 import 'package:petrol_naas/widget/custom_input.dart';
-import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 import 'package:provider/src/provider.dart';
 
 class ReceiptVoucherScreen extends StatefulWidget {
@@ -22,14 +22,14 @@ class ReceiptVoucherScreen extends StatefulWidget {
 
 class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
   Customer? _selectedCustomer;
-  // final TextEditingController _moneyAmountController = TextEditingController();
-  // final TextEditingController _statmentController = TextEditingController();
+  final TextEditingController _moneyAmountController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final ReceiptVoucher receiptVoucher = ReceiptVoucher();
 
   @override
   void dispose() {
-    // _moneyAmountController.dispose();
-    // _statmentController.dispose();
+    _moneyAmountController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -40,7 +40,7 @@ class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
       children: [
         _renderCustomerDropDown(context),
         _renderMoneyAmount(),
-        _renderStatmentTextArea(),
+        _renderDescriptionTextArea(),
         _renderSaveButton(),
       ],
     );
@@ -68,7 +68,7 @@ class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
     return CustomInput(
       type: CustomInputTypes.yellow,
       hintText: "المبلغ",
-      // controller: _moneyAmountController,
+      controller: _moneyAmountController,
       //TODO: add textfield pattern to accept numbers and dots only
       keyboardType: TextInputType.number,
       onChanged: onAmountChanged,
@@ -87,10 +87,11 @@ class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
     }
   }
 
-  ExpandCustomTextField _renderStatmentTextArea() {
+  ExpandCustomTextField _renderDescriptionTextArea() {
     return ExpandCustomTextField(
       onChanged: onDescriptionChanged,
       label: "البيان",
+      controller: _descriptionController,
     );
   }
 
@@ -109,16 +110,9 @@ class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
 
   void onPressSave() async {
     fillInRestJsonData();
-    if (!isDataFilled()) {
-      showSnackBar(context, "من فضلك املأ جميع البيانات");
-      return;
-    }
-    if (!isMoneyAmountValid()) {
-      showSnackBar(context, "من فضلك أدخل المبلغ بشكل صحيح بحيث تكون عدد موجب");
-      return;
-    }
-    print(receiptVoucher);
-    await Dio(dioOptions).post("/receipt", data: receiptVoucher.toJson());
+    if (!areAllDataValid()) return;
+
+    await sendDataToApi();
   }
 
   void fillInRestJsonData() {
@@ -127,6 +121,18 @@ class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
 
     receiptVoucher.cashAccNo = user.cashAccno;
     receiptVoucher.userNo = user.userNo;
+  }
+
+  bool areAllDataValid() {
+    if (!isDataFilled()) {
+      showSnackBar(context, "من فضلك املأ جميع البيانات");
+      return false;
+    }
+    if (!isMoneyAmountValid()) {
+      showSnackBar(context, "من فضلك أدخل المبلغ بشكل صحيح بحيث تكون عدد موجب");
+      return false;
+    }
+    return true;
   }
 
   bool isDataFilled() {
@@ -147,5 +153,28 @@ class _ReceiptVoucherScreenState extends State<ReceiptVoucherScreen> {
 
   bool isMoneyAmountValid() {
     return receiptVoucher.amount != null && receiptVoucher.amount! > 0;
+  }
+
+  Future<void> sendDataToApi() async {
+    try {
+      final Response response =
+          await Dio(dioOptions).post("/receipt", data: receiptVoucher.toJson());
+      final bool isSavedSuccessfully = response.data == "1" ? true : false;
+      if (isSavedSuccessfully) {
+        resetFields();
+        showSnackBar(context, "تم الحفظ بنجاح");
+      }
+    } catch (e) {
+      print(e);
+      showSnackBar(context, "حدث خطأ ما، الرجاء المحاولة مرة أخرى");
+    }
+  }
+
+  void resetFields() {
+    _descriptionController.clear();
+    _moneyAmountController.clear();
+    setState(() {
+      _selectedCustomer = null;
+    });
   }
 }

@@ -48,5 +48,8 @@ class Filters {
 
   bool hasDateFilter() => firstDate.current != null && lastDate.current != null;
 
-  bool hasCustomerFilter() => custNo.current != null;
+  bool hasCustomerSelectedForFilter() => custNo.current != null;
+
+  bool hasCustomerFilter() =>
+      custNo.current != null && custNo.current == custNo.pervious;
 }

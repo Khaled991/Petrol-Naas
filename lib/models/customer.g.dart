@@ -10,8 +10,9 @@ Customer _$CustomerFromJson(Map<String, dynamic> json) {
   return Customer(
     accNo: json['AccNo'] as String?,
     accName: json['AccName'] as String?,
-    vaTnum: json['VATnum'],
+    vaTnum: json['VATnum'] as String?,
     remainingBalance: (json['remainingBalance'] as num?)?.toDouble(),
+    creditLimit: (json['CreditLimit'] as num?)?.toDouble(),
   );
 }
 
@@ -20,4 +21,5 @@ Map<String, dynamic> _$CustomerToJson(Customer instance) => <String, dynamic>{
       'AccName': instance.accName,
       'VATnum': instance.vaTnum,
       'remainingBalance': instance.remainingBalance,
+      'CreditLimit': instance.creditLimit,
     };

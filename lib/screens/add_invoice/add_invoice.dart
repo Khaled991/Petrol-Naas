@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:petrol_naas/mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
+import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/models/invoice_header.dart';
 import 'package:petrol_naas/screens/add_items_screen/add_items_screen.dart';
+import 'package:petrol_naas/utils/utils.dart';
 import 'package:petrol_naas/widget/item_add_in_add_invoice.dart';
+import 'package:petrol_naas/widget/screen_layout.dart';
 // ignore: implementation_imports
 import 'package:provider/src/provider.dart';
-import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/items/items.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/create_invoice.dart';
@@ -19,7 +22,6 @@ import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.d
 import 'package:petrol_naas/widget/add_invoice_widget/invoice_details.dart';
 import 'package:petrol_naas/widget/custom_button.dart';
 import 'package:petrol_naas/widget/custom_dropdown.dart';
-import 'package:petrol_naas/widget/snack_bars/show_snack_bar.dart';
 
 import '../../constants.dart';
 import '../invoice_screen/invoice_screen.dart';
@@ -55,28 +57,8 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   void initalizeCustomersAndItemsAndFee() async {
-    await getCustomers();
     await getItems();
     await getFee();
-  }
-
-  Future<void> getCustomers() async {
-    try {
-      final String salesman = context.read<UserStore>().user.salesman ?? '';
-
-      changeLoadingState(true);
-      Response response = await Dio(dioOptions).get(
-        '/customer?Salesman=$salesman',
-      );
-      if (!mounted) return;
-      var jsonRespone = response.data;
-      final customersStore = context.read<CustomerStore>();
-
-      customersStore.setCustomers(jsonRespone);
-      changeLoadingState(false);
-    } on DioError {
-      changeLoadingState(false);
-    }
   }
 
   void changeLoadingState(bool state) => setState(() => isLoading = state);
@@ -85,9 +67,6 @@ class _AddInvoiceState extends State<AddInvoice> {
     try {
       changeLoadingState(true);
       final userStore = context.read<UserStore>();
-
-      print(
-          "${dioOptions.baseUrl}/items?sellPriceNo=${userStore.user.sellPriceNo}&whno=${userStore.user.whno}");
 
       Response response = await Dio(dioOptions).get(
           "/items?sellPriceNo=${userStore.user.sellPriceNo}&whno=${userStore.user.whno}");
@@ -137,25 +116,29 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: isLoading
-          ? _customLoading()
-          : ListView(
-              controller: scrollController,
-              padding: EdgeInsets.all(0),
-              children: [
-                _renderPayTypeDropdown(),
-                _renderCustomerDropdown(),
-                _renderNotesTextArea(),
-                _renderItemsList(),
-                _renderAddItemButton(),
-                _renderTotal(),
-                _renderVat(),
-                _renderInoviceTotal(),
-                _renderPrintButton(),
-              ],
-            ),
+    return ScreenLayout(
+      showBackButton: true,
+      title: "إضافة فاتورة",
+      child: Container(
+        color: Colors.white,
+        child: isLoading
+            ? _customLoading()
+            : ListView(
+                controller: scrollController,
+                padding: EdgeInsets.all(0),
+                children: [
+                  _renderPayTypeDropdown(),
+                  _renderCustomerDropdown(),
+                  _renderNotesTextArea(),
+                  _renderItemsList(),
+                  _renderAddItemButton(),
+                  _renderTotal(),
+                  _renderVat(),
+                  _renderInoviceTotal(),
+                  _renderPrintButton(),
+                ],
+              ),
+      ),
     );
   }
 
@@ -191,22 +174,100 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   //-----------------------------------------------------------------
 
-  Observer _renderCustomerDropdown() {
-    return Observer(builder: (_) {
-      final customersStore = context.watch<CustomerStore>();
+  Widget _renderCustomerDropdown() {
+    final customerStore = context.read<CustomerStore>();
+    final List<Customer> customers = customerStore.customers;
 
-      return CustomDropdown<Customer>(
-        elements: customersStore.customers,
-        textProperty: ['AccName', "remainingBalance"],
-        label: 'العميل',
-        selectedValue: _selectedCustomer,
-        onChanged: setCustomerDropDownValue,
-      );
-    });
+    final borderStyle = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10.0),
+        borderSide: BorderSide(
+          color: primaryColor,
+          style: BorderStyle.solid,
+          width: 1.2,
+        ));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "العميل",
+              style: TextStyle(
+                fontSize: 18.0,
+                color: darkColor,
+              ),
+            ),
+          ),
+          DropdownFormField<Customer>(
+            onChanged: setCustomerDropDownValue,
+            findFn: (dynamic str) async => customers,
+            filterFn: (dynamic customer, str) =>
+                customer.accName.toLowerCase().indexOf(str.toLowerCase()) >= 0,
+            dropdownItemFn: (dynamic customer, position, focused,
+                    dynamic lastSelectedItem, onTap) =>
+                ListTile(
+              title: Text(customer.accName),
+              subtitle: Text(
+                customer?.remainingBalance.toStringAsFixed(2) ?? '',
+              ),
+              tileColor:
+                  focused ? Color.fromARGB(20, 0, 0, 0) : Colors.transparent,
+              onTap: onTap,
+            ),
+            displayItemFn: (dynamic customer) => Text(
+              customer?.accName ?? '',
+              style: TextStyle(fontSize: 16),
+            ),
+            // TODO: next line
+            // searchTextStyle: TextStyle(fontFamily: "Changa", color: Colors.red),
+            decoration: InputDecoration(
+              floatingLabelStyle: TextStyle(color: Colors.black54),
+              floatingLabelBehavior: FloatingLabelBehavior.never,
+              fillColor: primaryColor,
+              focusColor: primaryColor,
+              hoverColor: primaryColor,
+              enabledBorder: borderStyle,
+              focusedBorder: borderStyle,
+              focusedErrorBorder: borderStyle,
+              border: borderStyle,
+              contentPadding: EdgeInsets.symmetric(horizontal: 10.0),
+              isDense: true,
+              suffixIcon: Icon(
+                Icons.expand_more,
+                color: primaryColor,
+                size: 25.0,
+              ),
+              labelText: "العميل",
+              labelStyle: TextStyle(color: Colors.black45),
+            ),
+            dropdownHeight: 120,
+          ),
+        ],
+      ),
+    );
+    // Observer(builder: (_) {
+    //   final customersStore = context.watch<CustomerStore>();
+
+    //   return CustomDropdown<Customer>(
+    //     elements: customersStore.customers,
+    //     textProperty: ['AccName', "remainingBalance"],
+    //     label: 'العميل',
+    //     selectedValue: _selectedCustomer,
+    //     onChanged: setCustomerDropDownValue,
+    //   );
+    // });
+  }
+
+  Future<List<Customer>> getData(filter) async {
+    final customerStore = context.read<CustomerStore>();
+
+    return customerStore.customers;
   }
 
   void setCustomerDropDownValue(customer) {
-    setState(() => createInvoice.custno = customer.accNo);
+    createInvoice.custno = customer.accNo;
     _selectedCustomer = customer;
   }
 
@@ -392,6 +453,16 @@ class _AddInvoiceState extends State<AddInvoice> {
       return;
     }
 
+    if (isExceedsCreditLimit() && createInvoice.payType == "3") {
+      final remainingAcceptableCredit = _selectedCustomer!.creditLimit! -
+          _selectedCustomer!.remainingBalance!;
+
+      Navigator.pop(context, 'Cancel');
+      showSnackBar(context,
+          'لقد تخطيت الحد الأقصى للائتمان، أقصى مبلغ يمكن الشراء به بالآجل هو: $remainingAcceptableCredit ريال سعودي');
+      return;
+    }
+
     await sendInvoiceToApi();
 
     if (invNo == null) {
@@ -477,6 +548,16 @@ class _AddInvoiceState extends State<AddInvoice> {
     return createInvoice.payType != null &&
         createInvoice.custno != null &&
         !(createInvoice.items == null || createInvoice.items!.isEmpty);
+  }
+
+  bool isExceedsCreditLimit() {
+    final addedItemsToNewInvoiceStore =
+        context.read<AddedItemsToNewInvoiceStore>();
+    final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
+
+    final remainingAcceptableCredit =
+        _selectedCustomer!.creditLimit! - _selectedCustomer!.remainingBalance!;
+    return total > remainingAcceptableCredit;
   }
 
   Future<void> sendInvoiceToApi() async {
