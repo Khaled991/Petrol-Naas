@@ -6,10 +6,10 @@ import '../constants.dart';
 class InvoiceScreenHeader extends StatelessWidget {
   const InvoiceScreenHeader({
     Key? key,
-    required this.taxNo,
+    required this.title,
     this.isColored = true,
   }) : super(key: key);
-  final String taxNo;
+  final String title;
   final bool isColored;
 
   @override
@@ -38,7 +38,7 @@ class InvoiceScreenHeader extends StatelessWidget {
               ),
             ),
             Text(
-              'الرقم الضريبي : $taxNo',
+              'الرقم الضريبي : 300468968200003',
               style: TextStyle(
                 fontSize: 16.0,
                 color: darkColor,
@@ -57,7 +57,7 @@ class InvoiceScreenHeader extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
-                  'فاتورة مبيعات ضريبية',
+                  title,
                   style: TextStyle(
                     fontSize: 20.0,
                     color: darkColor,

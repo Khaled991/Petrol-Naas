@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
-class InvoiceList extends StatelessWidget {
-  const InvoiceList({
+class CustomListTile extends StatelessWidget {
+  const CustomListTile({
     Key? key,
-    required this.tittle,
+    required this.title,
     required this.onTap,
     required this.date,
-    required this.billNumber,
+    required this.subtitle,
+    required this.icon,
+    this.thirdLine,
   }) : super(key: key);
 
-  final String tittle;
+  final String title;
   final String date;
-  final String billNumber;
-  // final int billNumber;
+  final String subtitle;
+  final String? thirdLine;
   final VoidCallback onTap;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -30,20 +33,20 @@ class InvoiceList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.receipt_outlined,
+                      icon,
                       size: 40,
                       color: primaryColor,
                     ),
                   ],
                 ),
                 title: Text(
-                  tittle,
+                  title,
                   style: TextStyle(
                     color: darkColor,
                   ),
                 ),
                 subtitle: Text(
-                  billNumber,
+                  "$subtitle${renderThirdLineIfExists()}",
                 ),
                 trailing: Text(date),
                 onTap: onTap,
@@ -54,5 +57,9 @@ class InvoiceList extends StatelessWidget {
         Divider(height: 0, color: darkColor.withOpacity(.25)),
       ],
     );
+  }
+
+  String renderThirdLineIfExists() {
+    return thirdLine != null ? "\n$thirdLine" : "";
   }
 }

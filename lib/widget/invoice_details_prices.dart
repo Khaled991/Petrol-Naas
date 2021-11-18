@@ -6,10 +6,10 @@ class InvoiceDetailsPrices extends StatelessWidget {
   const InvoiceDetailsPrices({
     Key? key,
     required this.title,
-    required this.price,
+    required this.description,
   }) : super(key: key);
   final String title;
-  final String price;
+  final String description;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class InvoiceDetailsPrices extends StatelessWidget {
                 horizontal: 10.0,
               ),
               child: Text(
-                price,
+                description,
                 style: TextStyle(fontSize: 16.0),
               ),
             ),

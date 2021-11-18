@@ -1,22 +1,22 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:petrol_naas/components/custom_list_tile.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/filters.dart';
 import 'package:petrol_naas/screens/add_invoice/add_invoice.dart';
 import 'package:petrol_naas/utils/utils.dart';
 import 'package:petrol_naas/widget/header/custom_header.dart';
+import 'package:petrol_naas/widget/list_tile_skelton/list_tile_skelton.dart';
 import 'package:petrol_naas/widget/screen_layout.dart';
 // ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 import 'package:petrol_naas/widget/my_invoices_screen_header.dart';
-import 'package:petrol_naas/widget/invoice_list_style.dart';
 import 'package:petrol_naas/mobx/my_invoice/my_invoices.dart';
 import 'package:petrol_naas/models/invoice.dart';
 import '../../constants.dart';
 import 'my_invoice_info.dart';
-import 'my_invoice_skeleton.dart';
 
 class MyInvoicesScreen extends StatefulWidget {
   const MyInvoicesScreen({Key? key}) : super(key: key);
@@ -103,9 +103,9 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
       final storeMyInvoices = _myInvoices;
       var jsonRespone = response.data;
       storeMyInvoices.jsonToInvoicesList(jsonRespone);
-      changeLoadingState(false);
     } on DioError {
       showSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
+    } finally {
       changeLoadingState(false);
     }
   }
@@ -160,7 +160,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
               ),
               Expanded(
                 child: isLoading
-                    ? MyInvoiceSkeleton()
+                    ? ListTileSkelton()
                     : storeMyInvoices.myInvoices.isNotEmpty
                         ? ListView.builder(
                             padding: const EdgeInsets.all(0.0),
@@ -174,20 +174,61 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
                                   invoice.header!.invdate!.split(' ')[0];
                               final invno = invoice.header!.invno!;
 
-                              return InvoiceList(
-                                tittle: invoice.header!.custName!,
-                                billNumber: invno,
+                              final String invoiceDate =
+                                  prepareDateAndTimeToPrint(
+                                      invoice.header!.invdate!);
+
+                              final Map<String, String> headerData = {
+                                "الرقم": invno,
+                                "التاريخ": invoiceDate,
+                                "نوع الدفع": invoice.header?.payType ?? "",
+                                "العميل": invoice.header!.custName!,
+                                if (invoice.header!.vatNum != null)
+                                  "الرقم الضريبي للعميل":
+                                      invoice.header!.vatNum!,
+                                "المندوب": invoice.header!.createdDelegateName!,
+                              };
+
+                              final Map<String, String> summaryData = {
+                                "الاجمالي": invoice.header!.total!,
+                                "الخصم": invoice.header!.discountTotal!,
+                                "الصافي": invoice.header!.netTotal!,
+                                "ضريبة القيمة المضافة":
+                                    invoice.header!.vaTamount!,
+                                "قيمة الفاتورة": invoice.header!.totAfterVat!,
+                              };
+
+                              final String qrData =
+                                  """رقم الفاتورة : ${invoice.header!.invno!}
+اسم المورد : شركة مصنع بترول ناس
+الرقم الضريبي : 300468968200003
+التاريخ والوقت : ${prepareDateAndTimeToPrint(invoice.header!.invdate!)}
+الإجمالي شامل الضريبة : ${invoice.header!.totAfterVat!}
+قيمة الضريبة : ${invoice.header!.vaTamount!}""";
+
+                              return CustomListTile(
+                                title: invoice.header!.custName!,
+                                subtitle: invno,
                                 date: date,
                                 onTap: () => {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => MyInvoiceInfo(
+                                      builder: (_) => PrintPaperScreen(
+                                        headerData: headerData,
+                                        summaryData: summaryData,
+                                        qrData: qrData,
+                                        closingNote:
+                                            'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
                                         invno: invno,
                                         invoice: invoice,
+                                        docFileName:
+                                            'فاتورة ${invoice.header!.custName!}${DateTime.now()}.pdf'
+                                                .replaceAll("/", "-"),
                                       ),
                                     ),
                                   ),
                                 },
+                                icon: Icons.receipt_outlined,
                               );
                             },
                           )

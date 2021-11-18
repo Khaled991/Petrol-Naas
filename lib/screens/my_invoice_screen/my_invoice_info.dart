@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:petrol_naas/components/with_loading.dart';
 import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/invoice_details.dart';
 import 'package:petrol_naas/models/item.dart';
@@ -21,35 +21,43 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-class MyInvoiceInfo extends StatefulWidget {
+class PrintPaperScreen<T> extends StatefulWidget {
   final String invno;
   final Invoice invoice;
-  const MyInvoiceInfo({
+  final String? qrData;
+  final String? closingNote;
+
+  final Map<String, String>? summaryData;
+  final Map<String, String>? headerData;
+  final String docFileName;
+
+  const PrintPaperScreen({
     Key? key,
     required this.invno,
     required this.invoice,
+    this.summaryData,
+    this.headerData,
+    this.closingNote,
+    this.qrData,
+    required this.docFileName,
   }) : super(key: key);
 
   @override
-  State<MyInvoiceInfo> createState() => _MyInvoiceInfoState();
+  State<PrintPaperScreen> createState() => _PrintPaperScreenState();
 }
 
-class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
-  String? priceText;
+class _PrintPaperScreenState extends State<PrintPaperScreen> {
   bool isCaptured = false;
   bool isLoading = true;
-  bool isConnected = false;
   GlobalKey? key;
   Uint8List? bytes;
   List<ViewInvoiceItem> itemsListForView = [];
-  String qrData = '';
 
   void changeLoadingState(bool state) => setState(() => isLoading = state);
 
   @override
   void initState() {
     super.initState();
-    getTafqeet(widget.invoice.header!.totAfterVat!);
     prepareItemsListForView();
   }
 
@@ -95,9 +103,6 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
     final pw.MemoryImage image = pw.MemoryImage(bytes!);
     final Map<String, double> paperDimensions = await getPrintDimensions();
 
-    final String imageFileName =
-        'فاتورة ${widget.invoice.header!.custName!}${DateTime.now()}.pdf'
-            .replaceAll("/", "-");
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(
@@ -109,262 +114,262 @@ class _MyInvoiceInfoState extends State<MyInvoiceInfo> {
         },
       ),
     );
-    await Printing.sharePdf(bytes: await doc.save(), filename: imageFileName);
+    await Printing.sharePdf(
+        bytes: await doc.save(), filename: widget.docFileName);
   }
 
-  void changePrinterConnection(bool state) {
-    setState(() {
-      isConnected = state;
-    });
-  }
-
-  // void getInvoiceData() async {
-  //   try {
-  //     changeLoadingState(true);
-  //     final String url =
-  //         "/invoice/${widget.invno}";
-  //     Response response = await Dio(dioOptions).get(url);
-  //     final jsonResponse = response.data;
-  //     invoice = Invoice.fromJson(jsonResponse);
-  //     getTafqeet(invoice!.header!.totAfterVat!);
-  //     prepareItemsListForView();
-  //   } catch (e) {
-  //     // print(e);
-  //   }
-  // }
-
-  void getTafqeet(finalPrice) async {
-    try {
-      changeLoadingState(true);
-      var formData = FormData.fromMap({
-        'coinname': 'SAR',
-        'number': finalPrice,
-      });
-      Response response = await Dio(dioOptions).post(
-        'https://ahsibli.com/wp-admin/admin-ajax.php?action=date_coins_1',
-        data: formData,
-      );
-      final String priceText =
-          response.toString().split("<td>")[4].split("</td>")[0];
-      setState(() {
-        this.priceText = priceText;
-      });
-      qrData = """اسم المورد : شركة مصنع بترول ناس
-الرقم الضريبي : 300468968200003
-التاريخ والوقت : ${prepareDateAndTimeToPrintInInvoice()}
-الإجمالي شامل الضريبة : ${widget.invoice.header!.totAfterVat!}
-قيمة الضريبة : ${widget.invoice.header!.vaTamount!}""";
-      changeLoadingState(false);
+  @override
+  Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width * 0.5;
+    if (!isLoading) {
       Timer(
         const Duration(seconds: 1),
         () async {
           await capture();
         },
       );
-    } catch (e) {
-      changeLoadingState(false);
-      showSnackBar(context, "حدث خطأ ما، الرجاء المحاولة مرة أخرى");
     }
-  }
 
-  String prepareDateAndTimeToPrintInInvoice() {
-    //TODO: timezone
-    DateTime invoiceDate = DateTime.parse(widget.invoice.header!.invdate!);
-    String dateString = DateFormat("dd-MM-yyyy hh:mma").format(invoiceDate);
-
-    return dateString;
-  }
-  // final String today = DateFormat("dd-MM-yyyy hh:mma").format(widget.invoice.header!.invdate! ?? "" );
-
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width * 0.5;
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.black),
-        title: Text(
-          'الفاتورة',
-          style: TextStyle(color: Colors.black),
+    return WithLoading(
+      isLoading: isLoading,
+      child: Scaffold(
+        appBar: AppBar(
+          iconTheme: IconThemeData(color: Colors.black),
+          title: Text(
+            'الفاتورة',
+            style: TextStyle(color: Colors.black),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.grey[50],
+          elevation: 0,
+          shadowColor: Color(0x003d3d3d),
+          actions: [
+            if (isCaptured)
+              IconButton(
+                icon: Icon(Icons.print_outlined),
+                color: Colors.black,
+                onPressed: printPDF,
+              )
+          ],
         ),
-        centerTitle: true,
-        backgroundColor: Colors.grey[50],
-        elevation: 0,
-        shadowColor: Color(0x003d3d3d),
-        actions: [
-          if (isCaptured)
-            IconButton(
-              icon: Icon(Icons.print_outlined),
-              color: Colors.black,
-              onPressed: printPDF,
-            )
-        ],
-      ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xffe8bd34)),
-              ),
-            )
-          : SafeArea(
-              child: Container(
-                color: Colors.grey[50],
-                child: ListView(
-                  children: [
-                    WidgetToImage(
-                      builder: (key) {
-                        this.key = key;
-                        return Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Column(
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  InvoiceScreenHeader(taxNo: '300468968200003'),
-                                  SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  Text(
-                                    'الرقم : ' + widget.invno,
-                                    style: TextStyle(
-                                      fontSize: 19.0,
-                                      color: darkColor,
-                                    ),
-                                  ),
-                                  Text(
-                                    "التاريخ : " +
-                                        prepareDateAndTimeToPrintInInvoice(),
-                                    style: TextStyle(
-                                      fontSize: 19.0,
-                                      color: darkColor,
-                                    ),
-                                  ),
-                                  Text(
-                                    'نوع الدفع : ${widget.invoice.header?.payType ?? ""}',
-                                    style: TextStyle(
-                                      fontSize: 19.0,
-                                      color: darkColor,
-                                    ),
-                                  ),
-                                  Text(
-                                    "العميل : " +
-                                        (widget.invoice.header!.custName!),
-                                    style: TextStyle(
-                                      fontSize: 19.0,
-                                      color: darkColor,
-                                    ),
-                                  ),
-                                  if (widget.invoice.header!.vatNum != null)
-                                    Text(
-                                      'الرقم الضريبي للعميل : ${widget.invoice.header!.vatNum!}',
-                                      style: TextStyle(
-                                        fontSize: 19.0,
-                                        color: darkColor,
-                                      ),
-                                    ),
-                                  Text(
-                                    "المندوب : " +
-                                        (widget.invoice.header!
-                                            .createdDelegateName!),
-                                    style: TextStyle(
-                                      fontSize: 19.0,
-                                      color: darkColor,
-                                    ),
-                                  ),
-                                  Divider(
-                                    height: 20.0,
-                                    color: darkColor,
-                                    thickness: 2.0,
-                                  ),
-                                  ItemsInfoTable(items: itemsListForView),
-                                  InvoiceDetailsPrices(
-                                    price: widget.invoice.header!.total!,
-                                    title: 'الاجمالي',
-                                  ),
-                                  InvoiceDetailsPrices(
-                                    price:
-                                        widget.invoice.header!.discountTotal!,
-                                    title: 'الخصم',
-                                  ),
-                                  InvoiceDetailsPrices(
-                                    price: widget.invoice.header!.netTotal!,
-                                    title: 'الصافي',
-                                  ),
-                                  InvoiceDetailsPrices(
-                                    price: widget.invoice.header!.vaTamount!,
-                                    title: 'ضريبة القيمة المضافة',
-                                  ),
-                                  InvoiceDetailsPrices(
-                                    price: widget.invoice.header!.totAfterVat!,
-                                    title: 'قيمة الفاتورة',
-                                  ),
-                                  Text(
-                                    (priceText ?? "") + " فقط لا غير",
-                                    style: TextStyle(
-                                      color: darkColor,
-                                      fontSize: 17,
-                                    ),
-                                  ),
-                                  Center(
-                                    child: QrImage(
-                                      data: qrData,
-                                      version: QrVersions.auto,
-                                      size: screenWidth,
-                                    ),
-                                  ),
-                                  Text(
-                                    'الرجاء احضار الفاتورة عند الاسترجاع أو الاستبدال خلال أسبوع',
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: 20.0,
-                              ),
-                            ],
+        body: SafeArea(
+          child: Container(
+            color: Colors.grey[50],
+            child: ListView(
+              children: [
+                WidgetToImage(
+                  builder: (key) {
+                    this.key = key;
+                    return Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        children: [
+                          if (widget.headerData != null)
+                            PrintPaperHeader(
+                              data: widget.headerData ?? {},
+                            ),
+                          Divider(
+                            height: 20.0,
+                            color: darkColor,
+                            thickness: 2.0,
                           ),
-                        );
-                      },
-                    ),
-                  ],
+                          ItemsInfoTable(items: itemsListForView),
+                          PrintPaperSummary(
+                            data: widget.summaryData!,
+                          ),
+                          Tafqeet(
+                            changeLoadingState: changeLoadingState,
+                            price: widget.invoice.header!.totAfterVat!,
+                          ),
+                          if (widget.qrData != null)
+                            Center(
+                              child: QrImage(
+                                data: widget.qrData!,
+                                version: QrVersions.auto,
+                                size: screenWidth,
+                              ),
+                            ),
+                          if (widget.closingNote != null)
+                            Text(widget.closingNote!),
+                          SizedBox(
+                            height: 20.0,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 }
 
+class PrintPaperHeader extends StatelessWidget {
+  final Map<String, String> data;
 
+  const PrintPaperHeader({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
 
-// class TopTextInvoice extends StatelessWidget {
-//   final String defination;
-//   final String data;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InvoiceScreenHeader(title: 'فاتورة مبيعات ضريبية'),
+        SizedBox(
+          height: 20.0,
+        ),
+        ...data.entries
+            .toList()
+            .map(
+              (MapEntry<String, String> mapEntry) => TopTextInvoice(
+                defination: mapEntry.key,
+                data: mapEntry.value,
+              ),
+            )
+            .toList()
+      ],
+    );
+  }
+}
 
-//   const TopTextInvoice({
-//     Key? key,
-//     required this.defination,
-//     required this.data,
-//   }) : super(key: key);
+class PrintPaperSummary extends StatelessWidget {
+  final Map<String, String> data;
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         Text(
-//           "$defination :  ",
-//           style: TextStyle(
-//             fontSize: 19.0,
-//             color: darkColor,
-//             fontWeight: FontWeight.bold,
-//           ),
-//         ),
-//         Text(
-//           data,
-//           style: TextStyle(
-//             fontSize: 19.0,
-//             color: darkColor,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+  const PrintPaperSummary({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...data.entries
+            .toList()
+            .map(
+              (MapEntry<String, String> mapEntry) => InvoiceDetailsPrices(
+                description: mapEntry.value,
+                title: mapEntry.key,
+              ),
+            )
+            .toList()
+        // data.forEach(
+        //   (String definition, String data) => TopTextInvoice(
+        //     data: '123شسؤيشستؤمنشستمنؤتسشمنؤتسشمنؤتمنمنم تسشمنؤ تنشمسؤت نمسش',
+        //     defination: 'الرقم',
+        //   ),
+        // ),
+      ],
+    );
+  }
+}
+
+class Tafqeet extends StatefulWidget {
+  final void Function(bool) changeLoadingState;
+  final String price;
+
+  const Tafqeet({
+    Key? key,
+    required this.changeLoadingState,
+    required this.price,
+  }) : super(key: key);
+
+  @override
+  State<Tafqeet> createState() => _TafqeetState();
+}
+
+class _TafqeetState extends State<Tafqeet> {
+  String priceText = "";
+
+  @override
+  void initState() {
+    super.initState();
+    getTafqeet();
+  }
+
+  void getTafqeet() async {
+    var formData = FormData.fromMap({
+      'coinname': 'SAR',
+      'number': widget.price,
+    });
+    try {
+      Response response = await Dio().post(
+        'https://ahsibli.com/wp-admin/admin-ajax.php?action=date_coins_1',
+        data: formData,
+      );
+
+      print(response);
+
+      final String priceText =
+          response.toString().split("<td>")[4].split("</td>")[0];
+      setState(() {
+        this.priceText = priceText;
+      });
+    } catch (e) {
+      print(e);
+      showSnackBar(
+          context, "حدث خطأ ما، الرجاء الانتظار، جارٍ المحاولة مرة أخرى");
+    } finally {
+      widget.changeLoadingState(false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      "$priceText فقط لا غير",
+      style: TextStyle(
+        color: darkColor,
+        fontSize: 17,
+      ),
+    );
+  }
+}
+
+class TopTextInvoice extends StatelessWidget {
+  final String defination;
+  final String data;
+
+  const TopTextInvoice({
+    Key? key,
+    required this.defination,
+    required this.data,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$defination :  ",
+            style: TextStyle(
+              fontSize: 19.0,
+              color: darkColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              data,
+              style: TextStyle(
+                fontSize: 19.0,
+                color: darkColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

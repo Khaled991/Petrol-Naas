@@ -3,10 +3,12 @@ import 'package:skeleton_loader/skeleton_loader.dart';
 
 import '../../constants.dart';
 
-class MyInvoiceSkeleton extends StatelessWidget {
+class ListTileSkelton extends StatelessWidget {
   final Widget? child;
+  final bool? isThreeLine;
 
-  const MyInvoiceSkeleton({Key? key, this.child}) : super(key: key);
+  const ListTileSkelton({Key? key, this.child, this.isThreeLine})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +42,17 @@ class MyInvoiceSkeleton extends StatelessWidget {
                       height: 9,
                       color: Colors.white,
                     ),
+                    if (isThreeLine == true)
+                      Column(
+                        children: [
+                          SizedBox(height: 5),
+                          Container(
+                            width: 120,
+                            height: 9,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),

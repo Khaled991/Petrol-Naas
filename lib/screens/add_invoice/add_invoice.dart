@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:petrol_naas/components/custom_button.dart';
+import 'package:petrol_naas/components/custom_dropdown.dart';
 import 'package:petrol_naas/mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/models/invoice_header.dart';
@@ -20,8 +22,6 @@ import 'package:petrol_naas/models/invoice_item.dart';
 import 'package:petrol_naas/models/item.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/invoice_details.dart';
-import 'package:petrol_naas/widget/custom_button.dart';
-import 'package:petrol_naas/widget/custom_dropdown.dart';
 
 import '../../constants.dart';
 import '../invoice_screen/invoice_screen.dart';
@@ -116,6 +116,9 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   @override
   Widget build(BuildContext context) {
+    final customerStore = context.watch<CustomerStore>();
+    print(customerStore.totalUserCreditLimit);
+
     return ScreenLayout(
       showBackButton: true,
       title: "إضافة فاتورة",
@@ -242,7 +245,7 @@ class _AddInvoiceState extends State<AddInvoice> {
               labelText: "العميل",
               labelStyle: TextStyle(color: Colors.black45),
             ),
-            dropdownHeight: 120,
+            dropdownHeight: 200,
           ),
         ],
       ),
@@ -415,7 +418,7 @@ class _AddInvoiceState extends State<AddInvoice> {
           style: TextStyle(fontSize: 25.0),
         ),
         content: const Text(
-          'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة مجدداً',
+          'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة',
           style: TextStyle(fontSize: 18.0),
         ),
         actions: <Widget>[
@@ -430,9 +433,9 @@ class _AddInvoiceState extends State<AddInvoice> {
             ),
           ),
           TextButton(
-            onPressed: () => onSubmitPrint(setState),
+            onPressed: () => onSubmitPrint(),
             child: Text(
-              'متابعة',
+              'تأكيد',
               style: TextStyle(
                 color: primaryColor,
                 fontSize: 16.0,
@@ -444,7 +447,7 @@ class _AddInvoiceState extends State<AddInvoice> {
     );
   }
 
-  Future<void> onSubmitPrint(StateSetter setState) async {
+  Future<void> onSubmitPrint() async {
     fillInRestDataOfInvoice();
 
     if (!isFieldsFilled()) {
@@ -453,11 +456,29 @@ class _AddInvoiceState extends State<AddInvoice> {
       return;
     }
 
-    if (isExceedsCreditLimit() && createInvoice.payType == "3") {
-      final remainingAcceptableCredit = _selectedCustomer!.creditLimit! -
-          _selectedCustomer!.remainingBalance!;
+    if (createInvoice.payType == "3" &&
+        (isExceedsTotalUserCreditLimit() || isExceedsCreditLimit())) {
+      final remainingAcceptableCreditBasedOnCustomerCreditLimit =
+          _selectedCustomer!.creditLimit! -
+              _selectedCustomer!.remainingBalance!;
+
+      final userStore = context.read<UserStore>();
+      final user = userStore.user;
+      final userCreditLimit = user.creditLimit;
+
+      final customerStore = context.read<CustomerStore>();
+      final totalUserCreditLimit = customerStore.totalUserCreditLimit;
+      final remainingAcceptableCreditBasedOnUserCreditLimit =
+          userCreditLimit! - totalUserCreditLimit;
+
+      final remainingAcceptableCredit =
+          remainingAcceptableCreditBasedOnCustomerCreditLimit <
+                  remainingAcceptableCreditBasedOnUserCreditLimit
+              ? remainingAcceptableCreditBasedOnCustomerCreditLimit
+              : remainingAcceptableCreditBasedOnUserCreditLimit;
 
       Navigator.pop(context, 'Cancel');
+
       showSnackBar(context,
           'لقد تخطيت الحد الأقصى للائتمان، أقصى مبلغ يمكن الشراء به بالآجل هو: $remainingAcceptableCredit ريال سعودي');
       return;
@@ -478,6 +499,8 @@ class _AddInvoiceState extends State<AddInvoice> {
     final String payType = InoviceHeader.decodePayType(createInvoice.payType!)!;
     final double vat = addedItemsToNewInvoiceStore.calculateVat(fee);
     final double totalPrice = addedItemsToNewInvoiceStore.calculateTotalPrice();
+
+    updateRemainingBalance();
 
     Navigator.of(context)
         .push(
@@ -500,16 +523,19 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   void fillInRestDataOfInvoice() {
     final userStore = context.read<UserStore>();
+
     if (createInvoice.payType == "1") {
       createInvoice.accno = userStore.user.cashAccno!;
     } else if (createInvoice.payType == "3") {
       createInvoice.accno = _selectedCustomer!.accNo!;
     }
+
     createInvoice.userno = userStore.user.userNo!;
     createInvoice.salesman = userStore.user.salesman!;
     createInvoice.whno = userStore.user.whno!;
     createInvoice.notes = noteController.text;
     createInvoice.sellPriceNo = userStore.user.sellPriceNo!;
+
     fillInItemsToViewInAddInviceAndInvoiceToBePrinted();
   }
 
@@ -550,6 +576,22 @@ class _AddInvoiceState extends State<AddInvoice> {
         !(createInvoice.items == null || createInvoice.items!.isEmpty);
   }
 
+  bool isExceedsTotalUserCreditLimit() {
+    final userStore = context.read<UserStore>();
+    final user = userStore.user;
+    final double userCreditLimit = user.creditLimit!;
+
+    final customerStore = context.read<CustomerStore>();
+    final totalUserCreditLimit = customerStore.totalUserCreditLimit;
+
+    final addedItemsToNewInvoiceStore =
+        context.read<AddedItemsToNewInvoiceStore>();
+    final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
+
+    final remainingAcceptableCredit = totalUserCreditLimit - userCreditLimit;
+    return total > remainingAcceptableCredit;
+  }
+
   bool isExceedsCreditLimit() {
     final addedItemsToNewInvoiceStore =
         context.read<AddedItemsToNewInvoiceStore>();
@@ -571,6 +613,21 @@ class _AddInvoiceState extends State<AddInvoice> {
       // ignore: avoid_print
       print(e);
     }
+  }
+
+  void updateRemainingBalance() {
+    final addedItemsToNewInvoiceStore =
+        context.read<AddedItemsToNewInvoiceStore>();
+    final double totalPrice = addedItemsToNewInvoiceStore.calculateTotalPrice();
+
+    final customerStore = context.read<CustomerStore>();
+    final customers = customerStore.customers;
+    customerStore.setCustomers(customers.map(
+      (Customer customer) => customer.accNo == _selectedCustomer?.accNo
+          ? customer.copyWith(
+              creditLimit: customer.remainingBalance! + totalPrice)
+          : customer,
+    ));
   }
 
   void resetPerviousData() {

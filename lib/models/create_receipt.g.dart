@@ -1,13 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'receipt_voucher.dart';
+part of 'create_receipt.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-ReceiptVoucher _$ReceiptVoucherFromJson(Map<String, dynamic> json) {
-  return ReceiptVoucher(
+CreateReceipt _$ReceiptVoucherFromJson(Map<String, dynamic> json) {
+  return CreateReceipt(
     userNo: json['userNo'] as String?,
     cashAccNo: json['cashAccNo'] as String?,
     accNo: json['accNo'] as String?,
@@ -16,7 +16,7 @@ ReceiptVoucher _$ReceiptVoucherFromJson(Map<String, dynamic> json) {
   );
 }
 
-Map<String, dynamic> _$ReceiptVoucherToJson(ReceiptVoucher instance) =>
+Map<String, dynamic> _$ReceiptVoucherToJson(CreateReceipt instance) =>
     <String, dynamic>{
       'userNo': instance.userNo,
       'cashAccNo': instance.cashAccNo,

@@ -21,10 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // Timer(const Duration(seconds: 2), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              // TestCompoennt(),
-
-              SignIn(),
+          builder: (_) => SignIn(),
         ),
       );
     });
@@ -37,39 +34,3 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
-
-// class TestCompoennt extends StatefulWidget {
-//   const TestCompoennt({Key? key}) : super(key: key);
-
-//   @override
-//   _TestCompoenntState createState() => _TestCompoenntState();
-// }
-
-// class _TestCompoenntState extends State<TestCompoennt> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: SafeArea(
-//         child: Column(
-//           children: [
-//             TextFieldTestComponent(),
-//             TextButton(
-//                 onPressed: () {
-//                   setState(() {});
-//                 },
-//                 child: Text("PRess"))
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class TextFieldTestComponent extends StatelessWidget {
-//   const TextFieldTestComponent({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return TextField();
-//   }
-// }

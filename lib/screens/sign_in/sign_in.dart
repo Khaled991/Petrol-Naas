@@ -1,10 +1,11 @@
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:petrol_naas/components/custom_button.dart';
+import 'package:petrol_naas/components/custom_text_field.dart';
 import 'package:petrol_naas/screens/my_invoice_screen/my_invoices_screen.dart';
+import 'package:petrol_naas/screens/my_receipts/my_receipts.dart';
 import 'package:petrol_naas/utils/utils.dart';
-import 'package:petrol_naas/widget/custom_button.dart';
-import 'package:petrol_naas/widget/custom_input.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/user.dart';
 import 'package:petrol_naas/models/user_sign_in.dart';
@@ -49,6 +50,8 @@ class _SignInState extends State<SignIn> {
   }
 
   void navigateToUserScreens() {
+    //TODO: delete next line
+    // navigatePushReplace(context, MyReceiptsScreen());
     navigatePushReplace(context, MyInvoicesScreen());
   }
 
@@ -59,8 +62,9 @@ class _SignInState extends State<SignIn> {
         data: signInData.toJson(),
       );
       var jsonRespone = response.data;
-      final store = context.read<UserStore>();
-      store.setUser(User.fromJson(jsonRespone, signInData.userNo));
+      final userStore = context.read<UserStore>();
+      userStore.setUser(User.fromJson(jsonRespone, signInData.userNo));
+
       return true;
     } on DioError catch (e) {
       // ignore: avoid_print
@@ -189,17 +193,17 @@ class _SignInState extends State<SignIn> {
                             ),
                             Padding(
                               padding: const EdgeInsets.only(top: 20.0),
-                              child: CustomInput(
+                              child: CustomTextField(
                                 hintText: 'رقم المندوب',
-                                type: CustomInputTypes.white,
+                                type: CustomTextFieldTypes.white,
                                 controller: userNoController,
                                 keyboardType: TextInputType.number,
                               ),
                             ),
-                            CustomInput(
+                            CustomTextField(
                               controller: passwordController,
                               hintText: 'كلمة المرور',
-                              type: CustomInputTypes.password,
+                              type: CustomTextFieldTypes.password,
                             ),
                             CustomButton(
                               buttonColors: Colors.white,

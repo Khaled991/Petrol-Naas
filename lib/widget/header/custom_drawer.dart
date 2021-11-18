@@ -27,11 +27,11 @@ final List<DrawerOptionModel> drawerOptions = <DrawerOptionModel>[
     icon: Icons.receipt_outlined,
     title: "الفواتير",
   ),
-  // DrawerOptionModel(
-  //   screen: MyReceipts(),
-  //   icon: Icons.receipt_long_rounded,
-  //   title: "سندات القبض",
-  // ),
+  DrawerOptionModel(
+    screen: MyReceiptsScreen(),
+    icon: Icons.receipt_long_rounded,
+    title: "سندات القبض",
+  ),
 ];
 
 class CustomDrawer extends StatelessWidget {

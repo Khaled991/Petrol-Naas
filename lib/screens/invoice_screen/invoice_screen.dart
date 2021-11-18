@@ -172,11 +172,18 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width * 0.5;
     final userStore = context.watch<UserStore>();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('الفاتورة'),
+        title: Text(
+          'الفاتورة',
+          style: TextStyle(color: Colors.black87),
+        ),
         centerTitle: true,
         backgroundColor: Colors.grey[50],
+        iconTheme: IconThemeData(
+          color: Colors.black87,
+        ),
         shadowColor: Color(0x003d3d3d),
         actions: [
           if (isCaptured)
@@ -199,7 +206,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         InvoiceScreenHeader(
-                          taxNo: '300468968200003',
+                          title: 'فاتورة مبيعات ضريبية',
                         ),
                         SizedBox(
                           height: 20.0,
@@ -256,23 +263,24 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           items: items,
                         ),
                         InvoiceDetailsPrices(
-                          price: widget.total.toStringAsFixed(2),
+                          description: widget.total.toStringAsFixed(2),
                           title: 'الاجمالي',
                         ),
                         InvoiceDetailsPrices(
-                          price: '0.00',
+                          description: '0.00',
                           title: 'الخصم',
                         ),
                         InvoiceDetailsPrices(
-                          price: widget.total.toStringAsFixed(2),
+                          description: widget.total.toStringAsFixed(2),
                           title: 'الصافي',
                         ),
                         InvoiceDetailsPrices(
-                          price: widget.vat.toStringAsFixed(2),
+                          description: widget.vat.toStringAsFixed(2),
                           title: 'ضريبة القيمة المضافة',
                         ),
                         InvoiceDetailsPrices(
-                          price: (widget.total + widget.vat).toStringAsFixed(2),
+                          description:
+                              (widget.total + widget.vat).toStringAsFixed(2),
                           title: 'قيمة الفاتورة',
                         ),
                         Text(

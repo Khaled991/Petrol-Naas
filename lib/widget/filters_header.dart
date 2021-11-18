@@ -12,32 +12,35 @@ import 'package:petrol_naas/models/customer.dart';
 import 'package:petrol_naas/models/filters.dart';
 import 'package:petrol_naas/models/invoice.dart';
 import 'package:petrol_naas/models/memorizable_state.dart';
+import 'package:petrol_naas/models/state_node.dart';
 import 'package:petrol_naas/widget/snack_bars/bottom_sheet_snack_bar.dart';
 // ignore: implementation_imports
 import 'package:provider/src/provider.dart';
 import '../constants.dart';
 
-class MyInvoicesScreenHeader extends StatefulWidget {
+class FiltersHeader<T> extends StatefulWidget {
   final void Function(bool state) changeLoadingState;
-  final void Function() getInvoices;
+  final void Function() fetchData;
   final Filters filters;
   final void Function() setFirstPage;
   final Function() moveScrollToTop;
+  final StateNode<List<T>> data;
 
-  const MyInvoicesScreenHeader({
+  const FiltersHeader({
+    Key? key,
     required this.changeLoadingState,
     required this.filters,
-    required this.getInvoices,
+    required this.fetchData,
     required this.setFirstPage,
     required this.moveScrollToTop,
-    Key? key,
+    required this.data,
   }) : super(key: key);
 
   @override
-  State<MyInvoicesScreenHeader> createState() => _MyInvoicesScreenHeaderState();
+  State<FiltersHeader<T>> createState() => _FiltersHeaderState<T>();
 }
 
-class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
+class _FiltersHeaderState<T> extends State<FiltersHeader<T>> {
   final MemorizableState<Customer> _selectedCustomer = MemorizableState();
   bool thereIsError = false;
   bool showNameFilterWidget = false;
@@ -63,20 +66,19 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
       _selectedCustomer.resetState();
       showNameFilterWidget = false;
     });
-    widget.getInvoices();
+    widget.fetchData();
   }
 
   void onPressClearDateFilter() {
     widget.changeLoadingState(true);
-    final invoicesStore = context.read<MyInvoices>();
-    invoicesStore.resetList();
+    widget.data.setValue([]);
 
     setState(() {
       widget.setFirstPage();
       widget.filters.lastDate.resetState();
       widget.filters.firstDate.resetState();
     });
-    widget.getInvoices();
+    widget.fetchData();
   }
 
   @override
@@ -150,8 +152,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
 
     widget.setFirstPage();
 
-    final invoicesStore = context.read<MyInvoices>();
-    invoicesStore.resetList();
+    widget.data.setValue([]);
 
     if (widget.filters.hasDateFilter()) {
       DateTime from = DateTime.parse(widget.filters.firstDate.current!);
@@ -170,7 +171,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
 
     widget.filters.confirmFilters();
 
-    widget.getInvoices();
+    widget.fetchData();
     widget.moveScrollToTop();
 
     if (widget.filters.hasCustomerFilter()) {
@@ -212,7 +213,7 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
               return Column(
                 children: [
                   Text(
-                    'ترتيب الفواتير',
+                    'ترتيب السندات',
                     style: TextStyle(
                       fontSize: 20.0,
                       color: darkColor,

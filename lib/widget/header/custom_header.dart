@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:petrol_naas/components/custom_text_field.dart';
 import 'package:petrol_naas/models/state_node.dart';
-import 'package:petrol_naas/widget/custom_input.dart';
 
 class HeaderTrailingModel {
   IconData icon;
@@ -88,8 +88,8 @@ class _CustomHeaderState extends State<CustomHeader> {
       children: [
         _backButton(toggleSearch),
         Expanded(
-          child: CustomInput(
-            type: CustomInputTypes.transparent,
+          child: CustomTextField(
+            type: CustomTextFieldTypes.transparent,
             hintText: "بحث ...",
             showClearButton: true,
             controller: widget.searchTextFieldController,

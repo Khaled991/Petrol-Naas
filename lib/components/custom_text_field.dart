@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
-enum CustomInputTypes { white, password, yellow, transparent }
+enum CustomTextFieldTypes { white, password, yellow, transparent }
 
-class CustomInput extends StatelessWidget {
+class CustomTextField extends StatelessWidget {
   final String hintText;
-  final CustomInputTypes type;
+  final CustomTextFieldTypes type;
   final TextInputType keyboardType;
   final TextEditingController? controller;
   final void Function(String)? onChanged;
   final bool showClearButton;
 
-  const CustomInput({
+  const CustomTextField({
     Key? key,
     required this.type,
     required this.hintText,
@@ -228,13 +228,13 @@ class CustomInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (type) {
-      case CustomInputTypes.white:
+      case CustomTextFieldTypes.white:
         return normalInput();
-      case CustomInputTypes.password:
+      case CustomTextFieldTypes.password:
         return passwordInput();
-      case CustomInputTypes.yellow:
+      case CustomTextFieldTypes.yellow:
         return yellowInput();
-      case CustomInputTypes.transparent:
+      case CustomTextFieldTypes.transparent:
         return transparentInput();
       default:
         return normalInput();

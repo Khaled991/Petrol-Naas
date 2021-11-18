@@ -6,6 +6,7 @@ class User {
   String? userNo;
   String? delegateNo;
   String? sellPriceNo;
+  double? creditLimit;
 
   User({
     this.delegateNo,
@@ -15,11 +16,12 @@ class User {
     this.salesman,
     this.userNo,
     this.sellPriceNo,
+    this.creditLimit,
   });
 
   @override
   String toString() {
-    return 'User(name: $name, whno: $whno, cashAccno: $cashAccno, salesman: $salesman, userNo: $userNo, delegateNo: $delegateNo), sellPriceNo: $sellPriceNo)';
+    return 'User(name: $name, whno: $whno, cashAccno: $cashAccno, salesman: $salesman, userNo: $userNo, delegateNo: $delegateNo), sellPriceNo: $sellPriceNo, creditLimit: $creditLimit)';
   }
 
   factory User.fromJson(Map<String, dynamic> json, String? userNo) => User(
@@ -29,6 +31,7 @@ class User {
         whno: json['Whno'] as String?,
         cashAccno: json['CashAccno'] as String?,
         salesman: json['Salesman'] as String?,
+        creditLimit: double.parse(json['creditLimit'].toString()),
         userNo: userNo,
       );
 
@@ -40,6 +43,7 @@ class User {
         'Salesman': salesman,
         'userNo': userNo,
         'sellPriceNo': sellPriceNo,
+        'creditLimit': creditLimit,
       };
 
   User copyWith({
@@ -50,6 +54,7 @@ class User {
     String? salesman,
     String? userNo,
     String? sellPriceNo,
+    double? creditLimit,
   }) {
     return User(
       delegateNo: delegateNo ?? this.delegateNo,
@@ -59,6 +64,7 @@ class User {
       salesman: salesman ?? this.salesman,
       userNo: userNo ?? this.userNo,
       sellPriceNo: sellPriceNo ?? this.sellPriceNo,
+      creditLimit: creditLimit ?? this.creditLimit,
     );
   }
 }

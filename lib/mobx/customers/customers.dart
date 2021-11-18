@@ -8,6 +8,17 @@ abstract class _CustomerStoreBase with Store {
   @observable
   List<Customer> customers = [];
 
+  @computed
+  double get totalUserCreditLimit => calculateUsedCreditLimit();
+
+  double calculateUsedCreditLimit() {
+    final double totalUsedCreditLimit = customers.fold<double>(
+        0.0,
+        (double currentValue, Customer customer) =>
+            customer.creditLimit! + currentValue);
+    return totalUsedCreditLimit;
+  }
+
   @action
   setCustomers(dynamic customersList) =>
       customers = prepareCustomersList(customersList);
