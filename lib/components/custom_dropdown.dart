@@ -124,7 +124,7 @@ class CustomDropdown<T> extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontFamily: 'Changa',
-                    color: Color(0x993d3d3d),
+                    color: Colors.black,
                   ),
                   items: _getDropDownItems(),
                   onChanged: onChanged,

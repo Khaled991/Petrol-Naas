@@ -98,7 +98,7 @@ class _PrintPaperScreenState extends State<PrintPaperScreen> {
     return <String, double>{"width": newWidth, "height": newHeight};
   }
 
-  printPDF() async {
+  void printPDF() async {
     final pw.Document doc = pw.Document();
     final pw.MemoryImage image = pw.MemoryImage(bytes!);
     final Map<String, double> paperDimensions = await getPrintDimensions();

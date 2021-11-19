@@ -6,7 +6,7 @@ import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/filters.dart';
 import 'package:petrol_naas/models/receipt.dart';
 import 'package:petrol_naas/models/state_node.dart';
-import 'package:petrol_naas/screens/add_receipt_voucher/add_receipt_voucher_screen.dart';
+import 'package:petrol_naas/screens/add_receipt/add_receipt_screen.dart';
 import 'package:petrol_naas/screens/receipt_print_screen/receipt_print_screen.dart';
 import 'package:petrol_naas/utils/utils.dart';
 import 'package:petrol_naas/widget/filters_header.dart';

@@ -1,21 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:petrol_naas/widget/screen_layout.dart';
 import 'package:provider/src/provider.dart';
 
 import 'package:petrol_naas/components/custom_button.dart';
-import 'package:petrol_naas/components/custom_dropdown.dart';
 import 'package:petrol_naas/components/custom_text_field.dart';
 import 'package:petrol_naas/constants.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/mobx/user/user.dart';
 import 'package:petrol_naas/models/create_receipt.dart';
 import 'package:petrol_naas/models/customer.dart';
+import 'package:petrol_naas/models/receipt.dart';
+import 'package:petrol_naas/screens/receipt_print_screen/receipt_print_screen.dart';
 import 'package:petrol_naas/utils/utils.dart';
 import 'package:petrol_naas/widget/add_invoice_widget/expand_custom_text_field.dart';
+import 'package:petrol_naas/widget/screen_layout.dart';
 
 class AddReceiptScreen extends StatefulWidget {
   const AddReceiptScreen({Key? key}) : super(key: key);
@@ -28,12 +28,16 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   Customer? _selectedCustomer;
   late final TextEditingController _moneyAmountController;
   late final TextEditingController _descriptionController;
+  late DropdownEditingController<Customer> _customerDropDownController;
+
   final CreateReceipt receipt = CreateReceipt();
 
   @override
   void initState() {
     _moneyAmountController = TextEditingController();
     _descriptionController = TextEditingController();
+    _customerDropDownController = DropdownEditingController<Customer>();
+
     super.initState();
   }
 
@@ -41,6 +45,8 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   void dispose() {
     _moneyAmountController.dispose();
     _descriptionController.dispose();
+    _customerDropDownController.dispose();
+
     super.dispose();
   }
 
@@ -73,8 +79,6 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       final customerStore = context.watch<CustomerStore>();
       final List<Customer> customers = customerStore.customers;
 
-      final isKeyboardShown = MediaQuery.of(context).viewInsets.bottom != 0.0;
-
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
         child: Column(
@@ -91,6 +95,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               ),
             ),
             DropdownFormField<Customer>(
+              controller: _customerDropDownController,
               onChanged: setCustomerDropDownValue,
               findFn: (dynamic str) async => customers,
               filterFn: (dynamic customer, str) =>
@@ -155,6 +160,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
   }
 
   void setCustomerDropDownValue(customer) {
+    _customerDropDownController.value = customer;
     _selectedCustomer = customer;
     receipt.accNo = customer!.accNo;
   }
@@ -199,53 +205,104 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
       buttonColors: greenColor,
       textColors: Colors.white,
       label: "حفظ",
-      onPressed: _showPrintAlert,
+      onPressed: _showPrintConfirmationAlert,
     );
   }
 
-  Future<String?> _showPrintAlert() {
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text(
-          'تنبيه!!',
-          style: TextStyle(fontSize: 25.0),
-        ),
-        content: const Text(
-          'هل انت متأكد من الحفظ لأنه لا يمكن التعديل علي السند',
-          style: TextStyle(fontSize: 18.0),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'Cancel'),
-            child: Text(
-              'الغاء',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 16.0,
+  Future<String?>? _showPrintConfirmationAlert() {
+    try {
+      fillInRestJsonData();
+
+      checkFieldsFilled();
+      checkMoneyAmountValidation();
+
+      return showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text(
+            'تنبيه!!',
+            style: TextStyle(fontSize: 25.0),
+          ),
+          content: const Text(
+            'هل انت متأكد من الحفظ لأنه لا يمكن التعديل علي السند',
+            style: TextStyle(fontSize: 18.0),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'Cancel'),
+              child: Text(
+                'الغاء',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 16.0,
+                ),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () => onSubmitSaving(),
-            child: Text(
-              'تأكيد',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 16.0,
+            TextButton(
+              onPressed: onSubmitSaving,
+              child: Text(
+                'تأكيد',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 16.0,
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
   }
 
   void onSubmitSaving() async {
-    fillInRestJsonData();
-    if (!areAllDataValid()) return;
+    try {
+      String savedReceiptNo = await sendDataToApi();
+      print(savedReceiptNo);
+      Receipt receipt = await fetchSavedReceipt(savedReceiptNo);
 
-    await sendDataToApi();
+      final userStore = context.read<UserStore>();
+      final user = userStore.user;
+      final userName = user.name!;
+      Navigator.pop(context, 'Cancel');
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReceiptPrintScreen(
+            headerData: {
+              "الرقم": receipt.recNo!,
+              "التاريخ": prepareDateToPrint(receipt.createdDate!),
+              "الملبغ": receipt.amount!.toStringAsFixed(2),
+              "العميل": receipt.accName!,
+              "البيان": receipt.description!,
+              "المندوب": userName,
+              "وقت الطباعة": prepareTimeToPrint(receipt.createdDate!),
+            },
+          ),
+        ),
+      ).then((value) => resetFields());
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
+  }
+
+  Future<Receipt> fetchSavedReceipt(String receiptId) async {
+    try {
+      final userStore = context.read<UserStore>();
+      final user = userStore.user;
+      final userNo = user.userNo;
+
+      String url = '/receipt/$receiptId?Createduserno=$userNo';
+
+      Response response = await Dio(dioOptions).get(url);
+
+      return Receipt.fromJson(response.data);
+    } on DioError catch (e) {
+      print(e);
+      throw 'حدث خطأ ما اثناء فتح السند، الرجاء الرجوع لصفحة السندات وفتحه مرة أخرى';
+    }
   }
 
   void fillInRestJsonData() {
@@ -256,53 +313,44 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
     receipt.userNo = user.userNo;
   }
 
-  bool areAllDataValid() {
-    if (!isDataFilled()) {
-      showSnackBar(context, "من فضلك املأ جميع البيانات");
-      return false;
-    }
-    if (!isMoneyAmountValid()) {
-      showSnackBar(context, "من فضلك أدخل المبلغ بشكل صحيح بحيث تكون عدد موجب");
-      return false;
-    }
-    return true;
-  }
-
-  bool isDataFilled() {
-    bool isCustomerSelected = receipt.accNo != null;
-    bool isAmountFilled = receipt.amount != null && receipt.amount != null;
+  void checkFieldsFilled() {
+    bool isCustomerSelected = receipt.accNo == null;
+    bool isAmountFilled = receipt.amount == null && receipt.amount == null;
     bool isDescriptionFilled =
-        receipt.description != null && receipt.description != "";
-    bool iscashAccNoValid = receipt.cashAccNo != null;
-    bool isUserNoValid = receipt.userNo != null;
+        receipt.description == null && receipt.description == "";
+    bool iscashAccNoValid = receipt.cashAccNo == null;
+    bool isUserNoValid = receipt.userNo == null;
 
-    return isCustomerSelected &&
-        isAmountFilled &&
-        isDescriptionFilled &&
-        iscashAccNoValid &&
-        isUserNoValid;
+    if (isCustomerSelected) throw "الرجاء اختيار عميل";
+    if (isAmountFilled) throw "الرجاء تحديد المبلغ";
+    if (isDescriptionFilled) throw "الرجاء كتابة بيان";
+
+    if (iscashAccNoValid || isUserNoValid) {
+      throw 'يوجد خطأ ما اثناء انشاء سند القبض، الرجاء التواصل مع الادارة لحل المشكلة';
+    }
   }
 
-  bool isMoneyAmountValid() {
-    return receipt.amount != null && receipt.amount! > 0;
+  void checkMoneyAmountValidation() {
+    if (receipt.amount == null || receipt.amount! <= 0) {
+      throw "من فضلك أدخل المبلغ بشكل صحيح بحيث تكون عدد موجب";
+    }
   }
 
-  Future<void> sendDataToApi() async {
+  Future<String> sendDataToApi() async {
     try {
       final Response response =
           await Dio(dioOptions).post("/receipt", data: receipt.toJson());
-      final bool isSavedSuccessfully = response.data == "1" ? true : false;
-      if (isSavedSuccessfully) {
-        resetFields();
-        showSnackBar(context, "تم الحفظ بنجاح");
-      }
+
+      return response.data;
     } catch (e) {
+      // ignore: avoid_print
       print(e);
-      showSnackBar(context, "حدث خطأ ما، الرجاء المحاولة مرة أخرى");
+      throw "حدث خطأ ما أثناء حفظ الفاتورة، الرجاء المحاولة مرة أخرى";
     }
   }
 
   void resetFields() {
+    _customerDropDownController.value = null;
     _descriptionController.clear();
     _moneyAmountController.clear();
     setState(() {

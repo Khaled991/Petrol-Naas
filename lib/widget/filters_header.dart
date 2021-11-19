@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -45,6 +46,19 @@ class _FiltersHeaderState<T> extends State<FiltersHeader<T>> {
   bool thereIsError = false;
   bool showNameFilterWidget = false;
   String _errorMessage = "";
+  late DropdownEditingController<Customer> _customerDropDownController;
+
+  @override
+  void initState() {
+    super.initState();
+    _customerDropDownController = DropdownEditingController<Customer>();
+  }
+
+  @override
+  void dispose() {
+    _customerDropDownController.dispose();
+    super.dispose();
+  }
 
   List<Invoice> prepareInvoiceList(dynamic invoiceList) {
     List<Invoice> invoices = List<Invoice>.from(
@@ -213,7 +227,7 @@ class _FiltersHeaderState<T> extends State<FiltersHeader<T>> {
               return Column(
                 children: [
                   Text(
-                    'ترتيب السندات',
+                    'تصفية سندات القبض',
                     style: TextStyle(
                       fontSize: 20.0,
                       color: darkColor,
@@ -230,6 +244,7 @@ class _FiltersHeaderState<T> extends State<FiltersHeader<T>> {
                       onChanged: setCustomerDropDownValue,
                     );
                   }),
+                  // _renderCustomerDropdown(),
                   Divider(),
                   Text(
                     'اختر تاريخ',
@@ -367,6 +382,82 @@ class _FiltersHeaderState<T> extends State<FiltersHeader<T>> {
           },
         );
       },
+    );
+  }
+
+  Widget _renderCustomerDropdown() {
+    final customerStore = context.read<CustomerStore>();
+    final List<Customer> customers = customerStore.customers;
+
+    final borderStyle = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10.0),
+        borderSide: BorderSide(
+          color: primaryColor,
+          style: BorderStyle.solid,
+          width: 1.2,
+        ));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "العميل",
+              style: TextStyle(
+                fontSize: 18.0,
+                color: darkColor,
+              ),
+            ),
+          ),
+          DropdownFormField<Customer>(
+            onChanged: setCustomerDropDownValue,
+            controller: _customerDropDownController,
+            findFn: (dynamic str) async => customers,
+            filterFn: (dynamic customer, str) =>
+                customer.accName.toLowerCase().indexOf(str.toLowerCase()) >= 0,
+            dropdownItemFn: (dynamic customer, position, focused,
+                    dynamic lastSelectedItem, onTap) =>
+                ListTile(
+              title: Text(customer.accName),
+              subtitle: Text(
+                customer?.remainingBalance.toStringAsFixed(2) ?? '',
+              ),
+              tileColor:
+                  focused ? Color.fromARGB(20, 0, 0, 0) : Colors.transparent,
+              onTap: onTap,
+            ),
+            displayItemFn: (dynamic customer) => Text(
+              customer?.accName ?? '',
+              style: TextStyle(fontSize: 16),
+            ),
+            // TODO: next line
+            // searchTextStyle: TextStyle(fontFamily: "Changa", color: Colors.red),
+            decoration: InputDecoration(
+              floatingLabelStyle: TextStyle(color: Colors.black54),
+              floatingLabelBehavior: FloatingLabelBehavior.never,
+              fillColor: primaryColor,
+              focusColor: primaryColor,
+              hoverColor: primaryColor,
+              enabledBorder: borderStyle,
+              focusedBorder: borderStyle,
+              focusedErrorBorder: borderStyle,
+              border: borderStyle,
+              contentPadding: EdgeInsets.symmetric(horizontal: 10.0),
+              isDense: true,
+              suffixIcon: Icon(
+                Icons.expand_more,
+                color: primaryColor,
+                size: 25.0,
+              ),
+              labelText: "العميل",
+              labelStyle: TextStyle(color: Colors.black45),
+            ),
+            dropdownHeight: 200,
+          ),
+        ],
+      ),
     );
   }
 }

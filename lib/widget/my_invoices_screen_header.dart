@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -39,9 +40,22 @@ class MyInvoicesScreenHeader extends StatefulWidget {
 
 class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
   final MemorizableState<Customer> _selectedCustomer = MemorizableState();
+  late DropdownEditingController<Customer> _customerDropDownController;
   bool thereIsError = false;
   bool showNameFilterWidget = false;
   String _errorMessage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _customerDropDownController = DropdownEditingController<Customer>();
+  }
+
+  @override
+  void dispose() {
+    _customerDropDownController.dispose();
+    super.dispose();
+  }
 
   List<Invoice> prepareInvoiceList(dynamic invoiceList) {
     List<Invoice> invoices = List<Invoice>.from(
@@ -209,163 +223,246 @@ class _MyInvoicesScreenHeaderState extends State<MyInvoicesScreenHeader> {
           onClosing: () {},
           builder: (BuildContext context) {
             return StatefulBuilder(builder: (BuildContext ctx, setState) {
-              return Column(
-                children: [
-                  Text(
-                    'ترتيب الفواتير',
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      color: darkColor,
-                    ),
-                  ),
-                  Divider(),
-                  Observer(builder: (_) {
-                    final customersStore = context.watch<CustomerStore>();
-                    return CustomDropdown<Customer>(
-                      elements: customersStore.customers,
-                      textProperty: 'AccName',
-                      label: 'اسم العميل',
-                      selectedValue: _selectedCustomer.current,
-                      onChanged: setCustomerDropDownValue,
-                    );
-                  }),
-                  Divider(),
-                  Text(
-                    'اختر تاريخ',
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      color: darkColor,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomButton(
-                          onPressed: () {
-                            showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime.now(),
-                            ).then(
-                              (date) {
-                                setState(() {
-                                  if (widget.filters.firstDate.current !=
-                                      null) {
-                                    widget.filters.confirmDateFilter();
-                                  }
-
-                                  widget.filters.firstDate.current =
-                                      DateFormat("yyyy-MM-dd").format(date!);
-                                });
-                              },
-                            );
-                          },
-                          buttonColors: primaryColor,
-                          label: 'من',
-                          icon: Icons.date_range_outlined,
-                          textColors: Colors.white,
-                        ),
+              return Padding(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Column(
+                  children: [
+                    Text(
+                      'تصفية الفواتير',
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: darkColor,
                       ),
-                      if (widget.filters.firstDate.current != null)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: 10.0,
+                    ),
+                    Divider(),
+                    Observer(builder: (_) {
+                      final customersStore = context.watch<CustomerStore>();
+                      return CustomDropdown<Customer>(
+                        elements: customersStore.customers,
+                        textProperty: 'AccName',
+                        label: 'اسم العميل',
+                        selectedValue: _selectedCustomer.current,
+                        onChanged: setCustomerDropDownValue,
+                      );
+                    }),
+                    // _renderCustomerDropdown(),
+
+                    Divider(),
+                    Text(
+                      'اختر تاريخ',
+                      style: TextStyle(
+                        fontSize: 20.0,
+                        color: darkColor,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomButton(
+                            onPressed: () {
+                              showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime.now(),
+                              ).then(
+                                (date) {
+                                  setState(() {
+                                    if (widget.filters.firstDate.current !=
+                                        null) {
+                                      widget.filters.confirmDateFilter();
+                                    }
+
+                                    widget.filters.firstDate.current =
+                                        DateFormat("yyyy-MM-dd").format(date!);
+                                  });
+                                },
+                              );
+                            },
+                            buttonColors: primaryColor,
+                            label: 'من',
+                            icon: Icons.date_range_outlined,
+                            textColors: Colors.white,
                           ),
-                          child: Text(
-                            widget.filters.firstDate.current!,
-                            style: TextStyle(
-                              color: darkColor,
-                              fontSize: 18.0,
+                        ),
+                        if (widget.filters.firstDate.current != null)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 10.0,
+                            ),
+                            child: Text(
+                              widget.filters.firstDate.current!,
+                              style: TextStyle(
+                                color: darkColor,
+                                fontSize: 18.0,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomButton(
-                          onPressed: () {
-                            showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime.now(),
-                            ).then(
-                              (date) {
-                                setState(() {
-                                  if (widget.filters.lastDate.current != null) {
-                                    widget.filters.lastDate
-                                        .assignCurrentToPervious();
-                                  }
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomButton(
+                            onPressed: () {
+                              showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime.now(),
+                              ).then(
+                                (date) {
+                                  setState(() {
+                                    if (widget.filters.lastDate.current !=
+                                        null) {
+                                      widget.filters.lastDate
+                                          .assignCurrentToPervious();
+                                    }
 
-                                  widget.filters.lastDate.current =
-                                      DateFormat("yyyy-MM-dd").format(date!);
-                                });
-                              },
-                            );
-                          },
-                          buttonColors: primaryColor,
-                          label: 'إلي',
-                          icon: Icons.date_range_outlined,
-                          textColors: Colors.white,
-                        ),
-                      ),
-                      if (widget.filters.lastDate.current != null)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: 10.0,
+                                    widget.filters.lastDate.current =
+                                        DateFormat("yyyy-MM-dd").format(date!);
+                                  });
+                                },
+                              );
+                            },
+                            buttonColors: primaryColor,
+                            label: 'إلي',
+                            icon: Icons.date_range_outlined,
+                            textColors: Colors.white,
                           ),
-                          child: Text(
-                            widget.filters.lastDate.current!,
-                            style: TextStyle(
-                              color: darkColor,
-                              fontSize: 18.0,
+                        ),
+                        if (widget.filters.lastDate.current != null)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 10.0,
+                            ),
+                            child: Text(
+                              widget.filters.lastDate.current!,
+                              style: TextStyle(
+                                color: darkColor,
+                                fontSize: 18.0,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomButton(
-                          buttonColors: greenColor,
-                          onPressed: () => onPressFilter(setState),
-                          label: 'تصفية النتائج',
-                          textColors: Colors.white,
-                        ),
-                      ),
-                      Expanded(
-                        child: CustomButton(
-                          buttonColors: redColor,
-                          onPressed: () {
-                            widget.filters.cancelFilters();
-                            _selectedCustomer.current =
-                                _selectedCustomer.pervious;
-                            Navigator.pop(context);
-                          },
-                          label: 'إلغاء',
-                          textColors: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (thereIsError)
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                          maxHeight: 50.0, maxWidth: double.infinity),
-                      child: BottomSheetSnackBar(
-                        text: _errorMessage,
-                      ),
+                      ],
                     ),
-                ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomButton(
+                            buttonColors: greenColor,
+                            onPressed: () => onPressFilter(setState),
+                            label: 'تصفية النتائج',
+                            textColors: Colors.white,
+                          ),
+                        ),
+                        Expanded(
+                          child: CustomButton(
+                            buttonColors: redColor,
+                            onPressed: () {
+                              widget.filters.cancelFilters();
+                              _selectedCustomer.current =
+                                  _selectedCustomer.pervious;
+                              Navigator.pop(context);
+                            },
+                            label: 'إلغاء',
+                            textColors: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (thereIsError)
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxHeight: 50.0, maxWidth: double.infinity),
+                        child: BottomSheetSnackBar(
+                          text: _errorMessage,
+                        ),
+                      ),
+                  ],
+                ),
               );
             });
           },
         );
       },
+    );
+  }
+
+  Widget _renderCustomerDropdown() {
+    final customerStore = context.read<CustomerStore>();
+    final List<Customer> customers = customerStore.customers;
+
+    final borderStyle = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10.0),
+        borderSide: BorderSide(
+          color: primaryColor,
+          style: BorderStyle.solid,
+          width: 1.2,
+        ));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "العميل",
+              style: TextStyle(
+                fontSize: 18.0,
+                color: darkColor,
+              ),
+            ),
+          ),
+          DropdownFormField<Customer>(
+            onChanged: setCustomerDropDownValue,
+            controller: _customerDropDownController,
+            findFn: (dynamic str) async => customers,
+            filterFn: (dynamic customer, str) =>
+                customer.accName.toLowerCase().indexOf(str.toLowerCase()) >= 0,
+            dropdownItemFn: (dynamic customer, position, focused,
+                    dynamic lastSelectedItem, onTap) =>
+                ListTile(
+              title: Text(customer.accName),
+              subtitle: Text(
+                customer?.remainingBalance.toStringAsFixed(2) ?? '',
+              ),
+              tileColor:
+                  focused ? Color.fromARGB(20, 0, 0, 0) : Colors.transparent,
+              onTap: onTap,
+            ),
+            displayItemFn: (dynamic customer) => Text(
+              customer?.accName ?? '',
+              style: TextStyle(fontSize: 16),
+            ),
+            // TODO: next line
+            // searchTextStyle: TextStyle(fontFamily: "Changa", color: Colors.red),
+            decoration: InputDecoration(
+              floatingLabelStyle: TextStyle(color: Colors.black54),
+              floatingLabelBehavior: FloatingLabelBehavior.never,
+              fillColor: primaryColor,
+              focusColor: primaryColor,
+              hoverColor: primaryColor,
+              enabledBorder: borderStyle,
+              focusedBorder: borderStyle,
+              focusedErrorBorder: borderStyle,
+              border: borderStyle,
+              contentPadding: EdgeInsets.symmetric(horizontal: 10.0),
+              isDense: true,
+              suffixIcon: Icon(
+                Icons.expand_more,
+                color: primaryColor,
+                size: 25.0,
+              ),
+              labelText: "العميل",
+              labelStyle: TextStyle(color: Colors.black45),
+            ),
+            dropdownHeight: 200,
+          ),
+        ],
+      ),
     );
   }
 }

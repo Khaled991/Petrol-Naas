@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -7,7 +8,11 @@ import 'package:petrol_naas/components/with_loading.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:petrol_naas/models/receipt.dart';
 import 'package:petrol_naas/screens/my_invoice_screen/my_invoice_info.dart';
+import 'package:petrol_naas/widget/invoice_image/utils.dart';
+import 'package:petrol_naas/widget/invoice_image/widget_to_image.dart';
 import 'package:printing/printing.dart';
+
+import '../../constants.dart';
 
 class ReceiptPrintScreen extends StatefulWidget {
   final Map<String, String> headerData;
@@ -24,6 +29,7 @@ class _ReceiptPrintScreenState extends State<ReceiptPrintScreen> {
   bool isCaptured = false;
   Uint8List? bytes;
   String docFileName = "";
+  GlobalKey? key;
 
   @override
   void initState() {
@@ -32,12 +38,29 @@ class _ReceiptPrintScreenState extends State<ReceiptPrintScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    Timer(
+      const Duration(seconds: 1),
+      () async {
+        await capture();
+      },
+    );
+    super.didChangeDependencies();
+  }
+
+  Future<void> capture() async {
+    bytes = await Utils.capture(key);
+    isCaptured = true;
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.black),
         title: Text(
-          'الفاتورة',
+          'سند القبض',
           style: TextStyle(color: Colors.black),
         ),
         centerTitle: true,
@@ -53,10 +76,58 @@ class _ReceiptPrintScreenState extends State<ReceiptPrintScreen> {
             )
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-        child: PrintPaperHeader(
-          data: widget.headerData,
+      body: SafeArea(
+        child: Container(
+          color: Colors.grey[50],
+          child: ListView(
+            children: [
+              WidgetToImage(
+                builder: (key) {
+                  this.key = key;
+                  return Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: PrintPaperHeader(
+                      data: widget.headerData,
+                    ),
+                    // child: Column(
+                    //   children: [
+                    //     if (widget.headerData != null)
+                    //       PrintPaperHeader(
+                    //         data: widget.headerData ?? {},
+                    //       ),
+                    //     Divider(
+                    //       height: 20.0,
+                    //       color: darkColor,
+                    //       thickness: 2.0,
+                    //     ),
+                    //     ItemsInfoTable(items: itemsListForView),
+                    //     PrintPaperSummary(
+                    //       data: widget.summaryData!,
+                    //     ),
+                    //     Tafqeet(
+                    //       changeLoadingState: changeLoadingState,
+                    //       price: widget.invoice.header!.totAfterVat!,
+                    //     ),
+                    //     if (widget.qrData != null)
+                    //       Center(
+                    //         child: QrImage(
+                    //           data: widget.qrData!,
+                    //           version: QrVersions.auto,
+                    //           size: screenWidth,
+                    //         ),
+                    //       ),
+                    //     if (widget.closingNote != null)
+                    //       Text(widget.closingNote!),
+                    //     SizedBox(
+                    //       height: 20.0,
+                    //     ),
+                    //   ],
+                    // ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -70,7 +141,9 @@ class _ReceiptPrintScreenState extends State<ReceiptPrintScreen> {
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(
-            paperDimensions["width"]!, paperDimensions["height"]!),
+          paperDimensions["width"]!,
+          paperDimensions["height"]!,
+        ),
         build: (pw.Context context) {
           return pw.Center(
             child: pw.Image(image),

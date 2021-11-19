@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:petrol_naas/components/custom_button.dart';
 import 'package:petrol_naas/components/custom_dropdown.dart';
+import 'package:petrol_naas/components/custom_text_field.dart';
 import 'package:petrol_naas/mobx/added_items_to_new_invoice/added_items_to_new_invoice.dart';
 import 'package:petrol_naas/mobx/customers/customers.dart';
 import 'package:petrol_naas/models/invoice_header.dart';
@@ -37,26 +38,31 @@ class AddInvoice extends StatefulWidget {
 
 class _AddInvoiceState extends State<AddInvoice> {
   CreateInvoice createInvoice = CreateInvoice();
-  bool isConnected = false;
   late bool isLoading;
   Customer? _selectedCustomer;
   String? invNo;
   double fee = 0.0;
 
-  late TextEditingController qtyController;
-  late TextEditingController noteController;
-  ScrollController scrollController = ScrollController();
+  late TextEditingController _qtyController;
+  late TextEditingController _noteController;
+  late TextEditingController _customerVATnumController;
+  late ScrollController _scrollController;
+  late DropdownEditingController<Customer> _customerDropDownController;
 
   @override
   void initState() {
     super.initState();
     isLoading = true;
-    initalizeCustomersAndItemsAndFee();
-    qtyController = TextEditingController();
-    noteController = TextEditingController();
+    initializeCustomersAndItemsAndFee();
+
+    _qtyController = TextEditingController();
+    _noteController = TextEditingController();
+    _customerVATnumController = TextEditingController();
+    _scrollController = ScrollController();
+    _customerDropDownController = DropdownEditingController<Customer>();
   }
 
-  void initalizeCustomersAndItemsAndFee() async {
+  void initializeCustomersAndItemsAndFee() async {
     await getItems();
     await getFee();
   }
@@ -109,16 +115,16 @@ class _AddInvoiceState extends State<AddInvoice> {
   @override
   void dispose() {
     super.dispose();
-    qtyController.dispose();
-    noteController.dispose();
-    scrollController.dispose();
+
+    _qtyController.dispose();
+    _noteController.dispose();
+    _customerVATnumController.dispose();
+    _scrollController.dispose();
+    _customerDropDownController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final customerStore = context.watch<CustomerStore>();
-    print(customerStore.totalUserCreditLimit);
-
     return ScreenLayout(
       showBackButton: true,
       title: "إضافة فاتورة",
@@ -127,11 +133,12 @@ class _AddInvoiceState extends State<AddInvoice> {
         child: isLoading
             ? _customLoading()
             : ListView(
-                controller: scrollController,
+                controller: _scrollController,
                 padding: EdgeInsets.all(0),
                 children: [
                   _renderPayTypeDropdown(),
                   _renderCustomerDropdown(),
+                  _renderCustomerVATnumTextField(),
                   _renderNotesTextArea(),
                   _renderItemsList(),
                   _renderAddItemButton(),
@@ -205,6 +212,7 @@ class _AddInvoiceState extends State<AddInvoice> {
           ),
           DropdownFormField<Customer>(
             onChanged: setCustomerDropDownValue,
+            controller: _customerDropDownController,
             findFn: (dynamic str) async => customers,
             filterFn: (dynamic customer, str) =>
                 customer.accName.toLowerCase().indexOf(str.toLowerCase()) >= 0,
@@ -250,17 +258,6 @@ class _AddInvoiceState extends State<AddInvoice> {
         ],
       ),
     );
-    // Observer(builder: (_) {
-    //   final customersStore = context.watch<CustomerStore>();
-
-    //   return CustomDropdown<Customer>(
-    //     elements: customersStore.customers,
-    //     textProperty: ['AccName', "remainingBalance"],
-    //     label: 'العميل',
-    //     selectedValue: _selectedCustomer,
-    //     onChanged: setCustomerDropDownValue,
-    //   );
-    // });
   }
 
   Future<List<Customer>> getData(filter) async {
@@ -270,15 +267,36 @@ class _AddInvoiceState extends State<AddInvoice> {
   }
 
   void setCustomerDropDownValue(customer) {
+    _customerDropDownController.value = customer;
     createInvoice.custno = customer.accNo;
     _selectedCustomer = customer;
+    setState(() {});
+  }
+
+  //-----------------------------------------------------------------
+
+  Widget _renderCustomerVATnumTextField() {
+    bool isCustomerHasVatAccNo = _selectedCustomer == null ||
+        _selectedCustomer!.vaTnum != null &&
+            (_selectedCustomer!.vaTnum!.contains(RegExp(r"^[0-9]")));
+
+    if (_selectedCustomer?.vaTnum != null) _customerVATnumController.clear();
+
+    return isCustomerHasVatAccNo
+        ? SizedBox()
+        : CustomTextField(
+            type: CustomTextFieldTypes.yellow,
+            hintText: "الرقم الضريبي للعميل",
+            keyboardType: TextInputType.number,
+            controller: _customerVATnumController,
+          );
   }
 
   //-----------------------------------------------------------------
 
   ExpandCustomTextField _renderNotesTextArea() {
     return ExpandCustomTextField(
-      controller: noteController,
+      controller: _noteController,
       label: 'ملاحظات',
     );
   }
@@ -409,89 +427,56 @@ class _AddInvoiceState extends State<AddInvoice> {
     );
   }
 
-  Future<String?> _showPrintAlert(BuildContext context) {
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text(
-          'تنبيه!!',
-          style: TextStyle(fontSize: 25.0),
-        ),
-        content: const Text(
-          'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة',
-          style: TextStyle(fontSize: 18.0),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'Cancel'),
-            child: Text(
-              'الغاء',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 16.0,
+  Future<String?>? _showPrintAlert(BuildContext context) {
+    try {
+      fillInRestDataOfInvoice();
+      isFieldsFilled();
+      checkVatAccNoDigitsOnly();
+      checkExceedingCreditLimit();
+      return showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text(
+            'تنبيه!!',
+            style: TextStyle(fontSize: 25.0),
+          ),
+          content: const Text(
+            'هل انت متأكد من الاستمرار لأنه لا يمكن التعديل علي الفاتورة',
+            style: TextStyle(fontSize: 18.0),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'Cancel'),
+              child: Text(
+                'الغاء',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 16.0,
+                ),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () => onSubmitPrint(),
-            child: Text(
-              'تأكيد',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 16.0,
+            TextButton(
+              onPressed: onSubmitPrint,
+              child: Text(
+                'تأكيد',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 16.0,
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } catch (e) {
+      showSnackBar(context, e.toString());
+    }
   }
 
   Future<void> onSubmitPrint() async {
-    fillInRestDataOfInvoice();
-
-    if (!isFieldsFilled()) {
-      Navigator.pop(context, 'Cancel');
-      showSnackBar(context, 'يجب ملئ جميع البيانات');
-      return;
-    }
-
-    if (createInvoice.payType == "3" &&
-        (isExceedsTotalUserCreditLimit() || isExceedsCreditLimit())) {
-      final remainingAcceptableCreditBasedOnCustomerCreditLimit =
-          _selectedCustomer!.creditLimit! -
-              _selectedCustomer!.remainingBalance!;
-
-      final userStore = context.read<UserStore>();
-      final user = userStore.user;
-      final userCreditLimit = user.creditLimit;
-
-      final customerStore = context.read<CustomerStore>();
-      final totalUserCreditLimit = customerStore.totalUserCreditLimit;
-      final remainingAcceptableCreditBasedOnUserCreditLimit =
-          userCreditLimit! - totalUserCreditLimit;
-
-      final remainingAcceptableCredit =
-          remainingAcceptableCreditBasedOnCustomerCreditLimit <
-                  remainingAcceptableCreditBasedOnUserCreditLimit
-              ? remainingAcceptableCreditBasedOnCustomerCreditLimit
-              : remainingAcceptableCreditBasedOnUserCreditLimit;
-
-      Navigator.pop(context, 'Cancel');
-
-      showSnackBar(context,
-          'لقد تخطيت الحد الأقصى للائتمان، أقصى مبلغ يمكن الشراء به بالآجل هو: $remainingAcceptableCredit ريال سعودي');
-      return;
-    }
-
     await sendInvoiceToApi();
 
-    if (invNo == null) {
-      Navigator.pop(context, 'Cancel');
-      showSnackBar(context, 'حدث خطأ ما، الرجاء المحاولة مرة اخرى');
-      return;
-    }
-    Navigator.pop(context, 'Cancel');
+    updateRemainingBalance();
 
     final addedItemsToNewInvoiceStore =
         context.read<AddedItemsToNewInvoiceStore>();
@@ -500,13 +485,10 @@ class _AddInvoiceState extends State<AddInvoice> {
     final double vat = addedItemsToNewInvoiceStore.calculateVat(fee);
     final double totalPrice = addedItemsToNewInvoiceStore.calculateTotalPrice();
 
-    updateRemainingBalance();
-
     Navigator.of(context)
         .push(
       MaterialPageRoute(
         builder: (_) => InvoiceScreen(
-          isConnected: isConnected,
           customerName: _selectedCustomer!.accName!,
           customerVATnum: _selectedCustomer!.vaTnum,
           invNo: invNo!,
@@ -519,27 +501,33 @@ class _AddInvoiceState extends State<AddInvoice> {
         .then((_) {
       resetPerviousData();
     });
+
+    Navigator.pop(context, 'Cancel');
   }
 
   void fillInRestDataOfInvoice() {
+    createInvoice.vatAccNo =
+        _selectedCustomer?.vaTnum ?? _customerVATnumController.text;
+    createInvoice.notes = _noteController.text;
+
     final userStore = context.read<UserStore>();
+    createInvoice.userno = userStore.user.userNo!;
+    createInvoice.salesman = userStore.user.salesman!;
+    createInvoice.whno = userStore.user.whno!;
 
     if (createInvoice.payType == "1") {
       createInvoice.accno = userStore.user.cashAccno!;
     } else if (createInvoice.payType == "3") {
+      if (_selectedCustomer == null) throw ('الرجاء اختيار عميل');
       createInvoice.accno = _selectedCustomer!.accNo!;
     }
 
-    createInvoice.userno = userStore.user.userNo!;
-    createInvoice.salesman = userStore.user.salesman!;
-    createInvoice.whno = userStore.user.whno!;
-    createInvoice.notes = noteController.text;
     createInvoice.sellPriceNo = userStore.user.sellPriceNo!;
 
-    fillInItemsToViewInAddInviceAndInvoiceToBePrinted();
+    fillInItemsToViewInAddInviceAndInvoiceToPrint();
   }
 
-  void fillInItemsToViewInAddInviceAndInvoiceToBePrinted() {
+  void fillInItemsToViewInAddInviceAndInvoiceToPrint() {
     clearAddItemsFromCreateInvoiceObj();
 
     final addedItemsToNewInvoiceStore =
@@ -570,36 +558,80 @@ class _AddInvoiceState extends State<AddInvoice> {
         .add(InvoiceItem(itemno: item.itemno!, freeQty: freeQty, qty: qty));
   }
 
-  bool isFieldsFilled() {
-    return createInvoice.payType != null &&
-        createInvoice.custno != null &&
-        !(createInvoice.items == null || createInvoice.items!.isEmpty);
+  void isFieldsFilled() {
+    //TODO:validate number as digits only
+    final bool isPayTypeFilled =
+        createInvoice.payType == "1" || createInvoice.payType == "3";
+    final bool isCustnoFilled = createInvoice.custno != null;
+    final bool isVatAccNoFilled = _customerVATnumController.text.isNotEmpty;
+    final bool isUsernoFilled = createInvoice.userno != "";
+    final bool isSalesmanFilled = createInvoice.salesman != "";
+    final bool isWhnoFilled = createInvoice.whno != "";
+    final bool isAccnoFilled = createInvoice.accno != "";
+    final bool isSellPriceNoFilled = createInvoice.sellPriceNo != "";
+    final bool isItemsFilled =
+        createInvoice.items != null && createInvoice.items!.isNotEmpty;
+
+    if (!isPayTypeFilled) throw ('الرجاء اختيار نوع الدفع');
+    if (!isCustnoFilled) throw ('الرجاء اختيار عميل');
+    if (!isVatAccNoFilled) throw ('الرجاء تحديد رقم ضريبي');
+    if (!isItemsFilled) throw ('الرجاء اضافة أصناف للفاتورة');
+
+    if (!isUsernoFilled ||
+        !isSalesmanFilled ||
+        !isWhnoFilled ||
+        !isAccnoFilled ||
+        !isSellPriceNoFilled) {
+      throw ('يوجد خطأ ما اثناء انشاء الفاتورة الرجاء التواصل مع الادارة لحل المشكلة');
+    }
   }
 
-  bool isExceedsTotalUserCreditLimit() {
+  void checkVatAccNoDigitsOnly() {
+    final bool isVatAccNoNotValid =
+        (createInvoice.vatAccNo?.contains(RegExp(r'[^0-9]')) ?? true);
+
+    if (isVatAccNoNotValid) throw ('الرقم الضريبي يجب أن يحتوي على أرقام فقط');
+  }
+
+  void checkExceedingCreditLimit() {
+    double remainingAcceptableCreditBasedOnTotalUserCreditLimit =
+        getRemainingAcceptableCreditBasedOnTotalUserCreditLimit();
+    double remainingAcceptableCreditBasedOnTotalCustomerCreditLimit =
+        getRemainingAcceptableCreditBasedOnTotalCustomerCreditLimit();
+
+    double remainingAcceptableCredit =
+        remainingAcceptableCreditBasedOnTotalUserCreditLimit <
+                remainingAcceptableCreditBasedOnTotalCustomerCreditLimit
+            ? remainingAcceptableCreditBasedOnTotalUserCreditLimit
+            : remainingAcceptableCreditBasedOnTotalCustomerCreditLimit;
+
+    final addedItemsToNewInvoiceStore =
+        context.read<AddedItemsToNewInvoiceStore>();
+    final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
+
+    final bool isTotalExeedsLimit = remainingAcceptableCredit - total < 0;
+    if (isTotalExeedsLimit) {
+      throw 'لقد تخطيت الحد الأقصى للائتمان، أقصى مبلغ يمكن الشراء به بالآجل هو: $remainingAcceptableCredit ريال سعودي';
+    }
+  }
+
+  double getRemainingAcceptableCreditBasedOnTotalUserCreditLimit() {
     final userStore = context.read<UserStore>();
     final user = userStore.user;
     final double userCreditLimit = user.creditLimit!;
 
     final customerStore = context.read<CustomerStore>();
-    final totalUserCreditLimit = customerStore.totalUserCreditLimit;
-
-    final addedItemsToNewInvoiceStore =
-        context.read<AddedItemsToNewInvoiceStore>();
-    final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
-
-    final remainingAcceptableCredit = totalUserCreditLimit - userCreditLimit;
-    return total > remainingAcceptableCredit;
-  }
-
-  bool isExceedsCreditLimit() {
-    final addedItemsToNewInvoiceStore =
-        context.read<AddedItemsToNewInvoiceStore>();
-    final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
+    final totalCustomersCreditLimit = customerStore.totalUserCreditLimit;
 
     final remainingAcceptableCredit =
+        userCreditLimit - totalCustomersCreditLimit;
+    return remainingAcceptableCredit;
+  }
+
+  double getRemainingAcceptableCreditBasedOnTotalCustomerCreditLimit() {
+    final double remainingAcceptableCredit =
         _selectedCustomer!.creditLimit! - _selectedCustomer!.remainingBalance!;
-    return total > remainingAcceptableCredit;
+    return remainingAcceptableCredit;
   }
 
   Future<void> sendInvoiceToApi() async {
@@ -610,8 +642,7 @@ class _AddInvoiceState extends State<AddInvoice> {
       final response = res.data;
       invNo = response;
     } catch (e) {
-      // ignore: avoid_print
-      print(e);
+      throw "حدث خطأ ما، الرجاء المحاولة مرة أخرى";
     }
   }
 
@@ -636,13 +667,13 @@ class _AddInvoiceState extends State<AddInvoice> {
     addedItemsToNewInvoiceStore.reset();
     createInvoice = CreateInvoice();
     _selectedCustomer = null;
-    noteController.text = '';
-    initalizeCustomersAndItemsAndFee();
+    _noteController.text = '';
+    initializeCustomersAndItemsAndFee();
 
     scrollToTop();
   }
 
   void scrollToTop() {
-    scrollController.jumpTo(0);
+    _scrollController.jumpTo(0);
   }
 }

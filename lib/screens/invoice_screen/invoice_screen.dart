@@ -27,7 +27,6 @@ class InvoiceScreen extends StatefulWidget {
   final double vat;
   final String customerName;
   final String invNo;
-  final bool isConnected;
   final String payType;
   final String? customerVATnum;
 
@@ -38,7 +37,6 @@ class InvoiceScreen extends StatefulWidget {
     required this.vat,
     required this.customerName,
     required this.invNo,
-    required this.isConnected,
     required this.payType,
     required this.customerVATnum,
   }) : super(key: key);

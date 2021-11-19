@@ -9,6 +9,7 @@ class CreateInvoice {
   String? accno;
   String? notes;
   String? sellPriceNo;
+  String? vatAccNo;
   List<InvoiceItem>? items;
 
   CreateInvoice({
@@ -20,12 +21,13 @@ class CreateInvoice {
     this.accno,
     this.notes,
     this.sellPriceNo,
+    this.vatAccNo,
     this.items,
   });
 
   @override
   String toString() {
-    return 'CreateInvoice(userno: $userno, salesman: $salesman, custno: $custno, whno: $whno, payType: $payType, accno: $accno, notes: $notes, sellPriceNo: $sellPriceNo, items: $items)';
+    return 'CreateInvoice(userno: $userno, salesman: $salesman, custno: $custno, whno: $whno, payType: $payType, accno: $accno, notes: $notes, sellPriceNo: $sellPriceNo,vatAccNo: $vatAccNo, items: $items)';
   }
 
   factory CreateInvoice.fromJson(Map<String, dynamic> json) => CreateInvoice(
@@ -37,6 +39,7 @@ class CreateInvoice {
         accno: json['Accno'] as String?,
         notes: json['notes'] as String?,
         sellPriceNo: json['sellPriceNo'] as String?,
+        vatAccNo: json['vatAccNo'] as String?,
         items: (json['Items'] as List<dynamic>?)
             ?.map((e) => InvoiceItem.fromJson(e as Map<String, dynamic>))
             .toList(),
@@ -51,6 +54,7 @@ class CreateInvoice {
         'Accno': double.parse(accno!),
         'notes': notes,
         'sellPriceNo': sellPriceNo,
+        'vatAccNo': vatAccNo,
         'Items': items?.map((e) => e.toJson()).toList(),
       };
 
@@ -63,6 +67,7 @@ class CreateInvoice {
     String? accno,
     String? notes,
     String? sellPriceNo,
+    String? vatAccNo,
     List<InvoiceItem>? items,
   }) {
     return CreateInvoice(
@@ -74,6 +79,7 @@ class CreateInvoice {
       accno: accno ?? this.accno,
       notes: notes ?? this.notes,
       sellPriceNo: sellPriceNo ?? this.sellPriceNo,
+      vatAccNo: vatAccNo ?? this.vatAccNo,
       items: items ?? this.items,
     );
   }
