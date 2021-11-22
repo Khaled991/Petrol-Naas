@@ -1,8 +1,3 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'create_receipt.g.dart';
-
-@JsonSerializable()
 class CreateReceipt {
   String? userNo;
   String? cashAccNo;
@@ -20,14 +15,24 @@ class CreateReceipt {
 
   @override
   String toString() {
-    return 'ReceiptVoucher(userNo: $userNo, cashAccNo: $cashAccNo, accNo: $accNo, amount: $amount, description: $description)';
+    return 'CreateReceipt(userNo: $userNo, cashAccNo: $cashAccNo, accNo: $accNo, amount: $amount, description: $description)';
   }
 
-  factory CreateReceipt.fromJson(Map<String, dynamic> json) {
-    return _$ReceiptVoucherFromJson(json);
-  }
+  factory CreateReceipt.fromJson(Map<String, dynamic> json) => CreateReceipt(
+        userNo: json['userNo'] as String?,
+        cashAccNo: json['cashAccNo'] as String?,
+        accNo: json['accNo'] as String?,
+        amount: (json['amount'] as num?)?.toDouble(),
+        description: json['description'] as String?,
+      );
 
-  Map<String, dynamic> toJson() => _$ReceiptVoucherToJson(this);
+  Map<String, dynamic> toJson() => {
+        'userNo': userNo,
+        'cashAccNo': cashAccNo,
+        'accNo': accNo,
+        'amount': amount,
+        'description': description,
+      };
 
   CreateReceipt copyWith({
     String? userNo,

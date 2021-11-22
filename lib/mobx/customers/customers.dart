@@ -20,7 +20,10 @@ abstract class _CustomerStoreBase with Store {
   }
 
   @action
-  setCustomers(dynamic customersList) =>
+  setCustomers(List<Customer> customersList) => customers = customersList;
+
+  @action
+  setCustomersFromJson(dynamic customersList) =>
       customers = prepareCustomersList(customersList);
 
   List<Customer> prepareCustomersList(dynamic customersList) {

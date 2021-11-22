@@ -158,7 +158,7 @@ class _MyReceiptsScreenState extends State<MyReceiptsScreen> {
                               title: receipt.accName ?? "",
                               subtitle: "رقم: $recNo",
                               thirdLine: "المبلغ: $amount ريال",
-                              date: date.substring(0, 10),
+                              trailing: date.substring(0, 10),
                               onTap: () {
                                 final userStore = context.read<UserStore>();
                                 final user = userStore.user;

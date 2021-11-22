@@ -62,7 +62,7 @@ class _AddInvoiceState extends State<AddInvoice> {
     _customerDropDownController = DropdownEditingController<Customer>();
   }
 
-  void initializeCustomersAndItemsAndFee() async {
+  Future<void> initializeCustomersAndItemsAndFee() async {
     await getItems();
     await getFee();
   }
@@ -215,16 +215,35 @@ class _AddInvoiceState extends State<AddInvoice> {
             controller: _customerDropDownController,
             findFn: (dynamic str) async => customers,
             filterFn: (dynamic customer, str) =>
-                customer.accName.toLowerCase().indexOf(str.toLowerCase()) >= 0,
+                customer.accName!.toLowerCase().contains(str.toLowerCase()),
             dropdownItemFn: (dynamic customer, position, focused,
                     dynamic lastSelectedItem, onTap) =>
                 ListTile(
-              title: Text(customer.accName),
-              subtitle: Text(
-                customer?.remainingBalance.toStringAsFixed(2) ?? '',
+              title: Text(
+                customer.accName,
+                style: TextStyle(
+                  // color: primaryColor,
+                  color: darkColor,
+                  fontSize: 18.0,
+                ),
               ),
-              tileColor:
-                  focused ? Color.fromARGB(20, 0, 0, 0) : Colors.transparent,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "الرصيد: ${customer.remainingBalance?.toStringAsFixed(2)}",
+                    style: TextStyle(fontSize: 17.0),
+                  ),
+                  Text(
+                    "الحد الائتماني: ${customer.creditLimit?.toStringAsFixed(2)}",
+                  ),
+                  Divider(
+                    height: 5.0,
+                    color: darkColor.withOpacity(0.3),
+                  )
+                ],
+              ),
+              // trailing: Text(trailing),
               onTap: onTap,
             ),
             displayItemFn: (dynamic customer) => Text(
@@ -282,14 +301,14 @@ class _AddInvoiceState extends State<AddInvoice> {
 
     if (_selectedCustomer?.vaTnum != null) _customerVATnumController.clear();
 
-    return isCustomerHasVatAccNo
-        ? SizedBox()
-        : CustomTextField(
+    return !isCustomerHasVatAccNo && createInvoice.payType == "3"
+        ? CustomTextField(
             type: CustomTextFieldTypes.yellow,
             hintText: "الرقم الضريبي للعميل",
             keyboardType: TextInputType.number,
             controller: _customerVATnumController,
-          );
+          )
+        : SizedBox();
   }
 
   //-----------------------------------------------------------------
@@ -427,12 +446,16 @@ class _AddInvoiceState extends State<AddInvoice> {
     );
   }
 
-  Future<String?>? _showPrintAlert(BuildContext context) {
+  Future<String?>? _showPrintAlert(BuildContext context) async {
     try {
       fillInRestDataOfInvoice();
       isFieldsFilled();
       checkVatAccNoDigitsOnly();
-      checkExceedingCreditLimit();
+      if (createInvoice.payType == "3") {
+        // آجل
+        await checkExceedingCreditLimit();
+      }
+
       return showDialog<String>(
         context: context,
         builder: (BuildContext context) => AlertDialog(
@@ -476,8 +499,6 @@ class _AddInvoiceState extends State<AddInvoice> {
   Future<void> onSubmitPrint() async {
     await sendInvoiceToApi();
 
-    updateRemainingBalance();
-
     final addedItemsToNewInvoiceStore =
         context.read<AddedItemsToNewInvoiceStore>();
 
@@ -501,8 +522,6 @@ class _AddInvoiceState extends State<AddInvoice> {
         .then((_) {
       resetPerviousData();
     });
-
-    Navigator.pop(context, 'Cancel');
   }
 
   void fillInRestDataOfInvoice() {
@@ -563,7 +582,8 @@ class _AddInvoiceState extends State<AddInvoice> {
     final bool isPayTypeFilled =
         createInvoice.payType == "1" || createInvoice.payType == "3";
     final bool isCustnoFilled = createInvoice.custno != null;
-    final bool isVatAccNoFilled = _customerVATnumController.text.isNotEmpty;
+    final bool isVatAccNoFilled = _customerVATnumController.text.isNotEmpty ||
+        (_selectedCustomer!.vaTnum != null && _selectedCustomer!.vaTnum != "");
     final bool isUsernoFilled = createInvoice.userno != "";
     final bool isSalesmanFilled = createInvoice.salesman != "";
     final bool isWhnoFilled = createInvoice.whno != "";
@@ -593,25 +613,28 @@ class _AddInvoiceState extends State<AddInvoice> {
     if (isVatAccNoNotValid) throw ('الرقم الضريبي يجب أن يحتوي على أرقام فقط');
   }
 
-  void checkExceedingCreditLimit() {
-    double remainingAcceptableCreditBasedOnTotalUserCreditLimit =
-        getRemainingAcceptableCreditBasedOnTotalUserCreditLimit();
-    double remainingAcceptableCreditBasedOnTotalCustomerCreditLimit =
-        getRemainingAcceptableCreditBasedOnTotalCustomerCreditLimit();
+  Future<void> checkExceedingCreditLimit() async {
+    try {
+      final userStore = context.read<UserStore>();
+      final user = userStore.user;
+      final delegateNo = user.delegateNo;
 
-    double remainingAcceptableCredit =
-        remainingAcceptableCreditBasedOnTotalUserCreditLimit <
-                remainingAcceptableCreditBasedOnTotalCustomerCreditLimit
-            ? remainingAcceptableCreditBasedOnTotalUserCreditLimit
-            : remainingAcceptableCreditBasedOnTotalCustomerCreditLimit;
+      final accNo = createInvoice.accno;
 
-    final addedItemsToNewInvoiceStore =
-        context.read<AddedItemsToNewInvoiceStore>();
-    final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
+      Response response = await Dio(dioOptions)
+          .get("/creditLimit?delegateNo=$delegateNo&AccNo=$accNo");
 
-    final bool isTotalExeedsLimit = remainingAcceptableCredit - total < 0;
-    if (isTotalExeedsLimit) {
-      throw 'لقد تخطيت الحد الأقصى للائتمان، أقصى مبلغ يمكن الشراء به بالآجل هو: $remainingAcceptableCredit ريال سعودي';
+      final double maxAcceptableBalance = double.parse(response.data);
+
+      final addedItemsToNewInvoiceStore =
+          context.read<AddedItemsToNewInvoiceStore>();
+      final total = addedItemsToNewInvoiceStore.invoiceTotal(fee);
+
+      if (total > maxAcceptableBalance) {
+        throw 'لقد تخطيت الحد الأقصى للائتمان، أقصى مبلغ يمكن الشراء به بالآجل هو: $maxAcceptableBalance ريال سعودي';
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -643,6 +666,8 @@ class _AddInvoiceState extends State<AddInvoice> {
       invNo = response;
     } catch (e) {
       throw "حدث خطأ ما، الرجاء المحاولة مرة أخرى";
+    } finally {
+      Navigator.pop(context, 'Cancel');
     }
   }
 
@@ -653,23 +678,29 @@ class _AddInvoiceState extends State<AddInvoice> {
 
     final customerStore = context.read<CustomerStore>();
     final customers = customerStore.customers;
-    customerStore.setCustomers(customers.map(
-      (Customer customer) => customer.accNo == _selectedCustomer?.accNo
-          ? customer.copyWith(
-              creditLimit: customer.remainingBalance! + totalPrice)
-          : customer,
-    ));
+    customerStore.setCustomers(
+      customers
+          .map(
+            (Customer customer) => customer.accNo == _selectedCustomer?.accNo
+                ? customer.copyWith(
+                    creditLimit: customer.remainingBalance! + totalPrice)
+                : customer,
+          )
+          .toList(),
+    );
   }
 
-  void resetPerviousData() {
+  Future<void> resetPerviousData() async {
     final addedItemsToNewInvoiceStore =
         context.read<AddedItemsToNewInvoiceStore>();
     addedItemsToNewInvoiceStore.reset();
     createInvoice = CreateInvoice();
-    _selectedCustomer = null;
-    _noteController.text = '';
-    initializeCustomersAndItemsAndFee();
 
+    _selectedCustomer = null;
+    _noteController.clear();
+
+    await initializeCustomersAndItemsAndFee();
+    updateRemainingBalance();
     scrollToTop();
   }
 

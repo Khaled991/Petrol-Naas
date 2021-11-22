@@ -45,8 +45,14 @@ class _SignInState extends State<SignIn> {
       showSnackBar(context, 'الرجاء ادخال كلمة المرور');
       return;
     }
-    bool isValid = await fetchSignIn();
-    if (isValid) navigateToUserScreens();
+
+    try {
+      await fetchSignIn();
+
+      navigateToUserScreens();
+    } catch (e) {
+      showSnackBar(context, 'حدث خطأ ما الرجاء التواصل مع الادارة');
+    }
   }
 
   void navigateToUserScreens() {
@@ -55,31 +61,26 @@ class _SignInState extends State<SignIn> {
     navigatePushReplace(context, MyInvoicesScreen());
   }
 
-  Future<bool> fetchSignIn() async {
+  Future<void> fetchSignIn() async {
     try {
       Response response = await Dio(dioOptions).post(
         '/login',
         data: signInData.toJson(),
       );
       var jsonRespone = response.data;
+      print(jsonRespone);
+
       final userStore = context.read<UserStore>();
       userStore.setUser(User.fromJson(jsonRespone, signInData.userNo));
-
-      return true;
     } on DioError catch (e) {
-      // ignore: avoid_print
-      // print(e.response);
-      if (e.response?.statusCode == 400) {
-        showSnackBar(context, 'البيانات غير صحيحة');
-      } else {
-        showSnackBar(context, 'حدث خطأ ما الرجاء التواصل مع الادارة');
-      }
-      return false;
-    } catch (e) {
-      // ignore: avoid_print
       print(e);
-      showSnackBar(context, 'حدث خطأ ما الرجاء التواصل مع الادارة');
-      return false;
+      if (e.response?.statusCode == 400) {
+        throw 'البيانات غير صحيحة';
+      } else {
+        throw 'حدث خطأ ما الرجاء التواصل مع الادارة';
+      }
+    } catch (e) {
+      throw 'حدث خطأ ما الرجاء التواصل مع الادارة';
     }
   }
 

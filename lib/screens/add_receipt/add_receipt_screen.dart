@@ -104,12 +104,30 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               dropdownItemFn: (dynamic customer, position, focused,
                       dynamic lastSelectedItem, onTap) =>
                   ListTile(
-                title: Text(customer.accName),
-                subtitle: Text(
-                  customer?.remainingBalance.toStringAsFixed(2) ?? '',
+                title: Text(
+                  customer.accName,
+                  style: TextStyle(
+                    color: darkColor,
+                    fontSize: 18.0,
+                  ),
                 ),
-                tileColor:
-                    focused ? Color.fromARGB(20, 0, 0, 0) : Colors.transparent,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "الرصيد: ${customer.remainingBalance?.toStringAsFixed(2)}",
+                      style: TextStyle(fontSize: 17.0),
+                    ),
+                    Text(
+                      "الحد الائتماني: ${customer.creditLimit?.toStringAsFixed(2)}",
+                    ),
+                    Divider(
+                      height: 5.0,
+                      color: darkColor.withOpacity(0.3),
+                    )
+                  ],
+                ),
+                // trailing: Text(trailing),
                 onTap: onTap,
               ),
               displayItemFn: (dynamic customer) => Text(

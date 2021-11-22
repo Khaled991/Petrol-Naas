@@ -80,7 +80,6 @@ class InvoiceScreenHeader extends StatelessWidget {
   }
 }
 
-
 // isColored
 //             ? Image.asset(
 //                 'assets/images/logo.png',

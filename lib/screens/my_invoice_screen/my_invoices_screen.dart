@@ -68,7 +68,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
       var jsonRespone = response.data;
       final customersStore = context.read<CustomerStore>();
 
-      customersStore.setCustomers(jsonRespone);
+      customersStore.setCustomersFromJson(jsonRespone);
       changeLoadingState(false);
     } on DioError {
       changeLoadingState(false);
@@ -209,7 +209,7 @@ class _MyInvoicesScreenState extends State<MyInvoicesScreen> {
                               return CustomListTile(
                                 title: invoice.header!.custName!,
                                 subtitle: invno,
-                                date: date,
+                                trailing: date,
                                 onTap: () => {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(

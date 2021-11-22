@@ -25,7 +25,7 @@ class User {
   }
 
   factory User.fromJson(Map<String, dynamic> json, String? userNo) => User(
-        delegateNo: json['delegateNo'] as String?,
+        delegateNo: json['delegateNo'].toString(),
         sellPriceNo: json['sellPriceNo'] as String?,
         name: json['name'] as String?,
         whno: json['Whno'] as String?,

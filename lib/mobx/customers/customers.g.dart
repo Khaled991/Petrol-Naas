@@ -9,6 +9,14 @@ part of 'customers.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$CustomerStore on _CustomerStoreBase, Store {
+  Computed<double>? _$totalUserCreditLimitComputed;
+
+  @override
+  double get totalUserCreditLimit => (_$totalUserCreditLimitComputed ??=
+          Computed<double>(() => super.totalUserCreditLimit,
+              name: '_CustomerStoreBase.totalUserCreditLimit'))
+      .value;
+
   final _$customersAtom = Atom(name: '_CustomerStoreBase.customers');
 
   @override
@@ -28,7 +36,7 @@ mixin _$CustomerStore on _CustomerStoreBase, Store {
       ActionController(name: '_CustomerStoreBase');
 
   @override
-  dynamic setCustomers(dynamic customersList) {
+  dynamic setCustomers(List<Customer> customersList) {
     final _$actionInfo = _$_CustomerStoreBaseActionController.startAction(
         name: '_CustomerStoreBase.setCustomers');
     try {
@@ -39,9 +47,21 @@ mixin _$CustomerStore on _CustomerStoreBase, Store {
   }
 
   @override
+  dynamic setCustomersFromJson(dynamic customersList) {
+    final _$actionInfo = _$_CustomerStoreBaseActionController.startAction(
+        name: '_CustomerStoreBase.setCustomersFromJson');
+    try {
+      return super.setCustomersFromJson(customersList);
+    } finally {
+      _$_CustomerStoreBaseActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
-customers: ${customers}
+customers: ${customers},
+totalUserCreditLimit: ${totalUserCreditLimit}
     ''';
   }
 }

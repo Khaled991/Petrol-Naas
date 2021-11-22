@@ -7,18 +7,18 @@ class CustomListTile extends StatelessWidget {
     Key? key,
     required this.title,
     required this.onTap,
-    required this.date,
-    required this.subtitle,
-    required this.icon,
+    required this.trailing,
+    this.subtitle,
+    this.icon,
     this.thirdLine,
   }) : super(key: key);
 
   final String title;
-  final String date;
-  final String subtitle;
+  final String trailing;
+  final String? subtitle;
   final String? thirdLine;
   final VoidCallback onTap;
-  final IconData icon;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +29,18 @@ class CustomListTile extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                leading: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 40,
-                      color: primaryColor,
-                    ),
-                  ],
-                ),
+                leading: icon != null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            icon,
+                            size: 40,
+                            color: primaryColor,
+                          ),
+                        ],
+                      )
+                    : null,
                 title: Text(
                   title,
                   style: TextStyle(
@@ -48,7 +50,7 @@ class CustomListTile extends StatelessWidget {
                 subtitle: Text(
                   "$subtitle${renderThirdLineIfExists()}",
                 ),
-                trailing: Text(date),
+                trailing: Text(trailing),
                 onTap: onTap,
               ),
             ],
